@@ -1,0 +1,11 @@
+name = "apex-house-bookings"
+main = "src/index.js"
+compatibility_date = "2026-10-15"
+
+[vars]
+# Comma-separated exact origins. Add the GitHub Pages origin used for testing.
+ALLOWED_ORIGINS = "https://theapexxhouse.com,https://www.theapexxhouse.com"
+GOOGLE_SHEET_NAME = "Bookings"
+# Set these non-secret values with `wrangler secret` or in the Cloudflare dashboard:
+# GOOGLE_CLIENT_EMAIL, GOOGLE_SHEET_ID, RESEND_FROM, NOTIFICATION_EMAIL
+# Store GOOGLE_PRIVATE_KEY and RESEND_API_KEY as Cloudflare secrets.
