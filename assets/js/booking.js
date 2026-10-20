@@ -1,9 +1,10 @@
 
-    import { SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js";
+    import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js";
     import { createCurrencyEstimator } from "./currency-estimates.js";
     import { initBookingInputs } from "./booking-inputs.js";
     // Public endpoint URL only; set this after deploying the Cloudflare Worker. Never put secrets here.
-    const BOOKING_ENDPOINT = "https://YOUR-WORKER.workers.dev/";
+    const BOOKING_ENDPOINT = "/api/book";
+    const BOOKING_CONFIG_ENDPOINT = "/api/booking-config";
     // Change these transfer details here; never put private keys or API secrets in this file.
     const PAYMENT_CONFIG = Object.freeze({
       accountNumber: "8038326349",
@@ -43,6 +44,45 @@
     let currentStep = 0;
     let bookingInputs;
     let currencyEstimator;
+    let turnstileSetupPromise = null;
+    let turnstileWidgetId = null;
+    const turnstileTokenInput = document.getElementById("turnstile-token");
+    const turnstileContainer = document.getElementById("turnstile-container");
+    const turnstileHelp = document.getElementById("turnstile-help");
+    async function ensureTurnstile() {
+      if (turnstileWidgetId !== null) return true;
+      if (turnstileSetupPromise) return turnstileSetupPromise;
+      turnstileSetupPromise = (async () => {
+        const configResponse = await fetch(BOOKING_CONFIG_ENDPOINT, { headers: { Accept: "application/json" } });
+        const config = await configResponse.json().catch(() => ({}));
+        if (!configResponse.ok || !config.turnstileSiteKey) throw new Error("Security verification is not configured. Please contact us on WhatsApp to complete your booking.");
+        if (!window.turnstile) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+            script.async = true;
+            script.defer = true;
+            script.onload = resolve;
+            script.onerror = () => reject(new Error("Security verification could not load. Check your connection or contact us on WhatsApp."));
+            document.head.append(script);
+          });
+        }
+        if (!window.turnstile) throw new Error("Security verification could not start. Please try again or contact us on WhatsApp.");
+        turnstileWidgetId = window.turnstile.render(turnstileContainer, {
+          sitekey: config.turnstileSiteKey,
+          callback: token => { turnstileTokenInput.value = token; turnstileHelp.textContent = "Security check complete."; },
+          "expired-callback": () => { turnstileTokenInput.value = ""; turnstileHelp.textContent = "The security check expired. Please complete it again."; },
+          "error-callback": () => { turnstileTokenInput.value = ""; turnstileHelp.textContent = "Security verification failed. Please try again."; },
+        });
+        turnstileHelp.textContent = "Complete the security check before submitting your request.";
+        return true;
+      })().catch(error => {
+        turnstileSetupPromise = null;
+        turnstileHelp.textContent = error.message || "Security verification is unavailable. Please contact us on WhatsApp.";
+        return false;
+      });
+      return turnstileSetupPromise;
+    }
     function priceLabel(amount) {
       const converted = currencyEstimator.convert(amount);
       return converted.currency === "NGN" && converted.requestedCurrency !== "NGN"
@@ -238,6 +278,7 @@
     });
     document.getElementById("booking-back").addEventListener("click", () => { currentStep = Math.max(0, currentStep - 1); renderStep(); });
     function renderStep() {
+      if (currentStep === 3) void ensureTurnstile();
       steps.forEach((step, index) => step.hidden = index !== currentStep);
       document.getElementById("booking-back").hidden = currentStep === 0;
       document.getElementById("booking-next").hidden = currentStep === 3;
@@ -284,6 +325,21 @@
       return `APEX-${date}-${suffix}`;
     }
     function displayBookingPayment(booking) {
+      const checkout = document.getElementById("payment-checkout");
+      checkout.hidden = !booking.paymentLink;
+      checkout.href = booking.paymentLink || "#";
+      const usesOnlineCheckout = Boolean(booking.paymentLink);
+      document.querySelector(".payment-intro").hidden = usesOnlineCheckout;
+      document.querySelector(".payment-details").hidden = usesOnlineCheckout;
+      document.querySelector(".international-payment-placeholder").hidden = usesOnlineCheckout;
+      document.querySelector(".payment-instruction").hidden = usesOnlineCheckout;
+      document.getElementById("payment-whatsapp").hidden = usesOnlineCheckout;
+      document.querySelector(".payment-warning").hidden = usesOnlineCheckout;
+      document.getElementById("payment-guidance").textContent = booking.paymentLink
+        ? "Your request is confirmed. Use the secure checkout link below to pay online."
+        : booking.amountKnown
+          ? "Your request is confirmed. Use the transfer details below to complete payment."
+          : "Our team will confirm the final amount before payment. Please wait for our message before transferring.";
       currentBooking = booking;
       const amountKnown = booking.amountKnown === true && Number.isFinite(Number(booking.amount));
       const quantity = `${booking.quantity} ${booking.unit}${Number(booking.quantity) === 1 ? "" : "s"}`;
@@ -349,6 +405,14 @@
         status.textContent = "Please check your country, phone number, and currency selections.";
         return;
       }
+      if (!turnstileTokenInput.value) {
+        const ready = await ensureTurnstile();
+        status.textContent = ready
+          ? "Complete the security check before submitting your booking."
+          : turnstileHelp.textContent;
+        turnstileContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
       if (String(data.website || "").trim()) return;
       const amountKnown = data.mode !== "physical" && service.id !== "launch-hosting";
       const conversion = currencyEstimator.convert(quote.amount, selectedCurrency.code);
@@ -377,10 +441,6 @@
         amount: booking.amountNGN, amountNGN: booking.amountNGN, amountKnown,
         eventTime: booking.time, eventTimezone: booking.eventTimezone, platform: booking.platform, brief,
       });
-      if (!BOOKING_ENDPOINT || BOOKING_ENDPOINT.includes("YOUR-WORKER")) {
-        status.textContent = "Online booking is not connected yet. Please contact us on WhatsApp to submit your request.";
-        return;
-      }
       const submitButton = document.getElementById("booking-submit");
       submitButton.disabled = true;
       submitButton.textContent = "Sending request…";
@@ -391,6 +451,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...data,
+            consent: data.consent === "true",
             reference: booking.reference,
             service: booking.service,
             package: booking.package,
@@ -413,12 +474,16 @@
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || result.ok !== true) throw new Error(result.error || "We could not send your booking request.");
+        booking.reference = typeof result.reference === "string" ? result.reference : booking.reference;
+        booking.paymentLink = typeof result.paymentLink === "string" ? result.paymentLink : "";
         try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this booking for refresh recovery.", error); }
         try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
         status.textContent = "Your booking request was received.";
         displayBookingPayment(booking);
       } catch (error) {
         status.textContent = error.message || "We could not send your booking request. Please try again or contact us on WhatsApp.";
+        turnstileTokenInput.value = "";
+        if (turnstileWidgetId !== null && window.turnstile) window.turnstile.reset(turnstileWidgetId);
       } finally {
         submitButton.disabled = false;
         submitButton.textContent = "Show payment instructions";
@@ -476,6 +541,8 @@
     document.getElementById("new-booking").addEventListener("click", () => {
       try { sessionStorage.removeItem(BOOKING_STORAGE_KEY); } catch (error) {}
       currentBooking = null;
+      turnstileTokenInput.value = "";
+      if (turnstileWidgetId !== null && window.turnstile) window.turnstile.reset(turnstileWidgetId);
       paymentScreen.hidden = true;
       bookingForm.hidden = false;
       bookingForm.reset();

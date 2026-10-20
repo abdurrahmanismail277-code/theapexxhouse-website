@@ -96,6 +96,13 @@
 .international-payment-placeholder strong{display:block;margin-bottom:5px;color:#021a40;font-weight:700}
 .international-payment-placeholder p{margin:0}
 .payment-local-estimate{grid-column:1/-1}
+.booking-turnstile{grid-column:1/-1;display:grid;gap:8px;min-width:0}
+#turnstile-container{min-height:65px;max-width:100%;overflow:hidden}
+#turnstile-help{color:#40536d;font:400 12px/1.5 var(--head)}
+.payment-checkout{display:inline-flex;align-items:center;justify-content:center;min-height:52px;margin-top:18px;padding:0 20px;border:1px solid #0164ff;border-radius:999px;background:#0164ff;color:#fff;text-align:center;font:700 14px var(--head);text-decoration:none}
+.payment-checkout:hover{background:#0757d2;border-color:#0757d2}
+.payment-checkout:focus-visible{outline:3px solid #0164ff55;outline-offset:3px}
+.payment-checkout[hidden]{display:none!important}
 @media(max-width:760px){
  .booking-card{grid-template-columns:minmax(0,1fr);gap:16px}
  .booking-progress,.required-fields-note,.booking-price-card,.booking-step:not([hidden]),.booking-actions,.booking-status{grid-column:1;grid-row:auto}
