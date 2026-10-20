@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" type="image/svg+xml" href="assets/apex-house-icon.svg">
   <meta name="theme-color" content="#021A40">
   <meta name="description" content="The Apex House brings people together through thoughtful event moderation, launch hosting, community management and public speaking.">
   <meta property="og:type" content="website">
@@ -14,7 +15,6 @@
   <meta name="twitter:title" content="The Apex House � Elevate Your Moment">
   <meta name="twitter:description" content="Thoughtful event moderation, launch hosting, community management and public speaking.">
   <meta name="twitter:image" content="https://theapexxhouse.com/assets/hero-event.jpeg">
-  <link rel="icon" type="image/png" href="assets/apex-logo-white.png">
   <title>The Apex House &mdash; Elevate Your Moment</title>
   <script>try{if(localStorage.getItem('apex-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -309,6 +309,7 @@
   <link rel="stylesheet" href="assets/css/program-gallery.css">
   <link rel="stylesheet" href="assets/css/service-interactions.css">
   <link rel="stylesheet" href="assets/css/brand-motion.css">
+  <link rel="stylesheet" href="assets/css/nav.css">
 </head>
 <body>
   <div class="intro-screen" id="intro-screen" role="status" aria-label="The Apex House">
@@ -325,39 +326,7 @@
       <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Switch to dark mode"><span class="theme-switch-track" aria-hidden="true"><svg class="switch-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><svg class="switch-moon" viewBox="0 0 24 24"><path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 20.5 15.5Z"/></svg><span class="theme-switch-thumb"></span></span></button>
     </div>
   </header>
-  <script>
-    (() => {
-      const button = document.querySelector('.menu-toggle');
-      const menu = document.getElementById('main-nav');
-      if (!button || !menu) return;
-      const setOpen = open => {
-        menu.classList.toggle('open', open);
-        button.setAttribute('aria-expanded', String(open));
-        button.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
-      };
-      button.addEventListener('click', () => setOpen(button.getAttribute('aria-expanded') !== 'true'));
-      menu.addEventListener('click', event => {
-        if (event.target.closest('a')) setOpen(false);
-      });
-      document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && menu.classList.contains('open')) {
-          setOpen(false);
-          button.focus();
-          return;
-        }
-        if (event.key === 'Tab' && menu.classList.contains('open')) {
-          const items = [button, ...menu.querySelectorAll('a[href]')].filter(item => item.getClientRects().length);
-          const first = items[0], last = items[items.length - 1];
-          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-        }
-      });
-      window.addEventListener('resize', () => {
-        if (window.innerWidth > 900) setOpen(false);
-      });
-    })();
-  </script>
-  <a class="back-to-top" id="back-to-top" href="#home" aria-label="Back to top" title="Back to top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg></a>
+<a class="back-to-top" id="back-to-top" href="#home" aria-label="Back to top" title="Back to top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg></a>
   <main id="main-content">
     <section class="hero" id="home">
       <div class="wrap hero-grid">
@@ -630,15 +599,6 @@
   <script src="assets/js/service-interactions.js"></script>
 <div class="service-package-bar" id="service-package-bar" hidden aria-live="polite"><div class="service-package-summary"><span class="service-package-count" id="service-package-count">0</span><span>services selected</span></div><div class="service-package-actions"><button class="service-package-clear" id="service-package-clear" type="button">Clear</button><a class="service-package-continue" id="service-package-continue" href="book.html">Continue to booking</a></div></div>
   <script src="assets/js/page-transitions.js"></script>
+  <script src="assets/js/nav.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-

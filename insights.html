@@ -9,7 +9,7 @@
   <meta property="og:type" content="article">
   <meta property="og:title" content="A great event begins long before the first guest arrives | The Apex House">
   <meta property="og:description" content="A practical guide to shaping a program that feels clear, welcoming and memorable.">
-  <link rel="icon" type="image/png" href="assets/apex-logo-white.png">
+  <link rel="icon" type="image/svg+xml" href="assets/apex-house-icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -25,6 +25,7 @@
   </style>
   <link rel="stylesheet" href="assets/css/motion.css">
   <link rel="stylesheet" href="assets/css/brand-motion.css">
+  <link rel="stylesheet" href="assets/css/nav.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -34,10 +35,7 @@
     <nav class="nav-links" id="main-nav" aria-label="Main navigation"><a href="home.html">Home</a><a href="home.html#services">Services</a><a href="home.html#work">Work</a><a href="home.html#about">About</a><a href="insights.html" aria-current="page">Insights</a><a href="home.html#faq">FAQ</a><a href="home.html#contact">Contact</a><a class="menu-booking" href="book.html">Book a service</a></nav>
     <a class="nav-cta" href="book.html">Book a service</a>
   </div></header>
-  <script>
-    (()=>{const button=document.querySelector('.menu-toggle'),menu=document.getElementById('main-nav');if(!button||!menu)return;const setOpen=open=>{menu.classList.toggle('open',open);button.setAttribute('aria-expanded',String(open));button.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu')};button.addEventListener('click',()=>setOpen(button.getAttribute('aria-expanded')!=='true'));menu.addEventListener('click',event=>{if(event.target.closest('a'))setOpen(false)});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.classList.contains('open')){setOpen(false);button.focus()}});window.addEventListener('resize',()=>{if(window.innerWidth>640)setOpen(false)})})();
-  </script>
-  <main id="main-content">
+<main id="main-content">
 <section class="insights" id="insights" aria-labelledby="insights-title">
       <article class="wrap insight-article">
         <header class="insight-header"><span class="insight-category flow-eyebrow">THE APEX HOUSE  /  EVENT FIELD GUIDE</span><h1 id="insights-title" data-flow>A great event begins <em>long before</em> the first guest arrives.</h1><p class="insight-deck" data-flow data-flow-speed="fast">A practical guide to shaping a program that feels clear, welcoming and memorable&mdash;from the first brief to the final thank-you.</p><div class="insight-byline"><span>By The Apex House</span><span aria-hidden="true">&bull;</span><span>Event planning guide</span><span aria-hidden="true">&bull;</span><span>5 minute read</span></div></header>
@@ -69,5 +67,6 @@
   <script src="assets/js/motion.js"></script>
   <script>const topButton=document.getElementById('back-to-top');const updateTopButton=()=>topButton.classList.toggle('is-visible',window.scrollY>420);window.addEventListener('scroll',updateTopButton,{passive:true});updateTopButton();</script>
 <script src="assets/js/page-transitions.js"></script>
+  <script src="assets/js/nav.js"></script>
 </body>
 </html>
