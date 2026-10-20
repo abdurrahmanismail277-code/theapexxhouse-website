@@ -1,4 +1,5 @@
-﻿/* Shared responsive navigation and slide-in drawer */
+@import url("./brand-palette.css");
+/* Shared responsive navigation and slide-in drawer */
 html.js-ready .menu-toggle{display:none!important}
 @media(max-width:1023px){
   html.js-ready .nav-inner>.menu-toggle{display:grid!important;place-items:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;padding:0;order:-1;position:relative;z-index:1;border:1px solid #ffffff45;border-radius:50%;background:#ffffff08;color:#fff;cursor:pointer}
@@ -60,4 +61,10 @@ body.ah-menu-open{overflow:hidden;touch-action:none}
 .menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(1){top:6px;transform:rotate(45deg)}
 .menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(2){opacity:0}
 .menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(3){top:6px;transform:rotate(-45deg)}
+html.js-ready .nav-cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid #fff;border-radius:999px;background:#fff;color:#0757c7;font:700 12px/1 var(--head,system-ui,sans-serif);box-shadow:0 5px 16px rgba(1,31,76,.16);transition:background-color 180ms ease,color 180ms ease,border-color 180ms ease,box-shadow 180ms ease,transform 180ms ease}
+html.js-ready .nav-cta:hover{transform:translateY(-1px);border-color:#0164ff;background:#0164ff;color:#fff;box-shadow:0 8px 20px rgba(1,100,255,.24)}
+html.js-ready .nav-cta svg{display:block;flex:none;width:17px;height:17px;padding:5px;box-sizing:content-box;border-radius:50%;background:#eaf2ff;stroke:#0757c7;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:background-color 180ms ease,stroke 180ms ease}
+html.js-ready .nav-cta:hover svg{background:#ffffff24;stroke:#fff}
+.btn-arrow{display:inline-block;width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform 180ms ease}
+@media(prefers-reduced-motion:reduce){html.js-ready .nav-cta,html.js-ready .nav-cta svg,.btn-arrow{transition:none!important}}
 body.ah-menu-closing .ah-menu-drawer,body.ah-menu-closing .ah-menu-backdrop{transition-duration:250ms}

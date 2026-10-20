@@ -1,0 +1,40 @@
+﻿/* The Apex House palette: navy, blue, white, charcoal, and pale blue. */
+:root{
+  --brand-navy:#021A40;
+  --brand-blue:#0164FF;
+  --brand-white:#FFFFFF;
+  --brand-charcoal:#1D1F23;
+  --brand-pale-blue:#C9DEFF;
+  --navy:var(--brand-navy);
+  --blue:var(--brand-blue);
+  --white:var(--brand-white);
+  --charcoal:var(--brand-charcoal);
+  --light-blue:var(--brand-pale-blue);
+  --ink:var(--brand-charcoal);
+  --muted:#59677B;
+  --line:rgba(2,26,64,.14);
+}
+html{accent-color:var(--brand-blue)}
+body{color:var(--brand-charcoal);background:var(--brand-white)}
+h1,h2,h3,h4{color:var(--brand-navy)}
+::selection{color:var(--brand-navy);background:var(--brand-pale-blue)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline-color:var(--brand-blue)}
+.eyebrow,.service-number,.stat-kicker,.insight-category{color:var(--brand-blue)}
+.hero{background:linear-gradient(180deg,var(--brand-white) 0%,#f4f8ff 100%)}
+.hero-badge,.hero-tags,.client,.service-detail,.program-card,.stat-card,.purpose-card,.faq-item,.founder-card,.booking-card,.booking-price-card,.calendly-callout,.policy{
+  border-color:var(--brand-pale-blue)
+}
+.hero-badge{background:var(--brand-white)}
+.hero-tags{color:var(--brand-charcoal)}
+.hero-tags i,.eyebrow:before{background:var(--brand-blue)}
+.stat-card{background:#f6f9ff}
+.service-card{background:var(--brand-navy)}
+.service-card .icon-tile{background:var(--brand-blue)}
+.founder-card{background:linear-gradient(135deg,#f1f6ff 0%,var(--brand-white) 68%)}
+.btn:not(.btn-outline),.book-link{background:var(--brand-blue);border-color:var(--brand-blue);color:var(--brand-white)}
+.btn:not(.btn-outline):hover,.book-link:hover{background:#0757d2;border-color:#0757d2}
+.btn-outline{background:var(--brand-white);border-color:var(--brand-pale-blue);color:var(--brand-navy)}
+.btn-outline:hover{background:var(--brand-pale-blue);border-color:var(--brand-pale-blue);color:var(--brand-navy)}
+.footer,.nav{background:var(--brand-navy)}
+.footer{color:var(--brand-white)}
+@media(prefers-reduced-motion:reduce){.btn:not(.btn-outline),.btn-outline,.book-link{transition:none!important}}
