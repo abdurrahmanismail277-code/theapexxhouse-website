@@ -119,6 +119,12 @@
     }
     function selectedMode() { return bookingForm.elements.mode.value; }
     function selectedService() { return getService(serviceOptions.value); }
+    function localDateString(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
     const conditionalTimers = new WeakMap();
     function setConditionalField(wrapper, visible) {
       if (!wrapper) return;
@@ -209,11 +215,14 @@
     document.querySelectorAll('input[name="mode"]').forEach(input => input.addEventListener("change", updateOffers));
     document.getElementById("booking-quantity").addEventListener("input", updateEstimate);
     document.getElementById("booking-extra-hours").addEventListener("input", updateEstimate);
-    document.getElementById("platform-preference").addEventListener("change", () => {
-      const other = document.getElementById("platform-other");
-      other.hidden = document.getElementById("platform-preference").value !== "Other";
-      if (other.hidden) other.value = "";
-    });
+    const platformPreference = document.getElementById("platform-preference");
+    const platformOther = document.getElementById("platform-other");
+    const updatePlatformOther = () => {
+      platformOther.hidden = platformPreference.value !== "Other";
+      if (platformOther.hidden) platformOther.value = "";
+    };
+    platformPreference.addEventListener("change", updatePlatformOther);
+    updatePlatformOther();
     document.querySelectorAll("[data-stepper]").forEach(button => button.addEventListener("click", () => {
       const input = document.getElementById(button.dataset.stepper);
       const min = Number(input.min || 0), max = Number(input.max || 1000), step = Number(input.step || 1);
@@ -221,7 +230,10 @@
       input.dispatchEvent(new Event("input", { bubbles: true }));
     }));
     const notesInput = document.getElementById("additional-notes");
-    notesInput.addEventListener("input", () => { document.getElementById("notes-count").textContent = String(notesInput.value.length); });
+    const notesCount = document.getElementById("notes-count");
+    const updateNotesCount = () => { notesCount.textContent = String(notesInput.value.length); };
+    notesInput.addEventListener("input", updateNotesCount);
+    updateNotesCount();
     let draftSaveTimer;
     const scheduleDraftSave = () => { window.clearTimeout(draftSaveTimer); draftSaveTimer = window.setTimeout(saveBookingDraft, 250); };
     bookingForm.addEventListener("input", scheduleDraftSave);
@@ -244,7 +256,8 @@
         if (!phone.e164) message = "Please enter your phone or WhatsApp number.";
         else if (!phone.valid) message = "Please check the number length for the selected country code.";
       } else if (field.name === "email" && field.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value.trim())) message = "Please enter a valid email address.";
-      else if (field.name === "eventDate" && field.value && field.value < new Date().toISOString().slice(0, 10)) message = "Preferred date cannot be in the past.";
+      else if ((field.name === "eventDate" || field.name === "alternateDate") && field.value && field.value < localDateString()) message = field.name === "eventDate" ? "Preferred date cannot be in the past." : "Second-choice date cannot be in the past.";
+      else if (field.name === "alternateDate" && field.value && field.value === bookingForm.elements.eventDate.value) message = "Second-choice date must differ from your preferred date.";
       else if (field.required && !String(field.value || "").trim()) {
         const messages = { eventName: "Please enter your event name.", eventType: "Please choose your event type.", eventDate: "Please choose your preferred date.", name: "Please enter your name.", email: "Please enter your email address.", audienceSize: "Please enter the audience size.", serviceId: "Please choose a service.", offerId: "Please choose a package.", whatsappNational: "Please enter your phone or WhatsApp number." };
         message = messages[field.name] || "Please complete this field.";
@@ -386,7 +399,9 @@
         paymentTitle.focus({ preventScroll: true });
       });
     }
+    let submissionInProgress = false;
     bookingForm.addEventListener("submit", async event => {
+      if (submissionInProgress) { event.preventDefault(); return; }
       event.preventDefault();
       const status = document.getElementById("booking-status");
       if (!validateStep(steps[currentStep])) return;
@@ -442,6 +457,7 @@
         eventTime: booking.time, eventTimezone: booking.eventTimezone, platform: booking.platform, brief,
       });
       const submitButton = document.getElementById("booking-submit");
+      submissionInProgress = true;
       submitButton.disabled = true;
       submitButton.textContent = "Sending request…";
       status.textContent = "Sending your booking request securely…";
@@ -485,6 +501,7 @@
         turnstileTokenInput.value = "";
         if (turnstileWidgetId !== null && window.turnstile) window.turnstile.reset(turnstileWidgetId);
       } finally {
+        submissionInProgress = false;
         submitButton.disabled = false;
         submitButton.textContent = "Show payment instructions";
       }
@@ -547,14 +564,20 @@
       bookingForm.hidden = false;
       bookingForm.reset();
       bookingInputs.reset();
+      updatePlatformOther();
+      updateNotesCount();
       currentStep = 0;
       history.replaceState({}, "", "#book");
       updateOffers();
       renderStep();
       document.getElementById("booking-title").focus({ preventScroll: true });
     });
-    document.querySelectorAll('input[name="eventDate"],input[name="alternateDate"]').forEach(input => input.min = new Date().toISOString().slice(0, 10));
+    document.querySelectorAll('input[name="eventDate"],input[name="alternateDate"]').forEach(input => input.min = localDateString());
     updateOffers();
+    if (bookingDraft.serviceId === serviceOptions.value && bookingDraft.mode === selectedMode() && bookingDraft.offerId && [...offerOptions.options].some(option => option.value === bookingDraft.offerId)) {
+      offerOptions.value = bookingDraft.offerId;
+      updateEstimate();
+    }
     renderStep();
     document.getElementById("payment-whatsapp").href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`;
     document.getElementById("payment-help").querySelector("a").href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`;
