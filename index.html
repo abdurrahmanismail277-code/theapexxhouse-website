@@ -313,6 +313,34 @@
   <link rel="stylesheet" href="assets/css/service-interactions.css">
   <link rel="stylesheet" href="assets/css/brand-motion.css">
   <link rel="stylesheet" href="assets/css/nav.css">
+  <style>
+    :root[data-theme="dark"] .hero h1{color:#fff;opacity:1}
+    :root[data-theme="dark"] .hero h1 span{color:#9bc3ff}
+    :root[data-theme="dark"] .hero-copy>p{color:#c9d6f2}
+    :root[data-theme="dark"] .hero-tags{color:#c9d6f2}
+    .why .section-title,.cta-band .section-title,.purpose-card h3,.service-card h3{color:#fff}
+    .why .stat-card h3{color:#f2f6fc}
+    :root[data-theme="dark"] .services .section-title,:root[data-theme="dark"] .programs .section-title,:root[data-theme="dark"] .purpose .section-title,:root[data-theme="dark"] .faq .section-title,:root[data-theme="dark"] .process .section-title,:root[data-theme="dark"] .testimonials .section-title{color:#f2f6fc}
+    :root[data-theme="dark"] .services .eyebrow,:root[data-theme="dark"] .programs .eyebrow,:root[data-theme="dark"] .purpose .eyebrow,:root[data-theme="dark"] .faq .eyebrow,:root[data-theme="dark"] .process .eyebrow,:root[data-theme="dark"] .why .eyebrow,:root[data-theme="dark"] .testimonials .eyebrow{color:#9bc3ff}
+    :root[data-theme="dark"] .process .step h3{color:#f2f6fc}
+    :root[data-theme="dark"] .process .step-num{color:#9bc3ff}
+    :root[data-theme="dark"] .process .step p,:root[data-theme="dark"] .services .section-intro,:root[data-theme="dark"] .programs .section-intro,:root[data-theme="dark"] .purpose .section-intro,:root[data-theme="dark"] .faq .section-intro{color:#c9d6f2}
+    :root[data-theme="dark"] .stat-card h3{color:#f2f6fc}
+    .hero-copy.fade-up,.hero-copy.fade-up.visible{opacity:1}
+    .hero-copy>p{text-decoration:none}
+    .hero-actions .btn-outline,.hero-actions .btn-outline:hover,.hero-actions .btn-outline:focus-visible{background:#fff;color:#0b3fd9;border-color:#fff}
+    .hero-actions .btn-outline .btn-arrow{stroke:#0b3fd9;opacity:1}
+    :root:not([data-theme="dark"]) .theme-switch-track .switch-sun{opacity:1}
+    :root:not([data-theme="dark"]) .theme-switch-track .switch-moon{opacity:.55}
+    :root[data-theme="dark"] .theme-switch-track .switch-moon{opacity:1}
+    :root[data-theme="dark"] .theme-switch-track .switch-sun{opacity:.55}
+    @media(max-width:640px){
+      .hero{padding-bottom:120px}
+      .hero-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+      .hero-actions .btn{min-width:0;padding-inline:4px;gap:4px;white-space:nowrap}
+      .hero-actions .btn-arrow{width:14px;height:14px}
+    }
+  </style>
 </head>
 <body>
   <div class="intro-screen" id="intro-screen" role="status" aria-label="The Apex House">
@@ -606,7 +634,7 @@
     accessibilityTrigger.addEventListener('click',()=>{const open=accessibilityTrigger.getAttribute('aria-expanded')!=='true';accessibilityTrigger.setAttribute('aria-expanded',String(open));accessibilityTrigger.setAttribute('aria-label',open?'Close accessibility settings':'Open accessibility settings');accessibilityPanel.hidden=!open;if(open)textSizeToggle.focus()});
     document.addEventListener('click',event=>{if(!accessibilityPanel.hidden&&!event.target.closest('.accessibility')){accessibilityPanel.hidden=true;accessibilityTrigger.setAttribute('aria-expanded','false');accessibilityTrigger.setAttribute('aria-label','Open accessibility settings')}});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!accessibilityPanel.hidden){accessibilityPanel.hidden=true;accessibilityTrigger.setAttribute('aria-expanded','false');accessibilityTrigger.setAttribute('aria-label','Open accessibility settings');accessibilityTrigger.focus()}});
-    const syncThemeButton=()=>{const dark=themeRoot.dataset.theme==='dark';themeButton.setAttribute('aria-pressed',String(dark));themeButton.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');themeButton.title=dark?'Switch to light mode':'Switch to dark mode'};
+    const syncThemeButton=()=>{const dark=themeRoot.dataset.theme==='dark';themeButton.dataset.activeTheme=dark?'dark':'light';themeButton.setAttribute('aria-pressed',String(dark));themeButton.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');themeButton.title=dark?'Switch to light mode':'Switch to dark mode'};
     syncThemeButton();
     themeButton.addEventListener('click',()=>{const dark=themeRoot.dataset.theme!=='dark';themeRoot.dataset.theme=dark?'dark':'light';try{localStorage.setItem('apex-theme',dark?'dark':'light')}catch(e){}syncThemeButton()});
     const testimonialCarousel=document.querySelector('.testimonial-carousel');
