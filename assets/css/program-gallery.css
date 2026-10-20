@@ -1,0 +1,26 @@
+.program-photo-gallery {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 12px 30px;
+  background: linear-gradient(145deg, #071a35, #102c50);
+}
+
+.program-photo-gallery img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: calc((100% - 16px) / 3);
+  height: 100%;
+  min-width: 0;
+  border: 1px solid #ffffff24;
+  border-radius: 9px;
+  background: #101820;
+  box-shadow: 0 8px 18px #0005;
+  object-fit: contain;
+}
+
+.program-photo-gallery .program-label {
+  z-index: 2;
+}

@@ -9,7 +9,7 @@
   <meta property="og:type" content="article">
   <meta property="og:title" content="A great event begins long before the first guest arrives | The Apex House">
   <meta property="og:description" content="A practical guide to shaping a program that feels clear, welcoming and memorable.">
-  <link rel="icon" href="favicon.jpeg" type="image/jpeg">
+  <link rel="icon" type="image/svg+xml" href="assets/apex-house-icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -24,14 +24,15 @@
     @media(max-width:640px){html{scroll-padding-top:calc(70px + env(safe-area-inset-top,0px))}.nav{padding-top:env(safe-area-inset-top,0px)}.nav-inner{height:70px}.nav-cta{display:none}.menu-toggle{display:grid;width:44px;height:44px;place-items:center;border:1px solid #ffffff35;border-radius:50%;background:transparent;color:#fff}.menu-icon,.menu-icon span{display:block;width:18px;height:2px;background:currentColor}.menu-icon{position:relative}.menu-icon span{position:absolute;left:0}.menu-icon span:first-child{top:-6px}.menu-icon span:last-child{top:6px}.nav-links{position:absolute;top:calc(70px + env(safe-area-inset-top,0px));left:0;right:0;display:none;align-items:stretch;gap:0;padding:8px 24px 20px;background:#021a40}.nav-links.open{display:flex;flex-direction:column}.nav-links a{padding:12px 0}.nav-links .menu-booking{display:block}.insights{padding:70px 0 78px}.insight-header{padding-bottom:24px}.insight-header h1{font-size:clamp(42px,12vw,64px)}.insight-deck{font-size:15px}.insight-layout{padding-top:22px}.insight-contents{padding:17px}.insight-contents ol{grid-template-columns:1fr}.insight-lead{font-size:17px}.insight-chapter{grid-template-columns:30px minmax(0,1fr);gap:10px;padding:22px 0}.insight-chapter h3{font-size:21px}.insight-chapter p{font-size:12px}.insight-takeaway{padding:18px}.footer{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}.footer-main{grid-template-columns:1fr;gap:24px}.footer-bottom{flex-direction:column;align-items:flex-start;font-size:13px}.back-to-top{right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
   </style>
   <link rel="stylesheet" href="assets/css/motion.css">
+  <link rel="stylesheet" href="assets/css/brand-motion.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="nav"><div class="wrap nav-inner">
-    <a class="brand" href="index.html#home" aria-label="The Apex House home"><img src="assets/logo.jpeg" width="300" height="90" alt="The Apex House logo"><span class="brand-fallback" hidden>The Apex House</span></a>
+    <a class="brand" href="home.html" aria-label="The Apex House home"><img src="assets/apex-house-logo.svg" width="300" height="90" alt="The Apex House logo"><span class="brand-fallback" hidden>The Apex House</span></a>
     <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="main-nav"><span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
-    <nav class="nav-links" id="main-nav" aria-label="Main navigation"><a href="index.html#home">Home</a><a href="index.html#services">Services</a><a href="index.html#work">Work</a><a href="index.html#about">About</a><a href="insights.html" aria-current="page">Insights</a><a href="index.html#faq">FAQ</a><a href="index.html#contact">Contact</a><a class="menu-booking" href="index.html#book">Book a service</a></nav>
-    <a class="nav-cta" href="index.html#book">Book a service</a>
+    <nav class="nav-links" id="main-nav" aria-label="Main navigation"><a href="home.html">Home</a><a href="home.html#services">Services</a><a href="home.html#work">Work</a><a href="home.html#about">About</a><a href="insights.html" aria-current="page">Insights</a><a href="home.html#faq">FAQ</a><a href="home.html#contact">Contact</a><a class="menu-booking" href="book.html">Book a service</a></nav>
+    <a class="nav-cta" href="book.html">Book a service</a>
   </div></header>
   <script>
     (()=>{const button=document.querySelector('.menu-toggle'),menu=document.getElementById('main-nav');if(!button||!menu)return;const setOpen=open=>{menu.classList.toggle('open',open);button.setAttribute('aria-expanded',String(open));button.setAttribute('aria-label',open?'Close navigation menu':'Open navigation menu')};button.addEventListener('click',()=>setOpen(button.getAttribute('aria-expanded')!=='true'));menu.addEventListener('click',event=>{if(event.target.closest('a'))setOpen(false)});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.classList.contains('open')){setOpen(false);button.focus()}});window.addEventListener('resize',()=>{if(window.innerWidth>640)setOpen(false)})})();
@@ -50,16 +51,16 @@
             <section class="insight-chapter" id="insight-followup" data-flow-card><span class="insight-number" data-flow-count="05">05</span><div><h3 data-flow>Close the loop after the last moment.</h3><p data-flow data-flow-speed="fast">A thoughtful close gives guests a clear sense of what happens next. Thank the people who made the gathering possible, share any promised resources and make follow-up simple. For the organizing team, a short debrief helps capture what worked and what to carry forward.</p><p data-flow data-flow-speed="fast">That final care is part of the experience too&mdash;and it often sets the tone for the next time you bring people together.</p></div></section>
             <aside class="insight-takeaway"><span class="insight-category">A NOTE TO TAKE WITH YOU</span><p data-flow data-flow-speed="fast">When the purpose is clear, the program has room to breathe and guests know how to take part, the whole event feels more considered.</p></aside>
           </div>
-          <nav class="insight-contents" aria-labelledby="insight-contents-title"><h3 id="insight-contents-title">In this guide</h3><ol><li><a href="#insight-purpose"><span>01</span> Start with purpose</a></li><li><a href="#insight-flow"><span>02</span> Shape the program flow</a></li><li><a href="#insight-people"><span>03</span> Welcome people in</a></li><li><a href="#insight-prepare"><span>04</span> Prepare for change</a></li><li><a href="#insight-followup"><span>05</span> Follow through</a></li></ol><a class="insight-contact" href="index.html#contact">Planning an event? Let&rsquo;s talk <span aria-hidden="true">&#8599;</span></a></nav>
+          <nav class="insight-contents" aria-labelledby="insight-contents-title"><h3 id="insight-contents-title">In this guide</h3><ol><li><a href="#insight-purpose"><span>01</span> Start with purpose</a></li><li><a href="#insight-flow"><span>02</span> Shape the program flow</a></li><li><a href="#insight-people"><span>03</span> Welcome people in</a></li><li><a href="#insight-prepare"><span>04</span> Prepare for change</a></li><li><a href="#insight-followup"><span>05</span> Follow through</a></li></ol><a class="insight-contact" href="home.html#contact">Planning an event? Let&rsquo;s talk <span aria-hidden="true">&#8599;</span></a></nav>
         </div>
       </article>
     </section>
   </main>
   <footer class="footer"><div class="wrap">
     <div class="footer-main">
-      <div class="footer-brand"><a href="index.html#home" aria-label="The Apex House home"><img src="assets/logo.jpeg" width="300" height="90" alt="The Apex House logo"></a><p>Family-owned. People-first. Here to help you bring people together, beautifully.</p></div>
-      <div><h3>Explore</h3><ul><li><a href="index.html#home">Home</a></li><li><a href="index.html#services">Services</a></li><li><a href="index.html#about">About us</a></li><li><a href="insights.html" aria-current="page">Insights</a></li><li><a href="privacy-policy.html">Privacy policy</a></li><li><a href="index.html#terms">Terms &amp; Conditions</a></li></ul></div>
-      <div><h3>Say hello</h3><ul><li><a href="index.html#book">Book a service</a></li><li><a href="mailto:theapexhouse2026@gmail.com">theapexhouse2026@gmail.com</a></li><li><a href="tel:+2348038326349">+234 803 832 6349</a></li></ul></div>
+      <div class="footer-brand"><a href="home.html" aria-label="The Apex House home"><img src="assets/apex-house-logo.svg" width="300" height="90" alt="The Apex House logo"></a><p>Family-owned. People-first. Here to help you bring people together, beautifully.</p></div>
+      <div><h3>Explore</h3><ul><li><a href="home.html">Home</a></li><li><a href="home.html#services">Services</a></li><li><a href="home.html#about">About us</a></li><li><a href="insights.html" aria-current="page">Insights</a></li><li><a href="privacy-policy.html">Privacy policy</a></li><li><a href="home.html#terms">Terms &amp; Conditions</a></li></ul></div>
+      <div><h3>Say hello</h3><ul><li><a href="book.html">Book a service</a></li><li><a href="mailto:theapexhouse2026@gmail.com">theapexhouse2026@gmail.com</a></li><li><a href="tel:+2348038326349">+234 803 832 6349</a></li></ul></div>
       <div><h3>Made for meaningful moments.</h3><p>CAC Business Name No. 9332783</p></div>
     </div>
     <div class="footer-bottom"><span>&copy; 2026 The Apex House. All rights reserved.</span><span>Made for meaningful moments.</span></div>
@@ -67,5 +68,6 @@
   <a class="back-to-top" id="back-to-top" href="#main-content" aria-label="Back to top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg></a>
   <script src="assets/js/motion.js"></script>
   <script>const topButton=document.getElementById('back-to-top');const updateTopButton=()=>topButton.classList.toggle('is-visible',window.scrollY>420);window.addEventListener('scroll',updateTopButton,{passive:true});updateTopButton();</script>
+<script src="assets/js/page-transitions.js"></script>
 </body>
 </html>

@@ -62,7 +62,8 @@ export const SERVICES = {
 
 export function readServiceIdsFromUrl(search = globalThis.location?.search ?? "") {
   const validIds = new Set(Object.values(SERVICES).flatMap((group) => group.services.map((service) => service.id)));
-  const requested = new URLSearchParams(search).get("services") ?? "";
+  const params = new URLSearchParams(search);
+  const requested = [params.get("service"), params.get("services")].filter(Boolean).join(",");
   return [...new Set(requested.split(",").filter((serviceId) => validIds.has(serviceId)))];
 }
 

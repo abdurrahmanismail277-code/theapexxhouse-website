@@ -117,6 +117,26 @@
   transform: translateY(0);
 }
 
+/* Reusable scroll reveal. Without JS, these elements remain visible. */
+.js-ready .reveal {
+  opacity: 0;
+  transform: translateY(40px) scale(.95);
+  transition:
+    opacity 700ms cubic-bezier(.22, 1, .36, 1),
+    transform 700ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform, opacity;
+}
+
+.js-ready .reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  will-change: auto;
+}
+
+.js-ready .program-card.reveal.is-visible:hover {
+  transform: translateY(-6px) scale(1);
+}
+
 mark[data-flow-highlight] {
   position: relative;
   background: transparent;
@@ -179,5 +199,13 @@ mark[data-flow-highlight].flow-highlight-drawn::after {
     transform: none;
     transition: none;
     pointer-events: auto;
+  }
+
+  .js-ready .reveal,
+  .js-ready .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    will-change: auto;
   }
 }

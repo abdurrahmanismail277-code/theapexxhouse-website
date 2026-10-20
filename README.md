@@ -4,7 +4,10 @@ Website for The Apex House, an event hosting and moderation business. The site p
 
 ## Project contents
 
-- `index.html` — main responsive website, styles, and browser-side interactions.
+- `index.html` — responsive homepage, service summaries, and pricing cards.
+- `book.html` — standalone multi-step booking page with currency estimates and payment instructions.
+- `assets/js/booking.js` — browser-side booking flow loaded only by `book.html`.
+- `assets/js/pricing.js` — homepage service pricing cards and category tabs.
 - `privacy-policy.html` — privacy policy.
 - `services.js` — shared service and pricing data used by the site and booking function.
 - `assets/` — logo, photographs, client marks, program images, testimonials, and payment-provider branding.

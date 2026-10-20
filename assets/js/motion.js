@@ -302,5 +302,39 @@
     revealAll();
   });
 
+  const revealItems = [...document.querySelectorAll(".reveal")];
+  if (revealItems.length) {
+    if (!supportsObserver || typeof window.IntersectionObserver !== "function") {
+      revealItems.forEach(item => item.classList.add("is-visible"));
+    } else {
+      try {
+        const rowTops = revealItems.map(item => item.getBoundingClientRect().top);
+        const rowIndices = revealItems.map((item, index) =>
+          rowTops.slice(0, index).filter(top => Math.abs(top - rowTops[index]) < 2).length
+        );
+        const revealObserver = new IntersectionObserver(entries => entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const item = entry.target;
+          revealObserver.unobserve(item);
+          item.style.transitionDelay = `${rowIndices[revealItems.indexOf(item)] * 120}ms`;
+
+          const clearDelay = event => {
+            if (event.propertyName !== "opacity") return;
+            item.style.transitionDelay = "";
+            item.removeEventListener("transitionend", clearDelay);
+          };
+          item.addEventListener("transitionend", clearDelay);
+          item.classList.add("is-visible");
+        }), {
+          threshold: 0.15,
+          rootMargin: "0px 0px -50px 0px"
+        });
+        revealItems.forEach(item => revealObserver.observe(item));
+      } catch (error) {
+        revealItems.forEach(item => item.classList.add("is-visible"));
+      }
+    }
+  }
+
   root.classList.add("js-ready");
 })();

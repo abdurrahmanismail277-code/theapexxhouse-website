@@ -1,0 +1,45 @@
+/* Shared wordmark treatment. The supplied roof mark now renders as a crisp local vector. */
+.brand-logo,
+.brand img,
+.footer-brand img,
+.topbar-logo {
+  display: block;
+  width: 154px;
+  height: 46px;
+  object-fit: contain;
+  object-position: left center;
+  transform-origin: left center;
+  transition: transform 220ms ease, filter 220ms ease;
+}
+.brand img { animation: apex-logo-arrive 540ms cubic-bezier(.22, 1, .36, 1) both; }
+.brand:hover .brand-logo,
+.brand:hover img,
+.footer-brand a:hover img,
+.topbar a:hover .topbar-logo {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 4px 9px rgba(1, 100, 255, .24));
+}
+.intro-mark {
+  filter: drop-shadow(0 10px 24px rgba(1, 100, 255, .12));
+}
+@media (max-width: 480px) {
+  .brand-logo,
+  .brand img,
+  .footer-brand img,
+  .topbar-logo { width: 140px; height: 42px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo,
+  .brand img,
+  .footer-brand img,
+  .topbar-logo { transition: none; }
+  .brand:hover .brand-logo,
+  .brand:hover img,
+  .footer-brand a:hover img,
+  .topbar a:hover .topbar-logo { transform: none; filter: none; }
+  .brand img { animation: none; }
+}
+@keyframes apex-logo-arrive {
+  from { opacity: .65; }
+  to { opacity: 1; }
+}

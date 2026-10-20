@@ -55,7 +55,7 @@
       countLabel.classList.remove("is-counting");
       requestAnimationFrame(() => countLabel.classList.add("is-counting"));
       packageBar.querySelector(".service-package-summary span:last-child").textContent = selected.length === 1 ? "service selected" : "services selected";
-      continueLink.href = `index.html?services=${selected.join(",")}#book`;
+      continueLink.href = `book.html?services=${selected.join(",")}`;
     } else {
       packageBar.classList.remove("is-visible");
       hideBarTimer = window.setTimeout(() => {
