@@ -52,7 +52,7 @@ export async function onRequestPost({ request, env }) {
   const whatsapp = input.whatsapp.trim();
   const venue = typeof input.venue === "string" ? input.venue.trim() : "";
   const platform = typeof input.platform === "string" ? input.platform.trim() : "";
-  if (!emailPattern.test(email) || !/^\+?234\d{10}$/.test(whatsapp)) return json({ error: "Please check your email and WhatsApp number." }, 400);
+  if (!emailPattern.test(email) || !/^\+[1-9]\d{7,14}$/.test(whatsapp)) return json({ error: "Please check your email and WhatsApp number." }, 400);
   if (name.length > 120 || email.length > 254 || input.eventName.trim().length > 120 || input.eventType.trim().length > 100 || input.brief.trim().length > 1200 || venue.length > 200 || platform.length > 120) return json({ error: "Please shorten one of the event details and try again." }, 400);
   if (!validDate(input.eventDate) || input.eventDate < new Date().toISOString().slice(0, 10)) return json({ error: "Please select a valid current or future event date." }, 400);
   if (input.alternateDate && (!validDate(input.alternateDate) || input.alternateDate === input.eventDate)) return json({ error: "Please select a different valid second-choice date." }, 400);

@@ -1,0 +1,183 @@
+.hero-word {
+  display: inline-block;
+  opacity: 1;
+  transform: none;
+}
+
+.js-ready .hero-word {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 500ms cubic-bezier(.22, 1, .36, 1),
+    transform 500ms cubic-bezier(.22, 1, .36, 1);
+  will-change: opacity, transform;
+}
+
+.js-ready .hero-buttons-pending {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 500ms cubic-bezier(.22, 1, .36, 1),
+    transform 500ms cubic-bezier(.22, 1, .36, 1);
+  pointer-events: none;
+}
+
+.js-ready .hero-buttons-pending.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.hero-word.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  will-change: auto;
+}
+
+.hero-highlight {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.hero-highlight::after {
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  bottom: -0.08em;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: #8abaff;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 600ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.hero-highlight.is-drawn::after {
+  transform: scaleX(1);
+}
+
+.flow-word {
+  display: inline-block;
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.js-ready .flow-word {
+  opacity: 0;
+  transform: translateY(14px);
+  filter: blur(6px);
+  transition:
+    opacity 600ms cubic-bezier(.22, 1, .36, 1),
+    transform 600ms cubic-bezier(.22, 1, .36, 1),
+    filter 600ms cubic-bezier(.22, 1, .36, 1);
+  will-change: opacity, transform, filter;
+}
+
+.js-ready .flow-word.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+  will-change: auto;
+}
+
+.js-ready.flow-no-blur .flow-word,
+.js-ready.flow-no-blur .flow-word.is-visible {
+  filter: none;
+}
+
+.flow-eyebrow {
+  opacity: 1;
+  transform: none;
+}
+
+.js-ready .flow-eyebrow {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 500ms cubic-bezier(.22, 1, .36, 1),
+    transform 500ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.js-ready .flow-eyebrow.flow-eyebrow-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.js-ready [data-flow-card] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 600ms cubic-bezier(.22, 1, .36, 1),
+    transform 600ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.js-ready [data-flow-card].flow-card-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+mark[data-flow-highlight] {
+  position: relative;
+  background: transparent;
+  color: inherit;
+}
+
+mark[data-flow-highlight]::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.08em;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: #8abaff;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 500ms cubic-bezier(.22, 1, .36, 1);
+}
+
+mark[data-flow-highlight].flow-highlight-drawn::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-ready .hero-word,
+  .js-ready .hero-word.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    will-change: auto;
+  }
+
+  .hero-highlight::after {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  .js-ready .flow-word,
+  .js-ready .flow-word.is-visible,
+  .js-ready .flow-eyebrow,
+  .js-ready .flow-eyebrow.flow-eyebrow-visible,
+  .js-ready [data-flow-card],
+  .js-ready [data-flow-card].flow-card-visible {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+    will-change: auto;
+  }
+
+  mark[data-flow-highlight]::after {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  .js-ready .hero-buttons-pending,
+  .js-ready .hero-buttons-pending.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    pointer-events: auto;
+  }
+}

@@ -86,7 +86,7 @@ function validateBooking(value) {
   }
   if (!/^APEX-\d{6}-[A-Z0-9]{4}$/.test(value.reference)) return "Booking reference is invalid.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email) || value.email.length > 254) return "Email address is invalid.";
-  if (!/^\+?234\d{10}$/.test(value.whatsapp)) return "Phone number is invalid.";
+  if (!/^\+[1-9]\d{7,14}$/.test(value.whatsapp)) return "Phone number is invalid.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value.eventDate)) return "Event date is invalid.";
   if (!["virtual", "physical"].includes(value.mode)) return "Booking mode is invalid.";
   if (!Number.isSafeInteger(Number(value.quantity)) || Number(value.quantity) < 1 || Number(value.quantity) > 1000) return "Quantity is invalid.";
