@@ -11,11 +11,11 @@
   --charcoal:var(--brand-charcoal);
   --light-blue:var(--brand-pale-blue);
   --ink:var(--brand-charcoal);
-  --muted:#59677B;
+  --muted:#3E4B5D;
   --line:rgba(2,26,64,.14);
 }
 html{accent-color:var(--brand-blue)}
-body{color:var(--brand-charcoal);background:var(--brand-white)}
+body{color:var(--brand-charcoal);background:var(--brand-white);-webkit-font-smoothing:auto}
 h1,h2,h3,h4{color:var(--brand-navy)}
 ::selection{color:var(--brand-navy);background:var(--brand-pale-blue)}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline-color:var(--brand-blue)}

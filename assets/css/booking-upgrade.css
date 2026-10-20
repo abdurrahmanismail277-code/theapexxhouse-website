@@ -126,3 +126,26 @@
 .booking-need-help{grid-column:1;grid-row:7}
 #booking-service.booking-services-loading{color:transparent;background:linear-gradient(90deg,#e5eaf2 20%,#f6f8fb 38%,#e5eaf2 58%);background-size:250% 100%;animation:booking-shimmer 1.25s linear infinite}
 @media(max-width:760px){.booking-labels,.required-fields-note,.booking-step:not([hidden]),.booking-price-card,.booking-actions,.booking-status,.booking-need-help{grid-column:1}.booking-labels{grid-row:2}.required-fields-note{grid-row:3}.booking-step:not([hidden]){grid-row:4}.booking-price-card{grid-row:5}.booking-actions{grid-row:6}.booking-status{grid-row:7}.booking-need-help{grid-row:8}}
+
+/* Keep the booking flow comfortable on touch screens and small viewports. */
+@media(max-width:760px){
+ .booking-card{width:100%;gap:14px;padding:clamp(16px,5vw,24px);}
+ .booking-price-card{position:static;top:auto;z-index:auto;padding:12px;}
+ .booking-step h3{font-size:clamp(21px,6vw,24px);}
+ .booking-fields{gap:16px;}
+ .booking-field{gap:7px;font-size:14px;}
+ .booking-card input:not([type=radio]):not([type=checkbox]):not([type=hidden]),.booking-card select,.booking-card textarea{min-height:54px;font-size:16px;}
+ .booking-card textarea{min-height:120px;}
+ .booking-mode-cards{gap:10px;}
+ .booking-mode-cards label{min-height:54px;justify-content:flex-start;padding-inline:14px;}
+ .booking-actions{display:flex;gap:10px;margin-top:4px;}
+ .booking-actions>*{flex:1 1 0;min-width:0;min-height:52px;padding-inline:12px;}
+ .booking-status{overflow-wrap:anywhere;}
+}
+@media(max-width:380px){
+ .booking-labels{gap:3px;font-size:9px;}
+ .phone-field-row{grid-template-columns:minmax(112px,.9fr) minmax(0,1.1fr);gap:7px;}
+ .phone-dial-wrap input{padding-inline:8px!important;}
+ .booking-actions{flex-wrap:wrap;}
+ .booking-actions>*{flex:1 1 100%;}
+}
