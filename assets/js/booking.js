@@ -1,6 +1,5 @@
 
     import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js";
-    import { createCurrencyEstimator } from "./currency-estimates.js";
     import { initBookingInputs } from "./booking-inputs.js";
     // Public endpoint URL only; set this after deploying the Cloudflare Worker. Never put secrets here.
     const BOOKING_ENDPOINT = "/api/book";
@@ -56,20 +55,12 @@
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
     let bookingInputs;
-    let currencyEstimator;
-    function priceLabel(amount) {
-      const converted = currencyEstimator.convert(amount);
-      return converted.currency === "NGN" && converted.requestedCurrency !== "NGN"
-        ? `${converted.ngn} NGN (offline ${converted.requestedCurrency} estimate unavailable)`
-        : converted.currency === "NGN" ? `${converted.ngn} NGN` : `\u2248 ${converted.approximate} \u00b7 ${converted.ngn} NGN`;
-    }
+    function priceLabel(amount) { return `${naira(amount)} NGN`; }
     serviceOptions.innerHTML = `<option value="">Choose a service</option>${Object.entries(SERVICES).map(([, group]) => `<optgroup label="${group.label}">${group.services.map(service => `<option value="${service.id}">${service.name}</option>`).join("")}</optgroup>`).join("")}`;
     serviceOptions.classList.remove("booking-services-loading");
     restoreBookingDraft(bookingDraft);
     bookingInputs = initBookingInputs({ draft: bookingDraft });
-    currencyEstimator = createCurrencyEstimator(document.getElementById("selected-currency"));
-    document.getElementById("phone-dial-country-iso").value = bookingInputs.dialCountry?.isoCode || "NG";
-    document.getElementById("currency-search").required = true;
+    document.getElementById("phone-dial-country-iso").value = "NG";
     const allServiceIds = new Set(Object.values(SERVICES).flatMap(group => group.services.map(service => service.id)));
     const validUrlSelections = readServiceIdsFromUrl(window.location.search);
     let storedSelections = [];
@@ -161,32 +152,19 @@
       const quantity = Number(document.getElementById("booking-quantity").value);
       const extraHours = Number(document.getElementById("booking-extra-hours").value || 0);
       const quote = calculatePrice(serviceOptions.value, selectedMode(), offerId, quantity, extraHours);
-      const currency = currencyEstimator.currency;
-      const estimate = quote ? currencyEstimator.convert(quote.amount, currency) : null;
-      const estimateUnavailable = Boolean(estimate && currency !== "NGN" && estimate.currency === "NGN");
-      const totalText = !estimate ? "Select a service and package" : estimateUnavailable ? `${estimate.ngn} NGN` : currency === "NGN" ? `${estimate.ngn} NGN` : `~ ${estimate.approximate}`;
+      const totalText = quote ? `${naira(quote.amount)} NGN` : "Select a service and package";
       animatePrice(document.getElementById("booking-price-live"), totalText);
       animatePrice(document.getElementById("booking-price"), totalText);
-      const notes = [];
-      if (selectedMode() === "physical") notes.push("Transport fare not included.");
+      const notes = ["Prices and payments are in Nigerian naira (NGN)."];
+      if (selectedMode() === "physical") notes.push("Transport fare is not included.");
       if (service?.extraHoursAllowed) notes.push(SETTINGS.launchExtraHourRateNGN == null ? "Additional hours are confirmed after review." : `Additional hours: ${priceLabel(SETTINGS.launchExtraHourRateNGN)} per hour, confirmed after review.`);
-      if (estimate) {
-        if (estimateUnavailable) notes.push(`No offline ${estimate.requestedCurrency} estimate is available; showing NGN only.`);
-        else if (currency !== "NGN") notes.push(`Approximately ${estimate.ngn} NGN.`);
-        notes.push("Approximate conversion for your reference. Final billing is in Nigerian naira (NGN) at the rate confirmed by The Apex House.");
-      }
-      const note = notes.join(" ") || "Choose a service and package to see an estimate.";
+      const note = quote ? notes.join(" ") : "Choose a service and package to see the NGN price.";
       document.getElementById("estimate-note").textContent = note;
       document.getElementById("estimate-note-live").textContent = note;
-      document.getElementById("exchange-rate").value = estimate?.rate || "";
-      document.getElementById("exchange-rate-timestamp").value = estimate?.timestamp || "";
-      document.getElementById("approximate-amount").value = estimate && !estimateUnavailable ? estimate.approximateAmount : "";
-      currencyEstimator.updateInfo();
     }
     serviceOptions.addEventListener("change", updateOffers);
     offerOptions.addEventListener("change", updateEstimate);
-    document.getElementById("selected-currency").addEventListener("change", updateEstimate);
-    currencyEstimator.ready.then(() => { currencyEstimator.updateInfo(); document.getElementById("booking-price-live").classList.remove("booking-rate-loading"); updateEstimate(); });
+
     document.querySelectorAll('input[name="mode"]').forEach(input => input.addEventListener("change", updateOffers));
     document.getElementById("booking-quantity").addEventListener("input", updateEstimate);
     document.getElementById("booking-extra-hours").addEventListener("input", updateEstimate);
@@ -224,7 +202,6 @@
       let message = "";
       field.setCustomValidity("");
       if (field.id === "country-search" && !bookingInputs.country) message = "Please choose your country from the list.";
-      else if (field.id === "currency-search" && !bookingInputs.currency) message = "Please choose a currency from the list.";
       else if (field.id === "phone-dial-search" && !bookingInputs.dialCountry) message = "Please choose a country calling code from the list.";
       else if (field.id === "timezone-search" && selectedMode() === "virtual" && !bookingInputs.timeZone) message = "Please choose a time zone from the list.";
       else if (field.id === "whatsapp-national") {
@@ -250,7 +227,6 @@
     }
     function validateStep(step) {
       const fields = [...step.querySelectorAll("input,select,textarea")].filter(field => !field.disabled && field.type !== "radio" && field.type !== "hidden" && !field.closest(".booking-honeypot") && !field.closest("[hidden]"));
-      if (currentStep === 0) fields.push(document.getElementById("currency-search"));
       const invalid = fields.filter(field => !validateField(field));
       if (invalid.length) {
         invalid[0].focus({ preventScroll: true });
@@ -282,7 +258,6 @@
         const service = selectedService();
         const offer = service?.offers.find(item => item.id === data.get("offerId") && item.mode === data.get("mode"));
         const quote = calculatePrice(data.get("serviceId"), data.get("mode"), data.get("offerId"), Number(data.get("quantity")), Number(data.get("extraHours") || 0));
-        const displayEstimate = quote ? currencyEstimator.convert(quote.amount) : null;
         const country = bookingInputs.country;
         const reviewParts = [
           `${service?.name} / ${offer?.label} / ${data.get("quantity")} ${offer?.unit}(s)`,
@@ -290,7 +265,7 @@
           `${data.get("name")} / ${data.get("email")}`,
           `Country: ${country?.name || "Not selected"}`,
           data.get("mode") === "virtual" && bookingInputs.timeZone ? `Time zone: ${bookingInputs.timeZone}` : "",
-          displayEstimate?.hasRate ? `${displayEstimate.currency} ${displayEstimate.approximate} / ${displayEstimate.ngn} NGN` : displayEstimate ? `No ${displayEstimate.requestedCurrency} estimate is available offline; NGN ${displayEstimate.ngn}` : "Quote unavailable",
+          quote ? `${naira(quote.amount)} NGN` : "Quote unavailable",
         ].filter(Boolean);
         document.getElementById("booking-review").textContent = reviewParts.join(" / ");
       }
@@ -313,22 +288,10 @@
       return `APEX-${date}-${suffix}`;
     }
     function displayBookingPayment(booking) {
-      const checkout = document.getElementById("payment-checkout");
-      checkout.hidden = !booking.paymentLink;
-      checkout.href = booking.paymentLink || "#";
-      const usesOnlineCheckout = Boolean(booking.paymentLink);
-      const isNigerianClient = booking.countryISO === "NG";
-      document.querySelector(".bank-transfer-card").hidden = !isNigerianClient;
-      document.querySelector(".international-payment-placeholder").hidden = usesOnlineCheckout || isNigerianClient;
-      document.getElementById("payment-guidance").textContent = booking.paymentLink
-        ? "Your request is confirmed. Continue to Selar using the checkout link below."
-        : isNigerianClient
-          ? booking.amountKnown
-            ? "Your request is confirmed. Use the direct bank transfer details below to complete payment."
-            : "Our team will confirm the final amount before payment. Please wait for our message before transferring."
-          : booking.amountKnown
-            ? "Your request is confirmed. The Selar checkout link will be added here once it is created."
-            : "Our team will confirm your final amount. The Selar checkout link will be added here once it is created.";
+      document.querySelector(".bank-transfer-card").hidden = false;
+      document.getElementById("payment-guidance").textContent = booking.amountKnown
+        ? "Your request is confirmed. Transfer the exact amount in Nigerian naira using the bank details below."
+        : "Our team will confirm the final amount in Nigerian naira before you transfer.";
       currentBooking = booking;
       booking.paymentNarration = booking.paymentNarration || getPaymentNarrationCode();
       paymentNarrationCode = booking.paymentNarration;
@@ -350,17 +313,7 @@
       document.getElementById("payment-event-date").textContent = `${dateText}${booking.time ? ` at ${booking.time}` : ""}`;
       document.getElementById("payment-country").textContent = `${booking.country || "Not provided"}${booking.countryISO ? ` (${booking.countryISO})` : ""}`;
       document.getElementById("payment-timezone").textContent = booking.eventTimezone || "Not applicable";
-      const paymentConversion = amountKnown ? currencyEstimator.convert(amountNumber, booking.selectedCurrency || "NGN") : null;
-      document.getElementById("payment-currency-summary").textContent = paymentConversion?.hasRate ? `${paymentConversion.currency}: ${paymentConversion.approximate} / ${paymentConversion.ngn} NGN (approximate)` : paymentConversion ? `No ${paymentConversion.requestedCurrency} estimate is available offline; authoritative total: ${paymentConversion.ngn} NGN` : "Final amount to be confirmed";
       document.getElementById("payment-total").textContent = amountText;
-      const localEstimate = document.getElementById("payment-total-local");
-      const selectedCurrency = booking.selectedCurrency || currencyEstimator.currency;
-      localEstimate.hidden = !amountKnown || selectedCurrency === "NGN";
-      localEstimate.textContent = amountKnown && selectedCurrency !== "NGN"
-        ? paymentConversion?.hasRate
-          ? `Approximate ${paymentConversion.approximate} / ${paymentConversion.ngn} NGN. Indicative only; payment is due in NGN and your bank may use a different rate.`
-          : `No ${selectedCurrency} estimate is available offline. Payment is due in NGN: ${paymentConversion.ngn}.`
-        : "";
       document.getElementById("payment-bank").textContent = BANK_NAME;
       document.getElementById("payment-account-name").textContent = ACCOUNT_NAME;
       document.getElementById("payment-account-number").textContent = ACCOUNT_NUMBER;
@@ -412,14 +365,12 @@
       }
       const selectedCountry = bookingInputs.country;
       const selectedPhone = bookingInputs.phone;
-      const selectedCurrency = bookingInputs.currency;
-      if (!selectedCountry || !selectedPhone.valid || !selectedCurrency) {
-        status.textContent = "Please check your country, phone number, and currency selections.";
+      if (!selectedCountry || selectedCountry.isoCode !== "NG" || !selectedPhone.valid) {
+        status.textContent = "Bookings are currently available in Nigeria only. Please check the phone number.";
         return;
       }
       if (String(data.website || "").trim()) return;
       const amountKnown = data.mode !== "physical" && service.id !== "launch-hosting";
-      const conversion = currencyEstimator.convert(quote.amount, selectedCurrency.code);
       const platform = data.mode === "virtual" ? (data.platformPreference === "Other" ? String(data.platformOther || "").trim() : String(data.platformPreference || "")) : "";
       const brief = String(data.brief || "").trim() || "No additional details provided.";
       const booking = {
@@ -430,9 +381,6 @@
         service: service.name, mode: data.mode, package: offer.label,
         quantity: Number(data.quantity), unit: offer.unit,
         amount: quote.amount, amountNGN: quote.amount, amountKnown, paymentNarration: getPaymentNarrationCode(),
-        selectedCurrency: selectedCurrency.code,
-        approximateAmount: conversion.currency === "NGN" && selectedCurrency.code !== "NGN" ? null : conversion.approximateAmount,
-        exchangeRate: conversion.rate, exchangeRateTimestamp: conversion.timestamp,
         date: data.eventDate, time: String(data.eventTime || ""),
         eventTimezone: data.mode === "virtual" ? bookingInputs.timeZone : "",
         platform, additionalNotes: String(data.additionalNotes || "").trim(),
@@ -440,16 +388,14 @@
       Object.assign(data, {
         country: booking.country, countryName: booking.country, countryISO: booking.countryISO,
         phoneDialCode: booking.phoneDialCode, whatsapp: booking.whatsapp,
-        selectedCurrency: booking.selectedCurrency, approximateAmount: booking.approximateAmount,
-        exchangeRate: booking.exchangeRate, exchangeRateTimestamp: booking.exchangeRateTimestamp,
         amount: booking.amountNGN, amountNGN: booking.amountNGN, amountKnown,
         eventTime: booking.time, eventTimezone: booking.eventTimezone, platform: booking.platform, brief,
       });
       const submitButton = document.getElementById("booking-submit");
       submissionInProgress = true;
       submitButton.disabled = true;
-      submitButton.textContent = "Sending request…";
-      status.textContent = "Sending your booking request…";
+      submitButton.textContent = "Sending requestï¿½";
+      status.textContent = "Sending your booking requestï¿½";
       try {
         const response = await fetch(BOOKING_ENDPOINT, {
           method: "POST",
@@ -468,10 +414,6 @@
             country: booking.country,
             countryISO: booking.countryISO,
             whatsapp: booking.whatsapp,
-            selectedCurrency: booking.selectedCurrency,
-            approximateAmount: booking.approximateAmount,
-            exchangeRate: booking.exchangeRate,
-            exchangeRateTimestamp: booking.exchangeRateTimestamp,
             eventTime: booking.time,
             eventTimezone: booking.eventTimezone,
             additionalNotes: booking.additionalNotes,
@@ -486,10 +428,21 @@
             : `The booking API returned an unexpected response (HTTP ${response.status}). Check that /api/book is deployed as a Cloudflare Pages Function.`;
           throw new Error(unavailableMessage);
         }
-        if (!response.ok) throw new Error(result.error || `Booking request failed (HTTP ${response.status}).`);
+        if (!response.ok) {
+          if (response.status === 502 && result.whatsappUrl) {
+            status.textContent = `${result.error || "We could not email your request."} `;
+            const fallback = document.createElement("a");
+            fallback.href = result.whatsappUrl;
+            fallback.target = "_blank";
+            fallback.rel = "noopener noreferrer";
+            fallback.textContent = "Send your booking request on WhatsApp";
+            status.append(fallback);
+            return;
+          }
+          throw new Error(result.error || `Booking request failed (HTTP ${response.status}).`);
+        }
         if (result.ok !== true) throw new Error(result.error || "The /api/book endpoint did not return a booking result. JSON Server is not the booking backend; use Cloudflare Pages or wrangler pages dev.");
         booking.reference = typeof result.reference === "string" ? result.reference : booking.reference;
-        booking.paymentLink = typeof result.paymentLink === "string" ? result.paymentLink : "";
         try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this booking for refresh recovery.", error); }
         try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
         status.textContent = "Your booking request was received.";

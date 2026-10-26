@@ -1,8 +1,6 @@
-import { COUNTRIES, getCountry, suggestCountry } from "./countries.js";
-import { CURRENCIES } from "./currencies.js";
+import { COUNTRIES } from "./countries.js";
 
 const GLOBE_SRC = "assets/flags/globe.svg";
-const POPULAR_CURRENCIES = ["NGN", "USD", "GBP", "EUR", "CAD", "AED", "GHS", "ZAR", "KES"];
 const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
 
 function flagImage(flag) {
@@ -21,7 +19,7 @@ function flagImage(flag) {
   return image;
 }
 
-function createCombobox({ input, listbox, items, label, searchText, value, onSelect, renderOption, limit = 280, currency = false }) {
+function createCombobox({ input, listbox, items, label, searchText, value, onSelect, renderOption, limit = 280 }) {
   let selected = null;
   let activeIndex = -1;
   let matches = [];
@@ -47,8 +45,8 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   const searchPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
   searchPath.setAttribute("d", "M21 21l-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"); searchPath.setAttribute("fill", "none"); searchPath.setAttribute("stroke", "currentColor"); searchPath.setAttribute("stroke-width", "1.8"); searchPath.setAttribute("stroke-linecap", "round"); searchIcon.append(searchPath);
   const search = document.createElement("input");
-  search.type = "search"; search.className = "combobox-panel-search"; search.placeholder = currency ? "Search currency or country" : input.placeholder || "Search";
-  search.setAttribute("aria-label", currency ? "Search currency or country" : input.getAttribute("aria-label") || "Search options");
+  search.type = "search"; search.className = "combobox-panel-search"; search.placeholder = input.placeholder || "Search";
+  search.setAttribute("aria-label", input.getAttribute("aria-label") || "Search options");
   search.setAttribute("aria-autocomplete", "list"); search.setAttribute("aria-controls", listbox.id); search.setAttribute("role", "combobox"); search.setAttribute("aria-expanded", "true");
   search.autocomplete = "off"; searchRow.append(searchIcon, search);
   const clear = document.createElement("button");
@@ -58,8 +56,8 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   panel.append(panelTop, searchRow, listbox); wrapper.append(backdrop, panel);
   input.readOnly = true;
   input.setAttribute("role", "button"); input.setAttribute("aria-haspopup", "listbox");
-  input.setAttribute("aria-label", input.getAttribute("aria-label") || `Choose ${currency ? "currency" : "option"}`);
-  input.placeholder ||= currency ? "Select currency" : "Select an option";
+  input.setAttribute("aria-label", input.getAttribute("aria-label") || "Choose an option");
+  input.placeholder ||= "Select an option";
 
   const close = () => {
     const wasOpen = input.getAttribute("aria-expanded") === "true";
@@ -116,16 +114,10 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   const render = query => {
     const needle = normalize(query);
     const filtered = items.filter(item => !needle || normalize(searchText(item)).includes(needle));
-    matches = currency && !needle ? [
-      ...POPULAR_CURRENCIES.map(code => filtered.find(item => item.code === code)).filter(Boolean),
-      ...filtered.filter(item => !POPULAR_CURRENCIES.includes(item.code)).sort((a, b) => a.name.localeCompare(b.name) || a.code.localeCompare(b.code)),
-    ] : filtered;
+    matches = filtered;
     activeIndex = matches.length ? 0 : -1;
     listbox.replaceChildren();
-    let allHeadingAdded = false;
     matches.forEach((item, index) => {
-      if (currency && !needle && index === 0) listbox.append(groupHeading("Popular"));
-      if (currency && !needle && !allHeadingAdded && index >= POPULAR_CURRENCIES.filter(code => matches.some(entry => entry.code === code)).length) { listbox.append(groupHeading("All currencies")); allHeadingAdded = true; }
       const option = document.createElement("li");
       option.id = `${listbox.id}-option-${index}`; option.className = "combobox-option"; option.setAttribute("role", "option"); option.setAttribute("aria-selected", "false");
       if (selected && value(selected) === value(item)) option.dataset.current = "true";
@@ -135,7 +127,7 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
     });
     if (!matches.length) {
       const empty = document.createElement("li"); empty.className = "combobox-empty"; empty.setAttribute("role", "presentation");
-      empty.textContent = currency ? "No currencies found. Try a different search." : "No matches found."; listbox.append(empty);
+      empty.textContent = "No matches found."; listbox.append(empty);
     }
     requestAnimationFrame(updateOverflow);
     updateActive();
@@ -164,31 +156,83 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   return { get selected() { return selected; }, choose, setValue(targetValue) { const item = items.find(candidate => value(candidate) === targetValue); if (item) choose(item); }, get input() { return input; } };
 }
 
-function currencyOption(item) {
-  const code = document.createElement("span"); code.className = "combobox-currency-code"; code.textContent = item.code;
-  const name = document.createElement("span"); name.className = "combobox-currency-name"; name.textContent = item.name;
-  const symbol = document.createElement("span"); symbol.className = "combobox-currency-symbol"; symbol.textContent = item.symbol || "";
-  const check = document.createElement("span"); check.className = "combobox-check"; check.setAttribute("aria-hidden", "true"); check.textContent = "✓";
-  return [flagImage(item.flag), code, name, symbol, check];
-}
-
 const PHONE_LENGTHS = { NG:[10,10],GB:[9,10],US:[10,10],CA:[10,10],AU:[9,9],NZ:[8,10],IN:[10,10],GH:[9,9],KE:[9,9],ZA:[9,9],AE:[9,9],SA:[9,9],EG:[10,10],DE:[7,12],FR:[9,9],ES:[9,9],IT:[6,11],IE:[7,10] };
 
 export function initBookingInputs({ draft = {}, onCountryChange = () => {} } = {}) {
-  const countryHidden = document.getElementById("country-iso"), phoneDialHidden = document.getElementById("phone-dial-code"), phoneDialCountryHidden = document.getElementById("phone-dial-country-iso"), currencyHidden = document.getElementById("selected-currency"), timeZoneHidden = document.getElementById("event-timezone");
-  const countryInput = document.getElementById("country-search"), dialInput = document.getElementById("phone-dial-search"), currencyInput = document.getElementById("currency-search"), timeZoneInput = document.getElementById("timezone-search"), phoneInput = document.getElementById("whatsapp-national"), e164Hidden = document.getElementById("whatsapp-e164");
-  let country, dialCountry;
-  const countryCombo = createCombobox({ input:countryInput,listbox:document.getElementById("country-listbox"),items:COUNTRIES,label:item=>item.name,searchText:item=>`${item.name} ${item.isoCode} ${item.dialCode} ${item.isoCode === "GB" ? "UK United Kingdom Great Britain" : ""}`,value:item=>item.isoCode,renderOption:item=>[flagImage(item.isoCode),Object.assign(document.createElement("span"),{className:"combobox-option-title",textContent:item.name})],onSelect:item=>{country=item;countryHidden.value=item.isoCode;countryHidden.dispatchEvent(new Event("change",{bubbles:true}));dialCombo.setValue(item.isoCode);currencyCombo.setValue(item.defaultCurrency);onCountryChange(item);updatePhone();}});
-  const dialCombo = createCombobox({ input:dialInput,listbox:document.getElementById("phone-dial-listbox"),items:COUNTRIES,label:item=>`${item.dialCode} · ${item.name}`,searchText:item=>`${item.dialCode} ${item.name} ${item.isoCode}`,value:item=>item.isoCode,renderOption:item=>[flagImage(item.isoCode),Object.assign(document.createElement("span"),{className:"combobox-option-title",textContent:`${item.dialCode} · ${item.name}`})],onSelect:item=>{dialCountry=item;phoneDialHidden.value=item.dialCode;phoneDialCountryHidden.value=item.isoCode;updatePhone();}});
-  const currencyCombo = createCombobox({ input:currencyInput,listbox:document.getElementById("currency-listbox"),items:CURRENCIES,label:item=>`${item.code} · ${item.name}`,searchText:item=>`${item.code} ${item.name} ${item.countryName || ""} ${item.flag === "gb" ? "UK Great Britain" : ""}`,value:item=>item.code,renderOption:currencyOption,currency:true,onSelect:item=>{currencyHidden.value=item.code;currencyHidden.dispatchEvent(new Event("change",{bubbles:true}));}});
-  let browserZone="UTC";try{browserZone=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";}catch{}
-  const timeZones = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ["Africa/Lagos","Europe/London","Europe/Paris","America/New_York","America/Chicago","America/Los_Angeles","Asia/Dubai","Asia/Kolkata","Asia/Singapore","Australia/Sydney","Pacific/Auckland"];
-  const zoneItems = [...new Set([...(timeZones||[]),browserZone,"UTC"])].map(zone=>({zone}));
-  const zoneCombo = createCombobox({ input:timeZoneInput,listbox:document.getElementById("timezone-listbox"),items:zoneItems,label:item=>item.zone,searchText:item=>item.zone,value:item=>item.zone,renderOption:item=>[flagImage(""),Object.assign(document.createElement("span"),{className:"combobox-option-title",textContent:item.zone})],onSelect:item=>{timeZoneHidden.value=item.zone;timeZoneHidden.dispatchEvent(new Event("change",{bubbles:true}));}});
-  const suggestion = getCountry(draft.countryISO)||suggestCountry(); countryCombo.setValue(draft.countryISO&&getCountry(draft.countryISO)?draft.countryISO:suggestion.isoCode);
-  if(draft.phoneDialCountryISO)dialCombo.setValue(draft.phoneDialCountryISO); if(draft.selectedCurrency)currencyCombo.setValue(draft.selectedCurrency);
-  zoneCombo.setValue(draft.eventTimezone||browserZone); if(draft.whatsappNational)phoneInput.value=draft.whatsappNational;
-  function buildPhone(){const dialDigits=(dialCountry?.dialCode||"+234").replace(/\D/g,"");let digits=phoneInput.value.replace(/\D/g,"");if(digits.startsWith(dialDigits))digits=digits.slice(dialDigits.length);digits=digits.replace(/^0+/,"");const e164=digits?`+${dialDigits}${digits}`:"";e164Hidden.value=e164;const range=PHONE_LENGTHS[dialCountry?.isoCode||country?.isoCode]||[7,12];return{e164,valid:digits.length>=range[0]&&digits.length<=range[1]&&dialDigits.length+digits.length<=15};}
-  function updatePhone(){buildPhone();} phoneInput.addEventListener("input",updatePhone);phoneInput.addEventListener("change",updatePhone);updatePhone();
-  return {get country(){return countryCombo.selected;},get dialCountry(){return dialCombo.selected;},get currency(){return currencyCombo.selected;},get timeZone(){return zoneCombo.selected?.zone||"";},get phone(){return buildPhone();},setCountry(iso){countryCombo.setValue(iso);},setCurrency(code){currencyCombo.setValue(code);},setTimeZone(zone){zoneCombo.setValue(zone);},reset(){countryCombo.setValue(suggestCountry().isoCode);phoneInput.value="";zoneCombo.setValue(browserZone);updatePhone();},getCountry};
+  const nigeria = COUNTRIES.find(item => item.isoCode === "NG");
+  if (!nigeria) throw new Error("Nigeria booking data is unavailable.");
+  const countryHidden = document.getElementById("country-iso");
+  const phoneDialHidden = document.getElementById("phone-dial-code");
+  const phoneDialCountryHidden = document.getElementById("phone-dial-country-iso");
+  const timeZoneHidden = document.getElementById("event-timezone");
+  const countryInput = document.getElementById("country-search");
+  const dialInput = document.getElementById("phone-dial-search");
+  const timeZoneInput = document.getElementById("timezone-search");
+  const phoneInput = document.getElementById("whatsapp-national");
+  const e164Hidden = document.getElementById("whatsapp-e164");
+
+  countryInput.value = nigeria.name;
+  countryInput.readOnly = true;
+  countryInput.setAttribute("aria-readonly", "true");
+  countryHidden.value = nigeria.isoCode;
+  dialInput.value = nigeria.dialCode;
+  dialInput.readOnly = true;
+  dialInput.setAttribute("aria-readonly", "true");
+  phoneDialHidden.value = nigeria.dialCode;
+  phoneDialCountryHidden.value = nigeria.isoCode;
+  const dialCountry = nigeria;
+
+  let browserZone = "UTC";
+  try { browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch {}
+  const timeZones = typeof Intl.supportedValuesOf === "function"
+    ? Intl.supportedValuesOf("timeZone")
+    : ["Africa/Lagos", "Europe/London", "Europe/Paris", "America/New_York", "America/Chicago", "America/Los_Angeles", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Australia/Sydney", "Pacific/Auckland"];
+  const zoneItems = [...new Set([...(timeZones || []), browserZone, "UTC"])].map(zone => ({ zone }));
+  const zoneCombo = createCombobox({
+    input: timeZoneInput,
+    listbox: document.getElementById("timezone-listbox"),
+    items: zoneItems,
+    label: item => item.zone,
+    searchText: item => item.zone,
+    value: item => item.zone,
+    renderOption: item => [flagImage(""), Object.assign(document.createElement("span"), { className: "combobox-option-title", textContent: item.zone })],
+    onSelect: item => { timeZoneHidden.value = item.zone; timeZoneHidden.dispatchEvent(new Event("change", { bubbles: true })); },
+  });
+  zoneCombo.setValue(draft.eventTimezone || browserZone);
+  if (draft.whatsappNational) phoneInput.value = draft.whatsappNational;
+  onCountryChange(nigeria);
+
+  function buildPhone() {
+    const dialDigits = nigeria.dialCode.replace(/\D/g, "");
+    let digits = phoneInput.value.replace(/\D/g, "");
+    if (digits.startsWith(dialDigits)) digits = digits.slice(dialDigits.length);
+    digits = digits.replace(/^0+/, "");
+    const e164 = digits ? `+${dialDigits}${digits}` : "";
+    const [minimum, maximum] = PHONE_LENGTHS.NG;
+    e164Hidden.value = e164;
+    return { e164, valid: digits.length >= minimum && digits.length <= maximum && dialDigits.length + digits.length <= 15 };
+  }
+  function updatePhone() { buildPhone(); }
+  phoneInput.addEventListener("input", updatePhone);
+  phoneInput.addEventListener("change", updatePhone);
+  updatePhone();
+
+  return {
+    get country() { return nigeria; },
+    get dialCountry() { return nigeria; },
+    get timeZone() { return zoneCombo.selected?.zone || ""; },
+    get phone() { return buildPhone(); },
+    setCountry() { countryInput.value = nigeria.name; countryHidden.value = nigeria.isoCode; },
+    setTimeZone(zone) { zoneCombo.setValue(zone); },
+    reset() {
+      countryInput.value = nigeria.name;
+      countryHidden.value = nigeria.isoCode;
+      dialInput.value = nigeria.dialCode;
+      phoneDialHidden.value = nigeria.dialCode;
+      phoneDialCountryHidden.value = nigeria.isoCode;
+      phoneInput.value = "";
+      zoneCombo.setValue(browserZone);
+      updatePhone();
+    },
+  };
 }

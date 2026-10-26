@@ -105,8 +105,7 @@ function bookingToSheetRow(booking) {
   const extraDetails = [
     `Country: ${booking.country || "Not provided"}${booking.countryISO ? ` (${booking.countryISO})` : ""}`,
     `Event time: ${booking.eventTime || "Not provided"}${booking.eventTimezone ? ` (${booking.eventTimezone})` : ""}`,
-    `Currency estimate: ${booking.selectedCurrency || "NGN"} ${booking.approximateAmount ?? "Not available"}; authoritative NGN amount: ${booking.amount}`,
-    `Exchange rate (NGN to ${booking.selectedCurrency || "NGN"}): ${booking.exchangeRate ?? "Not available"}; updated: ${booking.exchangeRateTimestamp || "Not provided"}`,
+    `Amount to pay: NGN ${Number(booking.amount).toLocaleString("en-NG")}`,
     `Additional notes: ${booking.additionalNotes || "Not provided"}`,
   ].join("\n");
   const bookingBrief = [booking.brief.trim(), extraDetails].filter(Boolean).join("\n\n");
@@ -175,7 +174,7 @@ async function sendEmail(env, message) {
 }
 
 function bookingEmailText(booking, introduction) {
-  return `${introduction}\n\nReference: ${booking.reference}\nName: ${booking.name}\nEmail: ${booking.email}\nPhone / WhatsApp: ${booking.whatsapp}\nCountry: ${booking.country || "Not provided"} (${booking.countryISO || "--"})\nService: ${booking.service}\nMode: ${booking.mode}\nPackage: ${booking.package}\nQuantity: ${booking.quantity} ${booking.unit}\nAmount: ${booking.amountKnown ? `NGN ${Number(booking.amount).toLocaleString("en-NG")}` : "To be confirmed"}\nEvent: ${booking.eventName} (${booking.eventType})\nPreferred date: ${booking.eventDate}${booking.eventTime ? ` ${booking.eventTime}` : ""}\nEvent time zone: ${booking.eventTimezone || "Not applicable"}\nSecond-choice date: ${booking.alternateDate || "Not provided"}\nVenue: ${booking.venue || "Not provided"}\nPlatform: ${booking.platform || "Not provided"}\nAudience size: ${booking.audienceSize}\nCurrency estimate: ${booking.selectedCurrency || "NGN"} ${booking.approximateAmount ?? "Not available"}\nNGN amount (authoritative): ${booking.amount}\nExchange rate: ${booking.exchangeRate ?? "Not available"} (${booking.exchangeRateTimestamp || "not provided"})\nAdditional notes: ${booking.additionalNotes || "Not provided"}\nBrief: ${booking.brief}`;
+  return `${introduction}\n\nReference: ${booking.reference}\nName: ${booking.name}\nEmail: ${booking.email}\nPhone / WhatsApp: ${booking.whatsapp}\nCountry: ${booking.country || "Not provided"} (${booking.countryISO || "--"})\nService: ${booking.service}\nMode: ${booking.mode}\nPackage: ${booking.package}\nQuantity: ${booking.quantity} ${booking.unit}\nAmount: ${booking.amountKnown ? `NGN ${Number(booking.amount).toLocaleString("en-NG")}` : "To be confirmed"}\nEvent: ${booking.eventName} (${booking.eventType})\nPreferred date: ${booking.eventDate}${booking.eventTime ? ` ${booking.eventTime}` : ""}\nEvent time zone: ${booking.eventTimezone || "Not applicable"}\nSecond-choice date: ${booking.alternateDate || "Not provided"}\nVenue: ${booking.venue || "Not provided"}\nPlatform: ${booking.platform || "Not provided"}\nAudience size: ${booking.audienceSize}\nAdditional notes: ${booking.additionalNotes || "Not provided"}\nBrief: ${booking.brief}`;
 }
 
 function bookingEmailHtml(booking, introduction) {
@@ -186,8 +185,6 @@ function bookingEmailHtml(booking, introduction) {
     ["Event", `${booking.eventName} (${booking.eventType})`], ["Preferred date", `${booking.eventDate}${booking.eventTime ? ` ${booking.eventTime}` : ""}`],
     ["Event time zone", booking.eventTimezone || "Not applicable"], ["Second-choice date", booking.alternateDate || "Not provided"], ["Venue", booking.venue || "Not provided"],
     ["Platform", booking.platform || "Not provided"], ["Audience size", booking.audienceSize],
-    ["Selected currency estimate", `${booking.selectedCurrency || "NGN"} ${booking.approximateAmount ?? "Not available"}`],
-    ["Authoritative amount", `NGN ${booking.amount}`], ["Exchange rate", `${booking.exchangeRate ?? "Not available"} (${booking.exchangeRateTimestamp || "not provided"})`],
     ["Additional notes", booking.additionalNotes || "Not provided"], ["Brief", booking.brief],
   ];
   return `<div style="font-family:Arial,sans-serif;color:#102443;line-height:1.6"><p>${escapeHtml(introduction)}</p><table style="border-collapse:collapse">${rows.map(([label, value]) => `<tr><th align="left" style="padding:7px 14px 7px 0;vertical-align:top">${escapeHtml(label)}</th><td style="padding:7px 0;white-space:pre-wrap">${escapeHtml(String(value))}</td></tr>`).join("")}</table></div>`;

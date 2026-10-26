@@ -51,8 +51,15 @@
   .nav-inner>.theme-toggle{order:1}
 }
 @media(max-width:767px){
-  .booking-section{padding-top:2rem}
-  #booking-form{margin-top:1.25rem}
+  .booking-section{padding:1.5rem 0 calc(4rem + env(safe-area-inset-bottom,0px))}
+  .booking-section>.wrap{width:calc(100% - 24px);max-width:40rem}
+  #booking-form{width:100%;margin-top:1rem;padding:clamp(.875rem,4vw,1.25rem);gap:.875rem;border-radius:.875rem}
+  #booking-form .booking-step:not([hidden]){padding:clamp(.875rem,4vw,1.125rem)}
+  #booking-form .booking-fields{gap:1rem}
+  #booking-form .booking-field,#booking-form .booking-field.full{width:100%;max-width:100%}
+  #booking-form .phone-field-row{grid-template-columns:minmax(5.5rem,.7fr) minmax(0,1.3fr);gap:.5rem}
+  #booking-form .booking-actions{gap:.625rem}
+  #booking-form .booking-actions>*{min-height:3.25rem}
   #booking-form .booking-actions #booking-back{flex:1 1 100%}
   #booking-form .booking-price-card{order:1}
   #booking-form .booking-step:not([hidden]){order:2}
@@ -68,6 +75,13 @@
   #booking-form .booking-actions>*{flex:0 1 auto;min-width:9rem}
   #booking-form .booking-actions #booking-submit{margin-left:auto}
   #booking-form .booking-actions #booking-back{margin-right:auto}
+}
+@media(max-width:380px){
+  .booking-section>.wrap{width:calc(100% - 16px)}
+  #booking-form{padding:.75rem;gap:.75rem}
+  #booking-form .booking-step:not([hidden]){padding:.75rem}
+  #booking-form .booking-labels{font-size:.625rem}
+  #booking-form .phone-field-row{grid-template-columns:minmax(5rem,.65fr) minmax(0,1.35fr);gap:.375rem}
 }
 @media(min-width:901px){
   .booking-section{padding-block:3rem calc(6rem + env(safe-area-inset-bottom,0px))}

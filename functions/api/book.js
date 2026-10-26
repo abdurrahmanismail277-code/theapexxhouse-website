@@ -36,6 +36,7 @@ export async function onRequestPost({ request, env }) {
   if (String(input.website || "").trim()) return json({ error: "We could not verify this request." }, 400);
   const required = ["serviceId", "offerId", "mode", "eventName", "eventType", "eventDate", "name", "email", "whatsapp", "brief"];
   if (required.some(key => typeof input[key] !== "string" || !input[key].trim()) || input.consent !== true || !Number.isInteger(Number(input.audienceSize)) || Number(input.audienceSize) < 1 || Number(input.audienceSize) > 1000000) return json({ error: "Please complete all required fields." }, 400);
+  if (input.countryISO !== "NG") return json({ error: "Bookings are currently available in Nigeria only." }, 400);
 
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
@@ -56,12 +57,7 @@ export async function onRequestPost({ request, env }) {
   const reference = `APEX-${crypto.randomUUID()}`;
   const paymentNarration = typeof input.paymentNarration === "string" && /^APX-[A-Z0-9]{6}$/.test(input.paymentNarration) ? input.paymentNarration : "Not provided";
   const requiresReview = input.mode === "physical" || service.id === "launch-hosting";
-  const isNigerianClient = input.countryISO === "NG";
-  let paymentLink = "";
-  if (!isNigerianClient && !requiresReview) {
-    const selarLink = String(env.SELAR_CHECKOUT_URL || "").trim();
-    if (/^https:\/\/(?:www\.)?selar\.(?:com|co)\//i.test(selarLink)) paymentLink = selarLink;
-  }
+  const paymentLink = "";
 
   const fields = {
     "Booking reference": reference,
@@ -84,36 +80,36 @@ export async function onRequestPost({ request, env }) {
     "Email": email,
     "WhatsApp": whatsapp,
     "Country": `${input.country || "Not provided"}${input.countryISO ? ` (${input.countryISO})` : ""}`,
-    "Selected currency estimate": `${input.selectedCurrency || "NGN"} ${input.approximateAmount ?? "Not available"}`,
+    "Payment currency": "NGN",
     "Authoritative amount (NGN)": quote.amount,
-    "Exchange rate": `${input.exchangeRate ?? "Not available"} (${input.exchangeRateTimestamp || "not provided"})`,
     "Additional notes": typeof input.additionalNotes === "string" ? input.additionalNotes.trim() : "Not provided",
     "Brief": input.brief.trim(),
     "Consent": "Agreed",
     "Payment narration": paymentNarration,
     "Estimated amount": requiresReview ? `${money(quote.amount)} estimate; final amount to be confirmed` : money(quote.amount),
-    "Payment link": paymentLink || (isNigerianClient ? "Direct bank transfer on booking page" : requiresReview ? "Selar checkout after final amount review" : "Selar checkout link not configured"),
+    "Payment method": "Direct Nigerian bank transfer (NGN)",
   };
   const referenceForMessage = escapeHtml(reference);
   const paymentSummary = requiresReview ? `${money(quote.amount)} estimate; final amount to be confirmed` : money(quote.amount);
   const rows = detailRows(fields);
   const subject = `New booking: ${plain(service.name)} - ${name} - ${reference}`;
-  const ownerPayment = paymentLink ? `<p><a href="${escapeHtml(paymentLink)}" style="color:#0164FF;font-weight:700">Open Selar checkout</a></p>` : isNigerianClient ? `<p><strong>Payment:</strong> Direct bank transfer instructions are shown on the booking page.</p>` : `<p><strong>Payment:</strong> Selar checkout link not configured or final amount requires review.</p>`;
+  const ownerPayment = `<p><strong>Payment:</strong> Nigerian bank transfer in NGN. Account details are shown on the booking page.</p>`;
   const ownerHtml = `<div style="font-family:Arial,sans-serif;color:#021A40"><div style="padding:24px;background:#021A40;color:#fff;border-radius:12px 12px 0 0"><p style="margin:0 0 8px;color:#9fc4ff;letter-spacing:.12em;text-transform:uppercase;font-size:11px">The Apex House</p><h1 style="margin:0;font-size:22px">New booking request</h1></div><p style="padding:0 8px">The client confirmation email will be sent immediately after this owner alert. Reference <strong>${referenceForMessage}</strong>.</p><table role="presentation" style="width:100%;border-collapse:collapse">${rows}</table>${ownerPayment}<p style="margin-top:20px;color:#60718a">Reply directly to this email to contact ${escapeHtml(name)}.</p></div>`;
   const ownerText = `New booking: ${service.name} - ${name} - ${reference}\n\n${Object.entries(fields).map(([key, value]) => `${key}: ${value}`).join("\n")}\n\nThe client confirmation email will be sent after this owner alert.`;
   const ownerPayload = { from: env.RESEND_FROM_EMAIL, to: [env.BOOKING_NOTIFICATION_EMAIL], bcc: [env.BOOKING_BACKUP_EMAIL], reply_to: email, subject, html: ownerHtml, text: ownerText };
   const ownerResult = await sendResend(env, ownerPayload, `booking-owner-${reference}`);
-  const waMessage = `Hi Apex House, I need help with my booking request ${reference} for ${service.name}.`;
+  const waMessage = `Hi Apex House, I tried to submit booking ${reference} for ${service.name} (${offer.label}, ${input.mode}). The website could not deliver the request to your team. Please help me complete it. My event is ${input.eventName.trim()} on ${input.eventDate}.`;
   const whatsappUrl = `https://wa.me/${digits}?text=${encodeURIComponent(waMessage)}`;
-  if (!ownerResult.ok) return json({ error: "We could not send your booking to the owner. Your details are still in the form. Please use WhatsApp to reach us.", reference, whatsappUrl }, 502);
+  if (!ownerResult.ok) {
+    const providerCode = typeof ownerResult.data?.name === "string" ? ownerResult.data.name.slice(0, 80) : "unknown";
+    console.error("Booking owner email rejected", { status: ownerResult.status, code: providerCode });
+    return json({ error: "Your booking was not submitted because our email service is temporarily unavailable. Your details are still in this form. Please send the request to us on WhatsApp to complete it.", reference, whatsappUrl }, 502);
+  }
 
-  const clientPaymentFallback = isNigerianClient
-    ? `<div style="margin-top:20px;padding:16px;border-radius:10px;background:#edf4ff;color:#021A40"><strong>Pay by direct bank transfer.</strong><br>Use the account details shown on the booking page.</div>`
-    : requiresReview
-      ? `<div style="margin-top:20px;padding:16px;border-radius:10px;background:#fff7e8;color:#60430c"><strong>Final amount will be confirmed shortly.</strong><br>We will share the Selar checkout link after review.</div>`
-      : `<div style="margin-top:20px;padding:16px;border-radius:10px;background:#fff7e8;color:#60430c"><strong>Selar checkout instructions will follow.</strong><br>Please contact us if you need help completing payment.</div>`;
-  const clientHtml = `<div style="margin:0;background:#f2f6fc;padding:28px 12px;font-family:Arial,sans-serif;color:#021A40"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 12px 36px rgba(2,26,64,.12)"><div style="padding:28px;background:#021A40;color:#fff"><p style="margin:0 0 8px;color:#9fc4ff;font-size:11px;letter-spacing:.16em;text-transform:uppercase">THE APEX HOUSE</p><h1 style="margin:0;font-size:26px;line-height:1.2">Your request is with us.</h1></div><div style="padding:26px"><p style="margin-top:0">Hello ${escapeHtml(name)},</p><p>Thank you for booking with us. We have received your request and sent it to our team for review.</p><div style="padding:16px;border-radius:10px;background:#edf4ff"><p style="margin:0 0 6px;color:#60718a;font-size:12px">BOOKING REFERENCE</p><p style="margin:0;font-size:18px;font-weight:700">${referenceForMessage}</p></div><h2 style="margin:24px 0 10px;font-size:16px">Your request</h2><table role="presentation" style="width:100%;border-collapse:collapse">${detailRows({ "Service": `${quote.service.categoryLabel} / ${service.name}`, "Mode": input.mode, "Package": offer.label, "Quantity": fields.Quantity, "Event": `${fields["Event name"]} (${fields["Event type"]})`, "Preferred date and time": fields["Preferred date"], "Event time zone": fields["Event time zone"], "Country": fields.Country, "Currency estimate": fields["Selected currency estimate"], "Authoritative amount (NGN)": quote.amount, "Venue or platform": input.mode === "physical" ? venue : platform || "Not specified", "Audience size": fields["Audience size"], "Additional notes": fields["Additional notes"], "Brief": fields.Brief, "Transport fare": fields["Transport fare"], "Estimated amount": paymentSummary })}</table>${paymentLink ? `<div style="padding:24px 0 8px;text-align:center"><a href="${escapeHtml(paymentLink)}" style="display:inline-block;padding:15px 26px;border-radius:999px;background:#0164FF;color:#fff;text-decoration:none;font-weight:700">Continue to Selar</a><p style="margin:12px 0 0;color:#60718a;font-size:12px">Checkout powered by Selar</p></div>` : clientPaymentFallback}<p style="margin:24px 0 8px">Questions? Message us on WhatsApp:</p><p style="margin:0"><a href="https://wa.me/${digits}" style="color:#0164FF;font-weight:700">+${digits}</a></p><p style="margin-top:24px;color:#60718a;font-size:12px">We look forward to making your moment matter.<br><strong style="color:#021A40">The Apex House team</strong></p></div></div></div>`;
-  const clientText = `Hello ${name},\n\nWe received your booking request.\nReference: ${reference}\nService: ${quote.service.categoryLabel} / ${service.name}\nMode: ${input.mode}\nPackage: ${offer.label}\nQuantity: ${fields.Quantity}\nEvent: ${fields["Event name"]} (${fields["Event type"]})\nPreferred date: ${input.eventDate}\nSecond-choice date: ${fields["Second-choice date"]}\nVenue/platform: ${input.mode === "physical" ? venue : platform}\nAmount: ${paymentSummary}${paymentLink ? `\nPay now: ${paymentLink}` : "\nFinal amount will be confirmed shortly."}\n\nWhatsApp: +${digits}\n\nThe Apex House team`;
+  const clientPaymentFallback = `<div style="margin-top:20px;padding:16px;border-radius:10px;background:#edf4ff;color:#021A40"><strong>Pay by Nigerian bank transfer in NGN.</strong><br>Use the account details shown on the booking page. Our team will confirm the final amount for services that require review.</div>`;
+  const clientHtml = `<div style="margin:0;background:#f2f6fc;padding:28px 12px;font-family:Arial,sans-serif;color:#021A40"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 12px 36px rgba(2,26,64,.12)"><div style="padding:28px;background:#021A40;color:#fff"><p style="margin:0 0 8px;color:#9fc4ff;font-size:11px;letter-spacing:.16em;text-transform:uppercase">THE APEX HOUSE</p><h1 style="margin:0;font-size:26px;line-height:1.2">Your request is with us.</h1></div><div style="padding:26px"><p style="margin-top:0">Hello ${escapeHtml(name)},</p><p>Thank you for booking with us. We have received your request and sent it to our team for review.</p><div style="padding:16px;border-radius:10px;background:#edf4ff"><p style="margin:0 0 6px;color:#60718a;font-size:12px">BOOKING REFERENCE</p><p style="margin:0;font-size:18px;font-weight:700">${referenceForMessage}</p></div><h2 style="margin:24px 0 10px;font-size:16px">Your request</h2><table role="presentation" style="width:100%;border-collapse:collapse">${detailRows({ "Service": `${quote.service.categoryLabel} / ${service.name}`, "Mode": input.mode, "Package": offer.label, "Quantity": fields.Quantity, "Event": `${fields["Event name"]} (${fields["Event type"]})`, "Preferred date and time": fields["Preferred date"], "Event time zone": fields["Event time zone"], "Country": "Nigeria (NG)", "Payment currency": "NGN", "Authoritative amount (NGN)": quote.amount, "Venue or platform": input.mode === "physical" ? venue : platform || "Not specified", "Audience size": fields["Audience size"], "Additional notes": fields["Additional notes"], "Brief": fields.Brief, "Transport fare": fields["Transport fare"], "Estimated amount": paymentSummary })}</table>${clientPaymentFallback}<p style="margin:24px 0 8px">Questions? Message us on WhatsApp:</p><p style="margin:0"><a href="https://wa.me/${digits}" style="color:#0164FF;font-weight:700">+${digits}</a></p><p style="margin-top:24px;color:#60718a;font-size:12px">We look forward to making your moment matter.<br><strong style="color:#021A40">The Apex House team</strong></p></div></div></div>`;
+  const clientText = `Hello ${name},\n\nWe received your booking request.\nReference: ${reference}\nService: ${quote.service.categoryLabel} / ${service.name}\nMode: ${input.mode}\nPackage: ${offer.label}\nQuantity: ${fields.Quantity}\nEvent: ${fields["Event name"]} (${fields["Event type"]})\nPreferred date: ${input.eventDate}\nSecond-choice date: ${fields["Second-choice date"]}\nVenue/platform: ${input.mode === "physical" ? venue : platform}\nAmount in NGN: ${paymentSummary}
+Payment: Direct Nigerian bank transfer. Use the payment details shown on the booking page.\n\nWhatsApp: +${digits}\n\nThe Apex House team`;
   const clientResult = await sendResend(env, { from: env.RESEND_FROM_EMAIL, to: [email], subject: `We received your booking request - ${reference}`, html: clientHtml, text: clientText }, `booking-client-${reference}`);
   if (!clientResult.ok) {
     await sendResend(env, { from: env.RESEND_FROM_EMAIL, to: [env.BOOKING_NOTIFICATION_EMAIL], bcc: [env.BOOKING_BACKUP_EMAIL], reply_to: email, subject: `Client email failed: ${reference}`, text: `The owner alert succeeded, but the client confirmation email could not be delivered.\nReference: ${reference}\nClient: ${name} <${email}>\nResend status: ${clientResult.status}. Please contact the client directly.` }, `booking-client-failure-${reference}`);
