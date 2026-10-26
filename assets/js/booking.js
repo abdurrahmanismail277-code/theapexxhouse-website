@@ -222,6 +222,7 @@
     function validateField(field) {
       if (field.disabled || field.type === "hidden" || field.closest("[hidden]") || field.closest(".booking-honeypot")) return true;
       let message = "";
+      field.setCustomValidity("");
       if (field.id === "country-search" && !bookingInputs.country) message = "Please choose your country from the list.";
       else if (field.id === "currency-search" && !bookingInputs.currency) message = "Please choose a currency from the list.";
       else if (field.id === "phone-dial-search" && !bookingInputs.dialCountry) message = "Please choose a country calling code from the list.";
