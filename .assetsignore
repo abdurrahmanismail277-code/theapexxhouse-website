@@ -1,0 +1,17 @@
+.git/
+.github/
+.wrangler/
+apex-house-site/
+functions/
+supabase/
+worker/
+README.md
+BOOKING_SETUP.md
+.env*
+**/.env*
+.dev.vars*
+**/.dev.vars*
+*.pem
+**/*.pem
+*.key
+**/*.key
