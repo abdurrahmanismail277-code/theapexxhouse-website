@@ -4,15 +4,28 @@
     import { initBookingInputs } from "./booking-inputs.js";
     // Public endpoint URL only; set this after deploying the Cloudflare Worker. Never put secrets here.
     const BOOKING_ENDPOINT = "/api/book";
-    const BOOKING_CONFIG_ENDPOINT = "/api/booking-config";
-    // Change these transfer details here; never put private keys or API secrets in this file.
+    const BANK_NAME = "OPay";
+    const ACCOUNT_NAME = "MUTMAINNAH OLUNLE TIRMIDHIY";
+    const ACCOUNT_NUMBER = "6550785344";
+    // Change transfer details here; never put private keys or API secrets in this file.
     const PAYMENT_CONFIG = Object.freeze({
-      accountNumber: "8038326349",
-      bank: "OPay",
-      accountName: "Mutmainnah Tirmidhiy Olunle",
+      accountNumber: ACCOUNT_NUMBER,
+      bank: BANK_NAME,
+      accountName: ACCOUNT_NAME,
       whatsappNumber: "2348038326349",
     });
     const BOOKING_STORAGE_KEY = "apex-house-pending-payment";
+    let paymentNarrationCode = "";
+    function getPaymentNarrationCode() {
+      if (!paymentNarrationCode) {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        const values = new Uint8Array(6);
+        if (window.crypto?.getRandomValues) window.crypto.getRandomValues(values);
+        else values.forEach((_, index) => values[index] = Math.floor(Math.random() * 256));
+        paymentNarrationCode = `APX-${[...values].map(value => alphabet[value % alphabet.length]).join("")}`;
+      }
+      return paymentNarrationCode;
+    }
     const BOOKING_DRAFT_KEY = "apex-house-booking-draft";
     function readBookingDraft() {
       try { const value = JSON.parse(localStorage.getItem(BOOKING_DRAFT_KEY) || "null"); return value && typeof value === "object" ? value : {}; } catch { return {}; }
@@ -20,7 +33,7 @@
     function saveBookingDraft() {
       const draft = {};
       for (const [key, value] of new FormData(bookingForm).entries()) {
-        if (["consent", "website", "turnstileToken"].includes(key)) continue;
+        if (["consent", "website"].includes(key)) continue;
         draft[key] = value;
       }
       try { localStorage.setItem(BOOKING_DRAFT_KEY, JSON.stringify(draft)); } catch {}
@@ -44,45 +57,6 @@
     let currentStep = 0;
     let bookingInputs;
     let currencyEstimator;
-    let turnstileSetupPromise = null;
-    let turnstileWidgetId = null;
-    const turnstileTokenInput = document.getElementById("turnstile-token");
-    const turnstileContainer = document.getElementById("turnstile-container");
-    const turnstileHelp = document.getElementById("turnstile-help");
-    async function ensureTurnstile() {
-      if (turnstileWidgetId !== null) return true;
-      if (turnstileSetupPromise) return turnstileSetupPromise;
-      turnstileSetupPromise = (async () => {
-        const configResponse = await fetch(BOOKING_CONFIG_ENDPOINT, { headers: { Accept: "application/json" } });
-        const config = await configResponse.json().catch(() => ({}));
-        if (!configResponse.ok || !config.turnstileSiteKey) throw new Error("Security verification is not configured. Please contact us on WhatsApp to complete your booking.");
-        if (!window.turnstile) {
-          await new Promise((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-            script.async = true;
-            script.defer = true;
-            script.onload = resolve;
-            script.onerror = () => reject(new Error("Security verification could not load. Check your connection or contact us on WhatsApp."));
-            document.head.append(script);
-          });
-        }
-        if (!window.turnstile) throw new Error("Security verification could not start. Please try again or contact us on WhatsApp.");
-        turnstileWidgetId = window.turnstile.render(turnstileContainer, {
-          sitekey: config.turnstileSiteKey,
-          callback: token => { turnstileTokenInput.value = token; turnstileHelp.textContent = "Security check complete."; },
-          "expired-callback": () => { turnstileTokenInput.value = ""; turnstileHelp.textContent = "The security check expired. Please complete it again."; },
-          "error-callback": () => { turnstileTokenInput.value = ""; turnstileHelp.textContent = "Security verification failed. Please try again."; },
-        });
-        turnstileHelp.textContent = "Complete the security check before submitting your request.";
-        return true;
-      })().catch(error => {
-        turnstileSetupPromise = null;
-        turnstileHelp.textContent = error.message || "Security verification is unavailable. Please contact us on WhatsApp.";
-        return false;
-      });
-      return turnstileSetupPromise;
-    }
     function priceLabel(amount) {
       const converted = currencyEstimator.convert(amount);
       return converted.currency === "NGN" && converted.requestedCurrency !== "NGN"
@@ -146,6 +120,7 @@
     }
     function updateOffers() {
       const service = selectedService();
+      if (service) getPaymentNarrationCode();
       const modeRadios = [...bookingForm.querySelectorAll('input[name="mode"]')];
       modeRadios.forEach(radio => { radio.disabled = !service || !service.offers.some(offer => offer.mode === radio.value); });
       if (service && !service.offers.some(offer => offer.mode === selectedMode())) {
@@ -291,7 +266,6 @@
     });
     document.getElementById("booking-back").addEventListener("click", () => { currentStep = Math.max(0, currentStep - 1); renderStep(); });
     function renderStep() {
-      if (currentStep === 3) void ensureTurnstile();
       steps.forEach((step, index) => step.hidden = index !== currentStep);
       document.getElementById("booking-back").hidden = currentStep === 0;
       document.getElementById("booking-next").hidden = currentStep === 3;
@@ -342,34 +316,41 @@
       checkout.hidden = !booking.paymentLink;
       checkout.href = booking.paymentLink || "#";
       const usesOnlineCheckout = Boolean(booking.paymentLink);
-      document.querySelector(".payment-intro").hidden = usesOnlineCheckout;
-      document.querySelector(".payment-details").hidden = usesOnlineCheckout;
-      document.querySelector(".international-payment-placeholder").hidden = usesOnlineCheckout;
-      document.querySelector(".payment-instruction").hidden = usesOnlineCheckout;
-      document.getElementById("payment-whatsapp").hidden = usesOnlineCheckout;
-      document.querySelector(".payment-warning").hidden = usesOnlineCheckout;
+      const isNigerianClient = booking.countryISO === "NG";
+      document.querySelector(".bank-transfer-card").hidden = !isNigerianClient;
+      document.querySelector(".international-payment-placeholder").hidden = usesOnlineCheckout || isNigerianClient;
       document.getElementById("payment-guidance").textContent = booking.paymentLink
-        ? "Your request is confirmed. Use the secure checkout link below to pay online."
-        : booking.amountKnown
-          ? "Your request is confirmed. Use the transfer details below to complete payment."
-          : "Our team will confirm the final amount before payment. Please wait for our message before transferring.";
+        ? "Your request is confirmed. Continue to Selar using the checkout link below."
+        : isNigerianClient
+          ? booking.amountKnown
+            ? "Your request is confirmed. Use the direct bank transfer details below to complete payment."
+            : "Our team will confirm the final amount before payment. Please wait for our message before transferring."
+          : booking.amountKnown
+            ? "Your request is confirmed. The Selar checkout link will be added here once it is created."
+            : "Our team will confirm your final amount. The Selar checkout link will be added here once it is created.";
       currentBooking = booking;
+      booking.paymentNarration = booking.paymentNarration || getPaymentNarrationCode();
+      paymentNarrationCode = booking.paymentNarration;
       const amountKnown = booking.amountKnown === true && Number.isFinite(Number(booking.amount));
-      const quantity = `${booking.quantity} ${booking.unit}${Number(booking.quantity) === 1 ? "" : "s"}`;
+      const amountNumber = Number.isFinite(Number(booking.amount)) ? Number(booking.amount) : 0;
+      const amountText = amountKnown ? naira(amountNumber) : "To be confirmed";
+      const amountPlain = amountKnown ? String(amountNumber) : "";
+      const narration = booking.paymentNarration;
+      const formattedAmount = amountKnown ? naira(amountNumber) : "To be confirmed";
+      const confirmationMessage = `Hello Apex House, I have paid ${formattedAmount} for ${booking.service}. Reference: ${narration}. My name is ${String(booking.name || "").trim()}. Receipt attached.`;
       document.getElementById("payment-reference-summary").textContent = booking.reference;
       document.getElementById("payment-name").textContent = booking.name;
       document.getElementById("payment-service").textContent = booking.service;
       document.getElementById("payment-mode").textContent = booking.mode === "physical" ? "Physical" : "Virtual";
       document.getElementById("payment-package").textContent = booking.package;
-      document.getElementById("payment-quantity").textContent = quantity;
+      document.getElementById("payment-quantity").textContent = `${booking.quantity} ${booking.unit}${Number(booking.quantity) === 1 ? "" : "s"}`;
       const eventDate = booking.date ? new Date(`${booking.date}T12:00:00`) : null;
       const dateText = eventDate && !Number.isNaN(eventDate.valueOf()) ? eventDate.toLocaleDateString(navigator.language || "en", { day: "numeric", month: "long", year: "numeric" }) : "Not provided";
       document.getElementById("payment-event-date").textContent = `${dateText}${booking.time ? ` at ${booking.time}` : ""}`;
       document.getElementById("payment-country").textContent = `${booking.country || "Not provided"}${booking.countryISO ? ` (${booking.countryISO})` : ""}`;
       document.getElementById("payment-timezone").textContent = booking.eventTimezone || "Not applicable";
-      const paymentConversion = amountKnown ? currencyEstimator.convert(booking.amount, booking.selectedCurrency || "NGN") : null;
+      const paymentConversion = amountKnown ? currencyEstimator.convert(amountNumber, booking.selectedCurrency || "NGN") : null;
       document.getElementById("payment-currency-summary").textContent = paymentConversion?.hasRate ? `${paymentConversion.currency}: ${paymentConversion.approximate} / ${paymentConversion.ngn} NGN (approximate)` : paymentConversion ? `No ${paymentConversion.requestedCurrency} estimate is available offline; authoritative total: ${paymentConversion.ngn} NGN` : "Final amount to be confirmed";
-      const amountText = amountKnown ? naira(booking.amount) : "To be confirmed on WhatsApp";
       document.getElementById("payment-total").textContent = amountText;
       const localEstimate = document.getElementById("payment-total-local");
       const selectedCurrency = booking.selectedCurrency || currencyEstimator.currency;
@@ -379,16 +360,31 @@
           ? `Approximate ${paymentConversion.approximate} / ${paymentConversion.ngn} NGN. Indicative only; payment is due in NGN and your bank may use a different rate.`
           : `No ${selectedCurrency} estimate is available offline. Payment is due in NGN: ${paymentConversion.ngn}.`
         : "";
-      document.getElementById("payment-bank").textContent = PAYMENT_CONFIG.bank;
-      document.getElementById("payment-account-name").textContent = PAYMENT_CONFIG.accountName;
-      document.getElementById("payment-account-number").textContent = PAYMENT_CONFIG.accountNumber;
+      document.getElementById("payment-bank").textContent = BANK_NAME;
+      document.getElementById("payment-account-name").textContent = ACCOUNT_NAME;
+      document.getElementById("payment-account-number").textContent = ACCOUNT_NUMBER;
       document.getElementById("payment-amount").textContent = amountText;
+      document.getElementById("payment-narration").textContent = narration;
+      document.getElementById("exact-payment-amount").textContent = amountText;
+      document.getElementById("exact-payment-service").textContent = booking.service;
+      document.getElementById("modal-transfer-amount").textContent = amountText;
+      document.getElementById("modal-payment-narration").textContent = narration;
+      document.querySelector(".exact-payment-notice").hidden = !amountKnown;
+      document.getElementById("payment-open-modal").hidden = !amountKnown;
       document.querySelector('[data-copy="amount"]').hidden = !amountKnown;
-      document.getElementById("payment-reference").textContent = booking.reference;
-      const messageAmount = amountKnown ? naira(booking.amount) : "To be confirmed on WhatsApp";
-      const receiptMessage = `Hello, The Apex House. I have made payment for my booking.\nReference: ${booking.reference}\nName: ${booking.name}\nService: ${booking.service}\nAmount: ${messageAmount}\nI am attaching my receipt. Thank you.`;
-      const whatsappHref = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}?text=${encodeURIComponent(receiptMessage)}`;
-      document.getElementById("payment-whatsapp").href = whatsappHref;
+      const allDetails = `Bank: ${BANK_NAME}\nAccount Name: ${ACCOUNT_NAME}\nAccount Number: ${ACCOUNT_NUMBER}\nAmount: ${formattedAmount}\nNarration: ${narration}`;
+      document.querySelectorAll(".payment-copy").forEach(button => {
+        button.dataset.copyValue = ({
+          bankName: BANK_NAME,
+          accountName: ACCOUNT_NAME,
+          accountNumber: ACCOUNT_NUMBER,
+          amount: amountPlain,
+          narration,
+          all: allDetails,
+        })[button.dataset.copy] || "";
+      });
+      document.getElementById("payment-modal-continue").href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}?text=${encodeURIComponent(confirmationMessage)}`;
+      document.getElementById("payment-confirmation").hidden = true;
       document.getElementById("payment-help").querySelector("a").href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`;
       bookingForm.hidden = true;
       paymentScreen.hidden = false;
@@ -420,14 +416,6 @@
         status.textContent = "Please check your country, phone number, and currency selections.";
         return;
       }
-      if (!turnstileTokenInput.value) {
-        const ready = await ensureTurnstile();
-        status.textContent = ready
-          ? "Complete the security check before submitting your booking."
-          : turnstileHelp.textContent;
-        turnstileContainer.scrollIntoView({ behavior: "smooth", block: "center" });
-        return;
-      }
       if (String(data.website || "").trim()) return;
       const amountKnown = data.mode !== "physical" && service.id !== "launch-hosting";
       const conversion = currencyEstimator.convert(quote.amount, selectedCurrency.code);
@@ -440,7 +428,7 @@
         phoneDialCode: bookingInputs.dialCountry.dialCode, whatsapp: selectedPhone.e164,
         service: service.name, mode: data.mode, package: offer.label,
         quantity: Number(data.quantity), unit: offer.unit,
-        amount: quote.amount, amountNGN: quote.amount, amountKnown,
+        amount: quote.amount, amountNGN: quote.amount, amountKnown, paymentNarration: getPaymentNarrationCode(),
         selectedCurrency: selectedCurrency.code,
         approximateAmount: conversion.currency === "NGN" && selectedCurrency.code !== "NGN" ? null : conversion.approximateAmount,
         exchangeRate: conversion.rate, exchangeRateTimestamp: conversion.timestamp,
@@ -460,7 +448,7 @@
       submissionInProgress = true;
       submitButton.disabled = true;
       submitButton.textContent = "Sending request…";
-      status.textContent = "Sending your booking request securely…";
+      status.textContent = "Sending your booking request…";
       try {
         const response = await fetch(BOOKING_ENDPOINT, {
           method: "POST",
@@ -475,6 +463,7 @@
             amount: booking.amountNGN,
             amountNGN: booking.amountNGN,
             amountKnown: booking.amountKnown,
+            paymentNarration: booking.paymentNarration,
             country: booking.country,
             countryISO: booking.countryISO,
             whatsapp: booking.whatsapp,
@@ -488,8 +477,16 @@
             platform: booking.platform,
           }),
         });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.ok !== true) throw new Error(result.error || "We could not send your booking request.");
+        const contentType = response.headers.get("content-type") || "";
+        const result = contentType.includes("application/json") ? await response.json().catch(() => null) : null;
+        if (!result) {
+          const unavailableMessage = response.status === 404
+            ? "The /api/book route is unavailable. JSON Server and static previews do not run Cloudflare Pages Functions; use Cloudflare Pages or wrangler pages dev."
+            : `The booking API returned an unexpected response (HTTP ${response.status}). Check that /api/book is deployed as a Cloudflare Pages Function.`;
+          throw new Error(unavailableMessage);
+        }
+        if (!response.ok) throw new Error(result.error || `Booking request failed (HTTP ${response.status}).`);
+        if (result.ok !== true) throw new Error(result.error || "The /api/book endpoint did not return a booking result. JSON Server is not the booking backend; use Cloudflare Pages or wrangler pages dev.");
         booking.reference = typeof result.reference === "string" ? result.reference : booking.reference;
         booking.paymentLink = typeof result.paymentLink === "string" ? result.paymentLink : "";
         try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this booking for refresh recovery.", error); }
@@ -498,8 +495,6 @@
         displayBookingPayment(booking);
       } catch (error) {
         status.textContent = error.message || "We could not send your booking request. Please try again or contact us on WhatsApp.";
-        turnstileTokenInput.value = "";
-        if (turnstileWidgetId !== null && window.turnstile) window.turnstile.reset(turnstileWidgetId);
       } finally {
         submissionInProgress = false;
         submitButton.disabled = false;
@@ -507,25 +502,17 @@
       }
     });
     document.querySelectorAll(".payment-copy").forEach(button => button.addEventListener("click", async () => {
-      const booking = getSavedBooking();
-      if (!booking) return;
-      const values = {
-        accountNumber: PAYMENT_CONFIG.accountNumber,
-        accountName: PAYMENT_CONFIG.accountName,
-        amount: String(booking.amount),
-        reference: booking.reference,
-      };
-      const value = values[button.dataset.copy];
+      const value = button.dataset.copyValue;
       if (!value) return;
-      const originalText = button.dataset.originalText || button.textContent;
-      button.dataset.originalText = originalText;
+      const label = button.querySelector("[data-copy-label]");
+      const originalText = label?.textContent || "Copy";
       let copied = false;
       try {
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(value);
           copied = true;
         }
-      } catch (error) { /* Try the legacy copy method below. */ }
+      } catch (error) { /* Use the temporary textarea fallback. */ }
       if (!copied) {
         const textarea = document.createElement("textarea");
         textarea.value = value;
@@ -543,10 +530,46 @@
       }
       const announcement = document.getElementById("copy-announcement");
       if (button._copyTimer) window.clearTimeout(button._copyTimer);
-      button.textContent = copied ? "Copied" : "Copy failed - select the detail and copy it manually";
-      announcement.textContent = copied ? `Copied ${originalText.replace(/^Copy /, "").toLowerCase()}.` : "Copy was not available on this browser.";
-      button._copyTimer = window.setTimeout(() => { button.textContent = originalText; announcement.textContent = ""; }, 2000);
+      if (label) label.textContent = copied ? "Copied \u2713" : "Copy failed";
+      announcement.textContent = copied ? `${originalText.replace(/^Copy /, "")} copied.` : "Copy was not available on this browser.";
+      button._copyTimer = window.setTimeout(() => { if (label) label.textContent = originalText; announcement.textContent = ""; }, 2000);
     }));
+    const paymentModalBackdrop = document.getElementById("payment-modal-backdrop");
+    const paymentModal = document.getElementById("payment-modal");
+    const paymentModalContinue = document.getElementById("payment-modal-continue");
+    const paymentOpenModal = document.getElementById("payment-open-modal");
+    let paymentModalReturnFocus = null;
+    function closePaymentModal(restoreFocus = true) {
+      paymentModalBackdrop.hidden = true;
+      document.body.classList.remove("payment-modal-open");
+      if (restoreFocus && paymentModalReturnFocus?.isConnected) paymentModalReturnFocus.focus({ preventScroll: true });
+    }
+    paymentOpenModal.addEventListener("click", () => {
+      paymentModalReturnFocus = document.activeElement;
+      paymentModalBackdrop.hidden = false;
+      document.body.classList.add("payment-modal-open");
+      paymentModalContinue.focus({ preventScroll: true });
+    });
+    document.getElementById("payment-modal-back").addEventListener("click", () => closePaymentModal());
+    paymentModalBackdrop.addEventListener("click", event => { if (event.target === paymentModalBackdrop) closePaymentModal(); });
+    paymentModalContinue.addEventListener("click", () => {
+      closePaymentModal(false);
+      const confirmation = document.getElementById("payment-confirmation");
+      confirmation.hidden = false;
+      confirmation.focus({ preventScroll: true });
+    });
+    document.addEventListener("keydown", event => {
+      if (paymentModalBackdrop.hidden) return;
+      if (event.key === "Escape") { event.preventDefault(); closePaymentModal(); return; }
+      if (event.key !== "Tab") return;
+      const focusable = [paymentModalContinue, document.getElementById("payment-modal-back")];
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === paymentModal || !paymentModal.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === paymentModal || !paymentModal.contains(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    });
     function getSavedBooking() {
       if (currentBooking) return currentBooking;
       try {
@@ -558,8 +581,7 @@
     document.getElementById("new-booking").addEventListener("click", () => {
       try { sessionStorage.removeItem(BOOKING_STORAGE_KEY); } catch (error) {}
       currentBooking = null;
-      turnstileTokenInput.value = "";
-      if (turnstileWidgetId !== null && window.turnstile) window.turnstile.reset(turnstileWidgetId);
+      paymentNarrationCode = "";
       paymentScreen.hidden = true;
       bookingForm.hidden = false;
       bookingForm.reset();
@@ -579,7 +601,6 @@
       updateEstimate();
     }
     renderStep();
-    document.getElementById("payment-whatsapp").href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`;
     document.getElementById("payment-help").querySelector("a").href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`;
     document.getElementById("payment-bank").textContent = PAYMENT_CONFIG.bank;
     document.getElementById("payment-account-name").textContent = PAYMENT_CONFIG.accountName;

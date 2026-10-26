@@ -30,5 +30,14 @@ window.APEX_SERVICE_DETAILS = Object.freeze({
       "A pre-event conversation to align on the brief and programme flow."
     ],
     bestFor: "Events looking for a speaker to share ideas with clarity, warmth, and presence."
+  },
+  "project-management": {
+    included: [
+      "Clarifying project objectives, scope, and priorities.",
+      "Building an action plan with clear milestones and timelines.",
+      "Coordinating tasks, contributors, and project updates.",
+      "Tracking progress and surfacing decisions or risks as they arise."
+    ],
+    bestFor: "Event organisers and teams who need structured coordination to keep a project moving from plan to delivery."
   }
 });

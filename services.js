@@ -38,10 +38,10 @@ export const SERVICES = {
         { id: "1-month", label: "1 month", mode: "virtual", unit: "package", amount: 35000 },
         { id: "2-months", label: "2 months", mode: "virtual", unit: "package", amount: 65000 },
         { id: "3-months", label: "3 months", mode: "virtual", unit: "package", amount: 100000 },
-        { id: "1-month", label: "1 month", mode: "physical", unit: "package", amount: 35000 },
-        { id: "2-months", label: "2 months", mode: "physical", unit: "package", amount: 65000 },
-        { id: "3-months", label: "3 months", mode: "physical", unit: "package", amount: 100000 },
       ] },
+    ],
+    inquiryServices: [
+      { name: "Project Management", description: "Practical coordination to help keep your project organized, on schedule, and moving toward its goals.", inquiryMessage: "Hello, I’m interested in Project Management. Please share how you can support my project and the pricing." },
     ],
   },
   media: {
