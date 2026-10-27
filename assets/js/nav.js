@@ -7,23 +7,24 @@
     nav = document.createElement('nav');
     nav.className = 'nav-links';
     nav.setAttribute('aria-label', 'Main navigation');
-    nav.innerHTML = '<a href="home.html">Home</a><a href="services.html">Services</a><a href="home.html#how-it-works">How it works</a><a href="home.html#about">About</a><a href="home.html#contact">Contact</a>';
+    nav.innerHTML = '<a href="index.html">Home</a><a href="services.html">Services</a><a href="work.html">Projects</a><a href="about.html">About</a><a href="insights.html">Insights</a><a href="faq.html">FAQ</a><a href="contact.html">Contact</a>';
     navInner.append(nav);
   }
 
   document.documentElement.classList.add('js-ready');
-  const homeLink = header.querySelector('.brand')?.getAttribute('href') || header.querySelector('a')?.getAttribute('href') || 'home.html';
+  const homeLink = 'index.html';
   const page = location.pathname.split('/').pop() || 'index.html';
   const isHome = page === 'index.html' || page === 'home.html';
+  const isAbout = ['about.html', 'about-founder.html', 'about-co-founder.html'].includes(page);
   const links = [
     { label: 'Home', href: homeLink, current: isHome },
     { label: 'Services', href: 'services.html', current: page === 'services.html' },
-    { label: 'How it works', href: 'home.html#how-it-works', current: false },
-    { label: 'About', href: 'home.html#about', current: false },
-    { label: 'Contact', href: 'home.html#contact', current: false }
+    { label: 'Projects', href: 'work.html', current: page === 'work.html' },
+    { label: 'About', href: 'about.html', current: isAbout },
+    { label: 'Insights', href: 'insights.html', current: page === 'insights.html' },
+    { label: 'FAQ', href: 'faq.html', current: page === 'faq.html' },
+    { label: 'Contact', href: 'contact.html', current: page === 'contact.html' }
   ];
-  const process = document.querySelector('.process');
-  if (process && !process.id) process.id = 'how-it-works';
   const logo = header.querySelector('.brand')?.cloneNode(true) || header.querySelector('a')?.cloneNode(true);
   const drawer = document.createElement('aside');
   drawer.className = 'ah-menu-drawer';
