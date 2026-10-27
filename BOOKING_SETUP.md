@@ -8,7 +8,7 @@ Create a Google reCAPTCHA v2 checkbox key pair for `theapexxhouse.com` (and add 
 
 In Cloudflare, set the secret on the active `apex-house-site` Worker. Do not put the secret in `wrangler.toml`, HTML, or GitHub.
 
-From the project root, configure the secret with `npx wrangler secret put RECAPTCHA_SECRET_KEY`, then deploy the Worker. Replace the public site-key placeholder in the root `wrangler.toml` with the Google reCAPTCHA site key before deploying.
+The public Google reCAPTCHA site key is set in the root `wrangler.toml`. From the project root, configure the secret with `npx wrangler secret put RECAPTCHA_SECRET_KEY`, then deploy the Worker.
 
 ## Cloudflare Worker environment variables
 
