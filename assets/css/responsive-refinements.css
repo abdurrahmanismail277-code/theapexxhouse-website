@@ -1,0 +1,86 @@
+/* Shared responsive refinements: preserve the existing layout while scaling down cleanly. */
+html,
+body {
+  min-width: 320px;
+}
+
+:where(.hero-copy, .hero-visual, .service-detail, .consulting-service, .program-card, .stat-card, .step, .site-wrap, .page-hero, .page-section, .bio-page, .booking-section, #booking-form, .insight-layout, .insight-body) {
+  min-width: 0;
+}
+
+:where(video, iframe) {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .policy {
+    padding: clamp(1rem, 5vw, 1.75rem);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 11vw, 4.25rem);
+    letter-spacing: -.075em;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 8.8vw, 2.7rem);
+  }
+
+  .page-title {
+    font-size: clamp(2.35rem, 9vw, 4.25rem);
+  }
+
+  .page-hero h1 {
+    font-size: clamp(2.3rem, 9.5vw, 4rem);
+  }
+
+  .page-hero p,
+  .page-intro {
+    font-size: clamp(.9375rem, 3.9vw, 1rem);
+  }
+
+  .bio-copy p {
+    font-size: clamp(1rem, 4.4vw, 1.0625rem);
+    line-height: 1.75;
+  }
+
+  .insight-header h1,
+  .insight-header h2 {
+    font-size: clamp(2.3rem, 10vw, 4rem);
+    line-height: 1.02;
+  }
+
+  .insight-deck {
+    font-size: clamp(.9375rem, 4vw, 1.0625rem);
+  }
+
+  .service-detail .book-link {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .wrap,
+  .site-wrap {
+    width: calc(100% - 32px);
+  }
+
+  .nav-inner > .brand img {
+    width: clamp(112px, 37vw, 132px);
+    height: 42px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.3rem, 11.5vw, 2.75rem);
+  }
+
+  .section-title {
+    font-size: clamp(1.9rem, 8.5vw, 2.2rem);
+  }
+
+  .service-detail {
+    padding: 18px 15px;
+  }
+}
