@@ -1,6 +1,11 @@
 name = "apex-house-site"
-pages_build_output_dir = "./"
+main = "worker/src/site.js"
 compatibility_date = "2026-10-27"
+
+[assets]
+directory = "./"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
 
 [vars]
 TURNSTILE_SITE_KEY = "0x4AAAAAAFn62_cJUQDUhr5B"
