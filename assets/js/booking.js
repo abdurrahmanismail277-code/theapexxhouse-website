@@ -55,6 +55,7 @@
     const bookingStatus = document.getElementById("booking-status");
     let turnstileWidgetId = null;
     let turnstileLoadPromise = null;
+    let turnstileLoadFailed = false;
     function ensureTurnstileWidget() {
       if (turnstileWidgetId !== null || !turnstileSlot) return;
       const renderWidget = () => {
@@ -63,9 +64,12 @@
           sitekey: turnstileSlot.dataset.sitekey,
           action: "contact_enquiry",
           theme: "light",
-          callback: () => { bookingStatus.textContent = ""; },
-          "expired-callback": () => { bookingStatus.textContent = "The security check expired. Please complete it again."; },
-          "error-callback": () => { bookingStatus.textContent = "The security check could not load. Check your connection and try again."; },
+          appearance: "always",
+          retry: "auto",
+          "refresh-expired": "auto",
+          callback: () => { turnstileLoadFailed = false; bookingStatus.textContent = ""; },
+          "expired-callback": () => { bookingStatus.textContent = "The security check expired. Complete it again before submitting."; },
+          "error-callback": () => { turnstileLoadFailed = true; bookingStatus.textContent = "The security check could not load. Check your connection or try another browser."; },
         });
       };
       if (window.turnstile) {
@@ -81,7 +85,8 @@
         });
       }
       turnstileLoadPromise.then(() => window.turnstile.ready(renderWidget)).catch(() => {
-        bookingStatus.textContent = "The security check could not load. Check your connection and try again.";
+        turnstileLoadFailed = true;
+        bookingStatus.textContent = "The security check could not load. Check your connection or try another browser.";
       });
     }
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
@@ -390,8 +395,17 @@
       const status = document.getElementById("booking-status");
       if (!validateStep(steps[currentStep])) return;
       const data = Object.fromEntries(new FormData(bookingForm));
-      if (!window.turnstile || turnstileWidgetId === null || !window.turnstile.getResponse(turnstileWidgetId)) {
-        status.textContent = "Please complete the security check before submitting your request.";
+      if (!window.turnstile || turnstileWidgetId === null) {
+        ensureTurnstileWidget();
+        status.textContent = turnstileLoadFailed
+          ? "Cloudflare security check could not load. If you are using a blocker, allow challenges.cloudflare.com and reload the page."
+          : "Cloudflare security check is loading. Wait for it to appear, then try again.";
+        turnstileSlot?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+        return;
+      }
+      if (!window.turnstile.getResponse(turnstileWidgetId)) {
+        status.textContent = "Complete the Cloudflare security check above before submitting. If it is missing, the site hostname may need to be authorized in Cloudflare Turnstile.";
+        turnstileSlot?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
         return;
       }
       const service = selectedService();
