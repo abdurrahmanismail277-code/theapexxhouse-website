@@ -51,6 +51,39 @@
     const serviceOptions = document.getElementById("booking-service");
     const offerOptions = document.getElementById("booking-package");
     const bookingForm = document.getElementById("booking-form");
+    const turnstileSlot = document.getElementById("turnstile-slot");
+    const bookingStatus = document.getElementById("booking-status");
+    let turnstileWidgetId = null;
+    let turnstileLoadPromise = null;
+    function ensureTurnstileWidget() {
+      if (turnstileWidgetId !== null || !turnstileSlot) return;
+      const renderWidget = () => {
+        if (turnstileWidgetId !== null || currentStep !== 3 || !window.turnstile) return;
+        turnstileWidgetId = window.turnstile.render(turnstileSlot, {
+          sitekey: turnstileSlot.dataset.sitekey,
+          action: "contact_enquiry",
+          theme: "light",
+          callback: () => { bookingStatus.textContent = ""; },
+          "expired-callback": () => { bookingStatus.textContent = "The security check expired. Please complete it again."; },
+          "error-callback": () => { bookingStatus.textContent = "The security check could not load. Check your connection and try again."; },
+        });
+      };
+      if (window.turnstile) {
+        window.turnstile.ready(renderWidget);
+        return;
+      }
+      if (!turnstileLoadPromise) {
+        turnstileLoadPromise = new Promise((resolve, reject) => {
+          const script = document.getElementById("turnstile-api");
+          if (!script) { reject(new Error("Turnstile script is missing.")); return; }
+          script.addEventListener("load", resolve, { once: true });
+          script.addEventListener("error", reject, { once: true });
+        });
+      }
+      turnstileLoadPromise.then(() => window.turnstile.ready(renderWidget)).catch(() => {
+        bookingStatus.textContent = "The security check could not load. Check your connection and try again.";
+      });
+    }
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
@@ -254,6 +287,7 @@
       });
       bookingForm.querySelector(".booking-progress").setAttribute("aria-label", `Step ${currentStep + 1} of 4`);
       if (currentStep === 3) {
+        ensureTurnstileWidget();
         const data = new FormData(bookingForm);
         const service = selectedService();
         const offer = service?.offers.find(item => item.id === data.get("offerId") && item.mode === data.get("mode"));
@@ -356,6 +390,10 @@
       const status = document.getElementById("booking-status");
       if (!validateStep(steps[currentStep])) return;
       const data = Object.fromEntries(new FormData(bookingForm));
+      if (!window.turnstile || turnstileWidgetId === null || !window.turnstile.getResponse(turnstileWidgetId)) {
+        status.textContent = "Please complete the security check before submitting your request.";
+        return;
+      }
       const service = selectedService();
       const offer = service?.offers.find(item => item.id === data.offerId && item.mode === data.mode);
       const quote = calculatePrice(data.serviceId, data.mode, data.offerId, Number(data.quantity), Number(data.extraHours || 0));
@@ -437,6 +475,7 @@
             fallback.rel = "noopener noreferrer";
             fallback.textContent = "Send your booking request on WhatsApp";
             status.append(fallback);
+            if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
             return;
           }
           throw new Error(result.error || `Booking request failed (HTTP ${response.status}).`);
@@ -449,6 +488,7 @@
         displayBookingPayment(booking);
       } catch (error) {
         status.textContent = error.message || "We could not send your booking request. Please try again or contact us on WhatsApp.";
+        if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
       } finally {
         submissionInProgress = false;
         submitButton.disabled = false;

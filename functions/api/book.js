@@ -34,6 +34,12 @@ export async function onRequestPost({ request, env }) {
   try { input = await request.json(); } catch { return json({ error: "Please send a valid booking request." }, 400); }
   if (!input || typeof input !== "object" || Array.isArray(input)) return json({ error: "Please send a valid booking request." }, 400);
   if (String(input.website || "").trim()) return json({ error: "We could not verify this request." }, 400);
+  const turnstileToken = typeof input["cf-turnstile-response"] === "string" ? input["cf-turnstile-response"].trim() : "";
+  if (!turnstileToken || turnstileToken.length > 2048) return json({ error: "Please complete the security check and try again." }, 400);
+  if (!env.TURNSTILE_SECRET_KEY) return json({ error: "Security verification is temporarily unavailable. Please try again later." }, 503);
+  const turnstile = await verifyTurnstile(turnstileToken, request, env.TURNSTILE_SECRET_KEY);
+  if (turnstile === "unavailable") return json({ error: "Security verification is temporarily unavailable. Please try again." }, 503);
+  if (!turnstile) return json({ error: "The security check could not be verified. Please try again." }, 400);
   const required = ["serviceId", "offerId", "mode", "eventName", "eventType", "eventDate", "name", "email", "whatsapp", "brief"];
   if (required.some(key => typeof input[key] !== "string" || !input[key].trim()) || input.consent !== true || !Number.isInteger(Number(input.audienceSize)) || Number(input.audienceSize) < 1 || Number(input.audienceSize) > 1000000) return json({ error: "Please complete all required fields." }, 400);
   if (input.countryISO !== "NG") return json({ error: "Bookings are currently available in Nigeria only." }, 400);
@@ -115,4 +121,35 @@ Payment: Direct Nigerian bank transfer. Use the payment details shown on the boo
     await sendResend(env, { from: env.RESEND_FROM_EMAIL, to: [env.BOOKING_NOTIFICATION_EMAIL], bcc: [env.BOOKING_BACKUP_EMAIL], reply_to: email, subject: `Client email failed: ${reference}`, text: `The owner alert succeeded, but the client confirmation email could not be delivered.\nReference: ${reference}\nClient: ${name} <${email}>\nResend status: ${clientResult.status}. Please contact the client directly.` }, `booking-client-failure-${reference}`);
   }
   return json({ ok: true, reference, amount: quote.amount, finalAmountToBeConfirmed: requiresReview, paymentLink, clientEmailSent: clientResult.ok, whatsappUrl }, 201);
+}
+
+async function verifyTurnstile(token, request, secret) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const payload = new URLSearchParams({
+      secret,
+      response: token,
+      idempotency_key: crypto.randomUUID(),
+    });
+    const remoteIp = request.cf?.connectingIp;
+    if (remoteIp) payload.set("remoteip", remoteIp);
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: payload,
+      signal: controller.signal,
+    });
+    if (!response.ok) return "unavailable";
+    const result = await response.json().catch(() => null);
+    const requestHostname = new URL(request.url).hostname.toLowerCase();
+    return result?.success === true
+      && result.action === "contact_enquiry"
+      && typeof result.hostname === "string"
+      && result.hostname.toLowerCase() === requestHostname;
+  } catch {
+    return "unavailable";
+  } finally {
+    clearTimeout(timeout);
+  }
 }
