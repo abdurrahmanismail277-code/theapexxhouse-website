@@ -320,6 +320,8 @@
       document.getElementById("payment-account-number").textContent = ACCOUNT_NUMBER;
       document.getElementById("payment-amount").textContent = amountText;
       document.getElementById("payment-narration").textContent = narration;
+      document.getElementById("payment-amount-row").hidden = false;
+      document.getElementById("payment-narration-row").hidden = false;
       document.getElementById("exact-payment-amount").textContent = amountText;
       document.getElementById("exact-payment-service").textContent = booking.service;
       document.getElementById("modal-transfer-amount").textContent = amountText;
@@ -346,7 +348,7 @@
       document.querySelectorAll("[data-booking-phase]").forEach((label,index)=>{if(index===3)label.setAttribute("aria-current","step");else label.removeAttribute("aria-current")});
       history.replaceState({}, "", "#booking-payment");
       requestAnimationFrame(() => {
-        paymentScreen.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+        document.querySelector(".bank-transfer-card").scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
         paymentTitle.focus({ preventScroll: true });
       });
     }
@@ -560,5 +562,14 @@
     document.getElementById("payment-bank").textContent = PAYMENT_CONFIG.bank;
     document.getElementById("payment-account-name").textContent = PAYMENT_CONFIG.accountName;
     document.getElementById("payment-account-number").textContent = PAYMENT_CONFIG.accountNumber;
+    const publicPaymentCopyValues = {
+      bankName: PAYMENT_CONFIG.bank,
+      accountName: PAYMENT_CONFIG.accountName,
+      accountNumber: PAYMENT_CONFIG.accountNumber,
+      all: `Bank: ${PAYMENT_CONFIG.bank}\nAccount Name: ${PAYMENT_CONFIG.accountName}\nAccount Number: ${PAYMENT_CONFIG.accountNumber}`,
+    };
+    document.querySelectorAll(".payment-copy").forEach(button => {
+      button.dataset.copyValue = publicPaymentCopyValues[button.dataset.copy] || "";
+    });
     const savedBooking = getSavedBooking();
     if (savedBooking) displayBookingPayment(savedBooking);
