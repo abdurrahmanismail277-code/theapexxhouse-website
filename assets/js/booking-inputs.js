@@ -1,6 +1,7 @@
 import { COUNTRIES } from "./countries.js";
 
 const GLOBE_SRC = "assets/flags/globe.svg";
+const NIGERIA_TIME_ZONE = "Africa/Lagos";
 const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
 
 function flagImage(flag) {
@@ -182,23 +183,20 @@ export function initBookingInputs({ draft = {}, onCountryChange = () => {} } = {
   phoneDialCountryHidden.value = nigeria.isoCode;
   const dialCountry = nigeria;
 
-  let browserZone = "UTC";
-  try { browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch {}
-  const timeZones = typeof Intl.supportedValuesOf === "function"
-    ? Intl.supportedValuesOf("timeZone")
-    : ["Africa/Lagos", "Europe/London", "Europe/Paris", "America/New_York", "America/Chicago", "America/Los_Angeles", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Australia/Sydney", "Pacific/Auckland"];
-  const zoneItems = [...new Set([...(timeZones || []), browserZone, "UTC"])].map(zone => ({ zone }));
+  const nigeriaZone = { zone: NIGERIA_TIME_ZONE, label: "Nigeria time (WAT, UTC+1)", flag: "NG" };
+  timeZoneInput.placeholder = "Nigeria time (WAT, UTC+1)";
+  timeZoneInput.setAttribute("aria-label", "Nigeria event time zone");
   const zoneCombo = createCombobox({
     input: timeZoneInput,
     listbox: document.getElementById("timezone-listbox"),
-    items: zoneItems,
-    label: item => item.zone,
-    searchText: item => item.zone,
+    items: [nigeriaZone],
+    label: item => item.label,
+    searchText: item => `${item.label} Nigeria WAT UTC+1 Africa Lagos`,
     value: item => item.zone,
-    renderOption: item => [flagImage(""), Object.assign(document.createElement("span"), { className: "combobox-option-title", textContent: item.zone })],
+    renderOption: item => [flagImage(item.flag), Object.assign(document.createElement("span"), { className: "combobox-option-title", textContent: item.label })],
     onSelect: item => { timeZoneHidden.value = item.zone; timeZoneHidden.dispatchEvent(new Event("change", { bubbles: true })); },
   });
-  zoneCombo.setValue(draft.eventTimezone || browserZone);
+  zoneCombo.setValue(NIGERIA_TIME_ZONE);
   if (draft.whatsappNational) phoneInput.value = draft.whatsappNational;
   onCountryChange(nigeria);
 
@@ -231,7 +229,7 @@ export function initBookingInputs({ draft = {}, onCountryChange = () => {} } = {
       phoneDialHidden.value = nigeria.dialCode;
       phoneDialCountryHidden.value = nigeria.isoCode;
       phoneInput.value = "";
-      zoneCombo.setValue(browserZone);
+      zoneCombo.setValue(NIGERIA_TIME_ZONE);
       updatePhone();
     },
   };

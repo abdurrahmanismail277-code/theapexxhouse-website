@@ -2,6 +2,7 @@ import { calculatePrice } from "../../services.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NIGERIA_TIME_ZONE = "Africa/Lagos";
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
 const plain = value => String(value ?? "").replace(/[\r\n]+/g, " ").trim();
@@ -44,6 +45,7 @@ export async function onRequestPost({ request, env }) {
   if (required.some(key => typeof input[key] !== "string" || !input[key].trim()) || input.consent !== true || !Number.isInteger(Number(input.audienceSize)) || Number(input.audienceSize) < 1 || Number(input.audienceSize) > 1000000) return json({ error: "Please complete all required fields." }, 400);
   if (input.countryISO !== "NG" || input.country !== "Nigeria") return json({ error: "Bookings and payments are currently available in Nigeria only." }, 400);
   if (input.currency !== undefined && input.currency !== "NGN") return json({ error: "Payments are accepted only in Nigerian naira (NGN)." }, 400);
+  if (input.mode === "virtual" && input.eventTimezone !== NIGERIA_TIME_ZONE) return json({ error: "Please choose Nigeria time (WAT) for your virtual event." }, 400);
 
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
@@ -77,7 +79,7 @@ export async function onRequestPost({ request, env }) {
     "Event name": input.eventName.trim(),
     "Event type": input.eventType.trim(),
     "Preferred date": `${input.eventDate}${input.eventTime ? ` ${input.eventTime}` : ""}`,
-    "Event time zone": input.eventTimezone || "Not applicable",
+    "Event time zone": input.mode === "virtual" ? NIGERIA_TIME_ZONE : "Not applicable",
     "Second-choice date": input.alternateDate || "Not provided",
     "Venue": venue || "Not provided",
     "Platform": platform || "Not provided",
