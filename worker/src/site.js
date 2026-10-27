@@ -1,5 +1,4 @@
 import { onRequestPost } from "../../functions/api/book.js";
-import { onRequestGet as getRecaptchaConfig } from "../../functions/api/recaptcha-config.js";
 
 const json = (body, status = 200) => Response.json(body, {
   status,
@@ -9,16 +8,6 @@ const json = (body, status = 200) => Response.json(body, {
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
-
-    if (pathname === "/api/recaptcha-config") {
-      if (request.method !== "GET") {
-        return Response.json({ error: "Use GET to load reCAPTCHA settings." }, {
-          status: 405,
-          headers: { "Cache-Control": "no-store", "Allow": "GET" },
-        });
-      }
-      return getRecaptchaConfig({ request, env });
-    }
 
     if (pathname === "/api/book") {
       if (request.method === "OPTIONS") {

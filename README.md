@@ -11,7 +11,7 @@ Website for The Apex House, an event hosting and moderation business. The site p
 - `privacy-policy.html` — privacy policy.
 - `services.js` — shared service and pricing data used by the site and booking function.
 - `assets/` — logo, photographs, client marks, program images, testimonials, and payment-provider branding.
-- `functions/api/` — shared server handlers for reCAPTCHA configuration and booking submissions.
+- `functions/api/` — shared server handlers for booking submissions.
 - `BOOKING_SETUP.md` — setup instructions for booking integrations and required environment variables.
 - `worker/` — optional Cloudflare Worker project and its own README.
 
@@ -29,7 +29,7 @@ For booking API behavior, use the Cloudflare Worker local development command (`
 
 ## Deploy
 
-Deploy the project with the root `wrangler.toml` as the **Cloudflare Worker** `apex-house-site`. Configure its public reCAPTCHA site key and required secrets in the Worker environment. The booking flow uses Google reCAPTCHA, Resend, and Paystack; follow [BOOKING_SETUP.md](BOOKING_SETUP.md) for setup steps.
+Deploy the project with the root `wrangler.toml` as the **Cloudflare Worker** `apex-house-site`. Configure required secrets in the Worker environment. The booking flow uses Resend and Paystack; the CAPTCHA check is temporarily disabled.
 
 GitHub Pages can host the static HTML, but it does not run the Cloudflare Worker booking API. Keep the Worker route active for bookings.
 

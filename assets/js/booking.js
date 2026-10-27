@@ -51,60 +51,7 @@
     const serviceOptions = document.getElementById("booking-service");
     const offerOptions = document.getElementById("booking-package");
     const bookingForm = document.getElementById("booking-form");
-    const recaptchaSlot = document.getElementById("recaptcha-slot");
     const bookingStatus = document.getElementById("booking-status");
-    let recaptchaWidgetId = null;
-    let recaptchaLoadPromise = null;
-    let recaptchaWidgetPromise = null;
-    let recaptchaLoadFailed = false;
-    function loadRecaptchaApi() {
-      if (window.grecaptcha?.render) return Promise.resolve(window.grecaptcha);
-      if (!recaptchaLoadPromise) {
-        recaptchaLoadPromise = new Promise((resolve, reject) => {
-          const script = document.getElementById("recaptcha-api");
-          if (!script) { reject(new Error("The reCAPTCHA script is missing.")); return; }
-          const timeout = window.setTimeout(() => reject(new Error("Google reCAPTCHA did not load.")), 12000);
-          const ready = () => {
-            window.clearTimeout(timeout);
-            if (window.grecaptcha?.render) resolve(window.grecaptcha);
-            else reject(new Error("Google reCAPTCHA did not initialize."));
-          };
-          script.addEventListener("load", ready, { once: true });
-          script.addEventListener("error", () => { window.clearTimeout(timeout); reject(new Error("Google reCAPTCHA could not load.")); }, { once: true });
-          window.addEventListener("recaptcha-api-ready", ready, { once: true });
-        });
-      }
-      return recaptchaLoadPromise;
-    }
-    function ensureRecaptchaWidget() {
-      if (recaptchaWidgetId !== null || !recaptchaSlot || currentStep !== 3) return Promise.resolve();
-      if (!recaptchaWidgetPromise) {
-        recaptchaWidgetPromise = Promise.all([
-          fetch("/api/recaptcha-config", { cache: "no-store" }).then(async response => {
-            const config = await response.json().catch(() => ({}));
-            if (!response.ok || !config.siteKey) throw new Error(config.error || "reCAPTCHA is not configured yet.");
-            return config.siteKey;
-          }),
-          loadRecaptchaApi(),
-        ]).then(async ([siteKey, grecaptcha]) => {
-          await new Promise(resolve => grecaptcha.ready(resolve));
-          if (recaptchaWidgetId !== null) return;
-          recaptchaWidgetId = grecaptcha.render(recaptchaSlot, {
-            sitekey: siteKey,
-            theme: "light",
-            size: "normal",
-            callback: () => { recaptchaLoadFailed = false; bookingStatus.textContent = ""; },
-            "expired-callback": () => { bookingStatus.textContent = "The reCAPTCHA expired. Complete it again before submitting."; },
-            "error-callback": () => { recaptchaLoadFailed = true; bookingStatus.textContent = "Google reCAPTCHA could not load. Check your connection and try again."; },
-          });
-        }).catch(error => {
-          recaptchaLoadFailed = true;
-          bookingStatus.textContent = error.message || "Google reCAPTCHA could not load.";
-          recaptchaWidgetPromise = null;
-        });
-      }
-      return recaptchaWidgetPromise;
-    }
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
@@ -308,7 +255,6 @@
       });
       bookingForm.querySelector(".booking-progress").setAttribute("aria-label", `Step ${currentStep + 1} of 4`);
       if (currentStep === 3) {
-        void ensureRecaptchaWidget();
         const data = new FormData(bookingForm);
         const service = selectedService();
         const offer = service?.offers.find(item => item.id === data.get("offerId") && item.mode === data.get("mode"));
@@ -411,21 +357,6 @@
       const status = document.getElementById("booking-status");
       if (!validateStep(steps[currentStep])) return;
       const data = Object.fromEntries(new FormData(bookingForm));
-      if (!window.grecaptcha || recaptchaWidgetId === null) {
-        void ensureRecaptchaWidget();
-        status.textContent = recaptchaLoadFailed
-          ? "Google reCAPTCHA could not load. Allow google.com scripts and reload the page."
-          : "Google reCAPTCHA is loading. Wait for the checkbox to appear, then try again.";
-        recaptchaSlot?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
-        return;
-      }
-      const recaptchaToken = window.grecaptcha.getResponse(recaptchaWidgetId);
-      if (!recaptchaToken) {
-        status.textContent = "Complete the Google reCAPTCHA checkbox above before submitting.";
-        recaptchaSlot?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
-        return;
-      }
-      data["g-recaptcha-response"] = recaptchaToken;
       const service = selectedService();
       const offer = service?.offers.find(item => item.id === data.offerId && item.mode === data.mode);
       const quote = calculatePrice(data.serviceId, data.mode, data.offerId, Number(data.quantity), Number(data.extraHours || 0));
@@ -507,7 +438,6 @@
             fallback.rel = "noopener noreferrer";
             fallback.textContent = "Send your booking request on WhatsApp";
             status.append(fallback);
-            if (window.grecaptcha && recaptchaWidgetId !== null) window.grecaptcha.reset(recaptchaWidgetId);
             return;
           }
           throw new Error(result.error || `Booking request failed (HTTP ${response.status}).`);
@@ -520,7 +450,6 @@
         displayBookingPayment(booking);
       } catch (error) {
         status.textContent = error.message || "We could not send your booking request. Please try again or contact us on WhatsApp.";
-        if (window.grecaptcha && recaptchaWidgetId !== null) window.grecaptcha.reset(recaptchaWidgetId);
       } finally {
         submissionInProgress = false;
         submitButton.disabled = false;
@@ -611,7 +540,6 @@
       paymentScreen.hidden = true;
       bookingForm.hidden = false;
       bookingForm.reset();
-      if (window.grecaptcha && recaptchaWidgetId !== null) window.grecaptcha.reset(recaptchaWidgetId);
       bookingInputs.reset();
       updatePlatformOther();
       updateNotesCount();
