@@ -2,7 +2,7 @@
     import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js";
     import { initBookingInputs } from "./booking-inputs.js";
     // Public endpoint URL only; set this after deploying the Cloudflare Worker. Never put secrets here.
-    const BOOKING_ENDPOINT = "/api/book";
+    const BOOKING_ENDPOINT = "https://apex-house-site.abdurrahmanismail277.workers.dev/api/book";
     const BANK_NAME = "OPay";
     const ACCOUNT_NAME = "MUTMAINNAH OLUNLE TIRMIDHIY";
     const ACCOUNT_NUMBER = "6550785344";
@@ -425,8 +425,8 @@
         const result = contentType.includes("application/json") ? await response.json().catch(() => null) : null;
         if (!result) {
           const unavailableMessage = response.status === 404
-            ? "The /api/book route is unavailable. JSON Server and static previews do not run Cloudflare Pages Functions; use Cloudflare Pages or wrangler pages dev."
-            : `The booking API returned an unexpected response (HTTP ${response.status}). Check that /api/book is deployed as a Cloudflare Pages Function.`;
+            ? "The booking API is unavailable. Please try again shortly or contact us on WhatsApp."
+            : `The booking API returned an unexpected response (HTTP ${response.status}). Please try again shortly or contact us on WhatsApp.`;
           throw new Error(unavailableMessage);
         }
         if (!response.ok) {
@@ -442,7 +442,7 @@
           }
           throw new Error(result.error || `Booking request failed (HTTP ${response.status}).`);
         }
-        if (result.ok !== true) throw new Error(result.error || "The /api/book endpoint did not return a booking result. JSON Server is not the booking backend; use Cloudflare Pages or wrangler pages dev.");
+        if (result.ok !== true) throw new Error(result.error || "The Cloudflare booking service did not return a booking result. Please contact us on WhatsApp.");
         booking.reference = typeof result.reference === "string" ? result.reference : booking.reference;
         try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this booking for refresh recovery.", error); }
         try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
