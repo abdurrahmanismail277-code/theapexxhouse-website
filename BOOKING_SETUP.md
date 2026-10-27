@@ -19,7 +19,7 @@ Keep secret variables in Cloudflare Pages only. Do not add secret keys to `index
 1. Add and verify the sending domain in Resend, then set `RESEND_FROM_EMAIL`.
 2. Add the Resend owner, backup, and WhatsApp values above.
 3. Deploy this folder as the Cloudflare Pages project root. Confirm `/functions/api/book.js` is deployed as `/api/book`.
-4. Submit a booking from Preview. Bookings and payments are Nigeria only, in NGN by direct Nigerian bank transfer. Physical and Launch Hosting bookings require final amount review first.
+4. Submit a booking from Preview. Bookings and payments are Nigeria only, in NGN by direct transfer from a Nigerian bank account. International transfers and foreign currencies are not accepted. Physical and Launch Hosting bookings require final amount review first.
 
 The function recalculates the amount from `services.js`, checks the form honeypot, accepts Nigerian bookings only, and provides NGN direct bank transfer instructions. It sends the owner alert before the client confirmation. A failed owner email returns a WhatsApp fallback without clearing the form. A failed client email still shows the request as received and triggers a follow-up owner alert.
 

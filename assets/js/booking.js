@@ -324,8 +324,8 @@
     function displayBookingPayment(booking) {
       document.querySelector(".bank-transfer-card").hidden = false;
       document.getElementById("payment-guidance").textContent = booking.amountKnown
-        ? "Your request is confirmed. Transfer the exact amount in Nigerian naira using the bank details below."
-        : "Our team will confirm the final amount in Nigerian naira before you transfer.";
+        ? "Your request is confirmed. Transfer the exact amount in Nigerian naira from a Nigerian bank account using the details below. International transfers and foreign currencies are not accepted."
+        : "Our team will confirm the final amount in Nigerian naira before you transfer from a Nigerian bank account. International transfers and foreign currencies are not accepted.";
       currentBooking = booking;
       booking.paymentNarration = booking.paymentNarration || getPaymentNarrationCode();
       paymentNarrationCode = booking.paymentNarration;
