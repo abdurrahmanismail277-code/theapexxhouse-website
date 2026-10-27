@@ -7,7 +7,7 @@
     nav = document.createElement('nav');
     nav.className = 'nav-links';
     nav.setAttribute('aria-label', 'Main navigation');
-    nav.innerHTML = '<a href="index.html">Home</a><a href="services.html">Services</a><a href="work.html">Projects</a><a href="about.html">About</a><a href="insights.html">Insights</a><a href="faq.html">FAQ</a><a href="contact.html">Contact</a>';
+    nav.innerHTML = '<a href="index.html">Home</a><a href="services.html">Services</a><a href="index.html#work">Projects</a><a href="about.html">About</a><a href="insights.html">Insights</a><a href="faq.html">FAQ</a><a href="contact.html">Contact</a>';
     navInner.append(nav);
   }
 
@@ -19,7 +19,7 @@
   const links = [
     { label: 'Home', href: homeLink, current: isHome },
     { label: 'Services', href: 'services.html', current: page === 'services.html' },
-    { label: 'Projects', href: 'work.html', current: page === 'work.html' },
+    { label: 'Projects', href: 'index.html#work', current: false },
     { label: 'About', href: 'about.html', current: isAbout },
     { label: 'Insights', href: 'insights.html', current: page === 'insights.html' },
     { label: 'FAQ', href: 'faq.html', current: page === 'faq.html' },
