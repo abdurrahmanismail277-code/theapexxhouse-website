@@ -1,8 +1,6 @@
 
     import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js";
     import { initBookingInputs } from "./booking-inputs.js";
-    // Public endpoint URL only; set this after deploying the Cloudflare Worker. Never put secrets here.
-    const BOOKING_ENDPOINT = "https://apex-house-site.abdurrahmanismail277.workers.dev/api/book";
     const BANK_NAME = "OPay";
     const ACCOUNT_NAME = "MUTMAINNAH OLUNLE TIRMIDHIY";
     const ACCOUNT_NUMBER = "6550785344";
@@ -291,8 +289,8 @@
     function displayBookingPayment(booking) {
       document.querySelector(".bank-transfer-card").hidden = false;
       document.getElementById("payment-guidance").textContent = booking.amountKnown
-        ? "Your request is confirmed. Transfer the exact amount in Nigerian naira from a Nigerian bank account using the details below. International transfers and foreign currencies are not accepted."
-        : "Our team will confirm the final amount in Nigerian naira before you transfer from a Nigerian bank account. International transfers and foreign currencies are not accepted.";
+        ? "Your service details are reviewed. Transfer the exact amount in Nigerian naira from a Nigerian bank account using the details below. International transfers and foreign currencies are not accepted."
+        : "Please contact us on WhatsApp to confirm the final amount before transferring from a Nigerian bank account. International transfers and foreign currencies are not accepted.";
       currentBooking = booking;
       booking.paymentNarration = booking.paymentNarration || getPaymentNarrationCode();
       paymentNarrationCode = booking.paymentNarration;
@@ -302,7 +300,7 @@
       const amountPlain = amountKnown ? String(amountNumber) : "";
       const narration = booking.paymentNarration;
       const formattedAmount = amountKnown ? naira(amountNumber) : "To be confirmed";
-      const confirmationMessage = `Hello Apex House, I have paid ${formattedAmount} for ${booking.service}. Reference: ${narration}. My name is ${String(booking.name || "").trim()}. Receipt attached.`;
+      const confirmationMessage = `Hello Apex House, I have paid ${formattedAmount} for ${booking.service}. Event: ${booking.eventName || "Not provided"}. Date: ${booking.date || "Not provided"}. Payment reference: ${narration}. My name is ${String(booking.name || "").trim()}. Receipt attached.`;
       document.getElementById("payment-reference-summary").textContent = booking.reference;
       document.getElementById("payment-name").textContent = booking.name;
       document.getElementById("payment-service").textContent = booking.service;
@@ -352,9 +350,7 @@
         paymentTitle.focus({ preventScroll: true });
       });
     }
-    let submissionInProgress = false;
-    bookingForm.addEventListener("submit", async event => {
-      if (submissionInProgress) { event.preventDefault(); return; }
+    bookingForm.addEventListener("submit", event => {
       event.preventDefault();
       const status = document.getElementById("booking-status");
       if (!validateStep(steps[currentStep])) return;
@@ -375,7 +371,6 @@
       if (String(data.website || "").trim()) return;
       const amountKnown = data.mode !== "physical" && service.id !== "launch-hosting";
       const platform = data.mode === "virtual" ? (data.platformPreference === "Other" ? String(data.platformOther || "").trim() : String(data.platformPreference || "")) : "";
-      const brief = String(data.brief || "").trim() || "No additional details provided.";
       const booking = {
         reference: createBookingReference(),
         name: String(data.name).trim(), email: String(data.email).trim(),
@@ -384,79 +379,15 @@
         service: service.name, mode: data.mode, package: offer.label,
         quantity: Number(data.quantity), unit: offer.unit,
         amount: quote.amount, amountNGN: quote.amount, amountKnown, paymentNarration: getPaymentNarrationCode(),
+        eventName: String(data.eventName || "").trim(), eventType: String(data.eventType || "").trim(),
         date: data.eventDate, time: String(data.eventTime || ""),
         eventTimezone: data.mode === "virtual" ? bookingInputs.timeZone : "",
         platform, additionalNotes: String(data.additionalNotes || "").trim(),
       };
-      Object.assign(data, {
-        country: booking.country, countryName: booking.country, countryISO: booking.countryISO,
-        phoneDialCode: booking.phoneDialCode, whatsapp: booking.whatsapp,
-        amount: booking.amountNGN, amountNGN: booking.amountNGN, amountKnown,
-        eventTime: booking.time, eventTimezone: booking.eventTimezone, platform: booking.platform, brief,
-      });
-      const submitButton = document.getElementById("booking-submit");
-      submissionInProgress = true;
-      submitButton.disabled = true;
-      submitButton.textContent = "Sending request�";
-      status.textContent = "Sending your booking request�";
-      try {
-        const response = await fetch(BOOKING_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...data,
-            consent: data.consent === "true",
-            reference: booking.reference,
-            service: booking.service,
-            package: booking.package,
-            unit: booking.unit,
-            amount: booking.amountNGN,
-            amountNGN: booking.amountNGN,
-            amountKnown: booking.amountKnown,
-            paymentNarration: booking.paymentNarration,
-            country: booking.country,
-            countryISO: booking.countryISO,
-            whatsapp: booking.whatsapp,
-            eventTime: booking.time,
-            eventTimezone: booking.eventTimezone,
-            additionalNotes: booking.additionalNotes,
-            platform: booking.platform,
-          }),
-        });
-        const contentType = response.headers.get("content-type") || "";
-        const result = contentType.includes("application/json") ? await response.json().catch(() => null) : null;
-        if (!result) {
-          const unavailableMessage = response.status === 404
-            ? "The booking API is unavailable. Please try again shortly or contact us on WhatsApp."
-            : `The booking API returned an unexpected response (HTTP ${response.status}). Please try again shortly or contact us on WhatsApp.`;
-          throw new Error(unavailableMessage);
-        }
-        if (!response.ok) {
-          if (response.status === 502 && result.whatsappUrl) {
-            status.textContent = `${result.error || "We could not email your request."} `;
-            const fallback = document.createElement("a");
-            fallback.href = result.whatsappUrl;
-            fallback.target = "_blank";
-            fallback.rel = "noopener noreferrer";
-            fallback.textContent = "Send your booking request on WhatsApp";
-            status.append(fallback);
-            return;
-          }
-          throw new Error(result.error || `Booking request failed (HTTP ${response.status}).`);
-        }
-        if (result.ok !== true) throw new Error(result.error || "The Cloudflare booking service did not return a booking result. Please contact us on WhatsApp.");
-        booking.reference = typeof result.reference === "string" ? result.reference : booking.reference;
-        try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this booking for refresh recovery.", error); }
-        try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
-        status.textContent = "Your booking request was received.";
-        displayBookingPayment(booking);
-      } catch (error) {
-        status.textContent = error.message || "We could not send your booking request. Please try again or contact us on WhatsApp.";
-      } finally {
-        submissionInProgress = false;
-        submitButton.disabled = false;
-        submitButton.textContent = "Show payment instructions";
-      }
+      try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this payment summary for refresh recovery.", error); }
+      try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
+      status.textContent = "Review complete. Payment instructions are below.";
+      displayBookingPayment(booking);
     });
     document.querySelectorAll(".payment-copy").forEach(button => button.addEventListener("click", async () => {
       const value = button.dataset.copyValue;

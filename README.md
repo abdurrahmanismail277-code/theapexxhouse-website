@@ -11,7 +11,7 @@ Website for The Apex House, an event hosting and moderation business. The site p
 - `privacy-policy.html` — privacy policy.
 - `services.js` — shared service and pricing data used by the site and booking function.
 - `assets/` — logo, photographs, client marks, program images, testimonials, and payment-provider branding.
-- `functions/api/` — shared server handlers for booking submissions.
+- `functions/api/` — dormant server-side handlers; the current payment flow does not submit booking requests.
 - `BOOKING_SETUP.md` — setup instructions for booking integrations and required environment variables.
 - `worker/` — optional Cloudflare Worker project and its own README.
 
@@ -25,13 +25,13 @@ python -m http.server 8000
 
 Then open <http://localhost:8000>.
 
-For booking API behavior, use the Cloudflare Worker local development command (`wrangler dev`) with its secrets and variables configured. See [BOOKING_SETUP.md](BOOKING_SETUP.md).
+The payment flow can be previewed using a local HTTP server; it does not need a booking API.
 
 ## Deploy
 
-Deploy the project with the root `wrangler.toml` as the **Cloudflare Worker** `apex-house-site`. Configure required secrets in the Worker environment. The booking flow uses Resend and Paystack; the CAPTCHA check is temporarily disabled.
+Deploy the project with the root `wrangler.toml` as the **Cloudflare Worker** `apex-house-site`. The current page prepares payment instructions locally after the visitor reviews their service details, then offers a WhatsApp payment confirmation link. It does not send booking requests or emails.
 
-GitHub Pages can host the static HTML, but it does not run the Cloudflare Worker booking API. Keep the Worker route active for bookings.
+GitHub Pages can host the static HTML. The Worker currently serves site assets and does not expose a booking API.
 
 ## Editing content and images
 
