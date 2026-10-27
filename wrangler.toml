@@ -8,4 +8,5 @@ binding = "ASSETS"
 run_worker_first = ["/api/*"]
 
 [vars]
-TURNSTILE_SITE_KEY = "0x4AAAAAAFn62_cJUQDUhr5B"
+# Replace with the public site key from your Google reCAPTCHA v2 checkbox registration.
+RECAPTCHA_SITE_KEY = "REPLACE_WITH_GOOGLE_RECAPTCHA_V2_SITE_KEY"

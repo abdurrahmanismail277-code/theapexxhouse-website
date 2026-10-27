@@ -11,7 +11,7 @@ Website for The Apex House, an event hosting and moderation business. The site p
 - `privacy-policy.html` — privacy policy.
 - `services.js` — shared service and pricing data used by the site and booking function.
 - `assets/` — logo, photographs, client marks, program images, testimonials, and payment-provider branding.
-- `functions/api/` — Cloudflare Pages Functions for booking configuration and submissions.
+- `functions/api/` — shared server handlers for reCAPTCHA configuration and booking submissions.
 - `BOOKING_SETUP.md` — setup instructions for booking integrations and required environment variables.
 - `worker/` — optional Cloudflare Worker project and its own README.
 
@@ -25,13 +25,13 @@ python -m http.server 8000
 
 Then open <http://localhost:8000>.
 
-For booking API behavior, use Cloudflare Pages local development (`wrangler pages dev`) with the project’s Pages Functions and environment variables configured. See [BOOKING_SETUP.md](BOOKING_SETUP.md).
+For booking API behavior, use the Cloudflare Worker local development command (`wrangler dev`) with its secrets and variables configured. See [BOOKING_SETUP.md](BOOKING_SETUP.md).
 
 ## Deploy
 
-Deploy the project root as a **Cloudflare Pages** project to use the booking endpoints in `functions/api/`. Configure the required secrets and public settings in the Cloudflare Pages environment. The booking flow uses Turnstile, Resend, and Paystack; follow [BOOKING_SETUP.md](BOOKING_SETUP.md) for the exact variables and setup steps.
+Deploy the project with the root `wrangler.toml` as the **Cloudflare Worker** `apex-house-site`. Configure its public reCAPTCHA site key and required secrets in the Worker environment. The booking flow uses Google reCAPTCHA, Resend, and Paystack; follow [BOOKING_SETUP.md](BOOKING_SETUP.md) for setup steps.
 
-GitHub Pages can host the static HTML, but it does not run Cloudflare Pages Functions. If you use GitHub Pages, the site’s booking API will need to be hosted separately and configured accordingly.
+GitHub Pages can host the static HTML, but it does not run the Cloudflare Worker booking API. Keep the Worker route active for bookings.
 
 ## Editing content and images
 

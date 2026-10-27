@@ -35,12 +35,12 @@ export async function onRequestPost({ request, env }) {
   try { input = await request.json(); } catch { return json({ error: "Please send a valid booking request." }, 400); }
   if (!input || typeof input !== "object" || Array.isArray(input)) return json({ error: "Please send a valid booking request." }, 400);
   if (String(input.website || "").trim()) return json({ error: "We could not verify this request." }, 400);
-  const turnstileToken = typeof input["cf-turnstile-response"] === "string" ? input["cf-turnstile-response"].trim() : "";
-  if (!turnstileToken || turnstileToken.length > 2048) return json({ error: "Please complete the security check and try again." }, 400);
-  if (!env.TURNSTILE_SECRET_KEY) return json({ error: "Security verification is temporarily unavailable. Please try again later." }, 503);
-  const turnstile = await verifyTurnstile(turnstileToken, request, env.TURNSTILE_SECRET_KEY);
-  if (turnstile === "unavailable") return json({ error: "Security verification is temporarily unavailable. Please try again." }, 503);
-  if (!turnstile) return json({ error: "The security check could not be verified. Please try again." }, 400);
+  const recaptchaToken = typeof input["g-recaptcha-response"] === "string" ? input["g-recaptcha-response"].trim() : "";
+  if (!recaptchaToken || recaptchaToken.length > 4096) return json({ error: "Please complete Google reCAPTCHA and try again." }, 400);
+  if (!env.RECAPTCHA_SECRET_KEY) return json({ error: "Google reCAPTCHA is not configured yet. Please try again later." }, 503);
+  const recaptcha = await verifyRecaptcha(recaptchaToken, request, env.RECAPTCHA_SECRET_KEY);
+  if (recaptcha === "unavailable") return json({ error: "Google reCAPTCHA verification is temporarily unavailable. Please try again." }, 503);
+  if (!recaptcha) return json({ error: "Google reCAPTCHA could not verify this request. Please try again." }, 400);
   const required = ["serviceId", "offerId", "mode", "eventName", "eventType", "eventDate", "name", "email", "whatsapp", "brief"];
   if (required.some(key => typeof input[key] !== "string" || !input[key].trim()) || input.consent !== true || !Number.isInteger(Number(input.audienceSize)) || Number(input.audienceSize) < 1 || Number(input.audienceSize) > 1000000) return json({ error: "Please complete all required fields." }, 400);
   if (input.countryISO !== "NG" || input.country !== "Nigeria") return json({ error: "Bookings and payments are currently available in Nigeria only." }, 400);
@@ -126,18 +126,14 @@ Payment: Direct Nigerian bank transfer. Use the payment details shown on the boo
   return json({ ok: true, reference, amount: quote.amount, finalAmountToBeConfirmed: requiresReview, paymentLink, clientEmailSent: clientResult.ok, whatsappUrl }, 201);
 }
 
-async function verifyTurnstile(token, request, secret) {
+async function verifyRecaptcha(token, request, secret) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const payload = new URLSearchParams({
-      secret,
-      response: token,
-      idempotency_key: crypto.randomUUID(),
-    });
+    const payload = new URLSearchParams({ secret, response: token });
     const remoteIp = request.cf?.connectingIp;
     if (remoteIp) payload.set("remoteip", remoteIp);
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: payload,
@@ -147,7 +143,6 @@ async function verifyTurnstile(token, request, secret) {
     const result = await response.json().catch(() => null);
     const requestHostname = new URL(request.url).hostname.toLowerCase();
     return result?.success === true
-      && result.action === "contact_enquiry"
       && typeof result.hostname === "string"
       && result.hostname.toLowerCase() === requestHostname;
   } catch {
