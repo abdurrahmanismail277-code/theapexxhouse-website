@@ -362,8 +362,8 @@
       --hero-bg-from: #ffffff;
       --hero-bg-to: #f8fbff;
       --hero-bg-page: #ffffff;
-      --hero-bg-glow: rgba(83, 151, 255, 0.14);
-      --hero-bg-mark-opacity: 0.055;
+      --hero-bg-glow: rgba(83, 151, 255, 0.1);
+      --hero-bg-mark-opacity: 0.045;
       position: relative;
       isolation: isolate;
       background:
@@ -375,8 +375,8 @@
       --hero-bg-from: #071427;
       --hero-bg-to: #0a1b33;
       --hero-bg-page: #071427;
-      --hero-bg-glow: rgba(1, 100, 255, 0.2);
-      --hero-bg-mark-opacity: 0.08;
+      --hero-bg-glow: rgba(1, 100, 255, 0.16);
+      --hero-bg-mark-opacity: 0.065;
     }
 
     .hero-bg-layer {
@@ -394,7 +394,7 @@
       background-image: url("assets/apex-house-mark-pattern.svg");
       background-position: 0 0;
       background-repeat: repeat;
-      background-size: 184px 170px;
+      background-size: 220px 200px;
       opacity: var(--hero-bg-mark-opacity);
       mask-image:
         linear-gradient(to bottom, #000 0%, #000 58%, transparent 100%),
@@ -409,11 +409,11 @@
     }
 
     @media (min-width: 641px) and (max-width: 1023px) {
-      .hero-bg-layer::before { background-size: 158px 146px; }
+      .hero-bg-layer::before { background-size: 185px 168px; }
     }
 
     @media (max-width: 640px) {
-      .hero-bg-layer::before { background-size: 142px 132px; }
+      .hero-bg-layer::before { background-size: 158px 144px; }
     }
 
     @keyframes hero-bg-drift {
