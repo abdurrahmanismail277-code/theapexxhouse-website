@@ -1,0 +1,70 @@
+/* Static Apex lattice background. Keep the page tuning in this one file. */
+.site-bg-page {
+  --site-bg-from: #081326;
+  --site-bg-to: #102446;
+  --site-line-color: #4778cf;
+  --site-line-opacity: .15;
+  --site-glow-color: rgba(32, 104, 235, .24);
+  --site-vignette-color: rgba(0, 2, 8, .52);
+  --site-tile-size: 110px;
+  background:
+    radial-gradient(ellipse at center, transparent 55%, var(--site-vignette-color) 100%),
+    radial-gradient(ellipse at 100% 100%, var(--site-glow-color), transparent 40%),
+    url("../apex-house-pattern-tile.svg"),
+    linear-gradient(135deg, var(--site-bg-from), var(--site-bg-to)) !important;
+  background-size: cover, cover, var(--site-tile-size) calc(var(--site-tile-size) * .888889), cover;
+  background-position: center, center, 0 0, center;
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-attachment: scroll;
+}
+:root:not([data-theme="dark"]) .site-bg-page {
+  --site-bg-from: #ffffff;
+  --site-bg-to: #eaf2ff;
+  --site-line-color: #4778cf;
+  --site-line-opacity: .15;
+  --site-glow-color: rgba(102, 169, 255, .18);
+  --site-vignette-color: rgba(15, 58, 120, .035);
+}
+:root[data-theme="dark"] .site-bg-page {
+  --site-bg-from: #050c19;
+  --site-bg-to: #0b1b34;
+  --site-line-color: #4778cf;
+  --site-line-opacity: .15;
+  --site-glow-color: rgba(34, 104, 255, .24);
+  --site-vignette-color: rgba(0, 2, 8, .52);
+}
+ :root[data-theme="dark"] .site-bg-page .trusted {
+  background: rgba(255, 255, 255, .92) !important;
+}
+@media (max-width: 700px) {
+  .site-bg-page { --site-tile-size: 72px; }
+}
+/* Let the lattice run behind page sections. Preserve dark text surfaces where white copy depends on them. */
+.site-bg-page .hero,
+.site-bg-page .services,
+.site-bg-page .consulting,
+.site-bg-page .programs,
+.site-bg-page .purpose,
+.site-bg-page .faq,
+.site-bg-page .testimonials,
+.site-bg-page .trusted,
+.site-bg-page .process,
+.site-bg-page .terms-section,
+.site-bg-page .page-hero,
+.site-bg-page .page-section.soft,
+.site-bg-page .bio-page,
+.site-bg-page .insight-chapter {
+  background: transparent !important;
+}
+.site-bg-page .why,
+.site-bg-page .booking-section,
+.site-bg-page .insights {
+  background: rgba(3, 15, 34, .90) !important;
+}
+.site-bg-page .cta-band {
+  background: rgba(1, 100, 255, .95) !important;
+}
+.site-bg-page .footer,
+.site-bg-page .page-footer {
+  background: rgba(3, 15, 34, .90) !important;
+}

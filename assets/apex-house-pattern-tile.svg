@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="270" height="240" viewBox="0 0 270 240">
+<defs>
+<g id="mark" fill="none" stroke="#4778cf" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round" stroke-opacity=".15">
+<path d="M0 38 35 3h58l35 35v21L99 31H29L0 59z"/>
+<path d="m0 74 35-35h58l35 35v21L99 67H29L0 95z"/>
+<path d="m0 110 35-35h58l35 35v21L99 103H29L0 131z"/>
+</g>
+<g id="dots" fill="#4778cf" fill-opacity=".28">
+<circle cx="0" cy="38" r="2.4"/><circle cx="35" cy="3" r="2.4"/><circle cx="93" cy="3" r="2.4"/><circle cx="135" cy="38" r="2.4"/><circle cx="135" cy="59" r="2.4"/><circle cx="99" cy="31" r="2.4"/><circle cx="29" cy="31" r="2.4"/><circle cx="0" cy="59" r="2.4"/>
+<circle cx="0" cy="74" r="2.4"/><circle cx="35" cy="39" r="2.4"/><circle cx="93" cy="39" r="2.4"/><circle cx="135" cy="74" r="2.4"/><circle cx="135" cy="95" r="2.4"/><circle cx="99" cy="67" r="2.4"/><circle cx="29" cy="67" r="2.4"/><circle cx="0" cy="95" r="2.4"/>
+<circle cx="0" cy="110" r="2.4"/><circle cx="35" cy="75" r="2.4"/><circle cx="93" cy="75" r="2.4"/><circle cx="135" cy="110" r="2.4"/><circle cx="135" cy="131" r="2.4"/><circle cx="99" cy="103" r="2.4"/><circle cx="29" cy="103" r="2.4"/><circle cx="0" cy="131" r="2.4"/>
+</g>
+</defs>
+<use href="#mark" x="-67.5" y="-120"/><use href="#dots" x="-67.5" y="-120"/>
+<use href="#mark" x="67.5" y="-120"/><use href="#dots" x="67.5" y="-120"/>
+<use href="#mark" x="202.5" y="-120"/><use href="#dots" x="202.5" y="-120"/>
+<use href="#mark" x="-67.5" y="120"/><use href="#dots" x="-67.5" y="120"/>
+<use href="#mark"/> <use href="#dots"/>
+<use href="#mark" x="135"/><use href="#dots" x="135"/>
+<use href="#mark" x="67.5" y="120"/><use href="#dots" x="67.5" y="120"/>
+<use href="#mark" x="202.5" y="120"/><use href="#dots" x="202.5" y="120"/>
+</svg>
