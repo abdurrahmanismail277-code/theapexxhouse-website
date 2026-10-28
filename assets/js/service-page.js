@@ -1,4 +1,4 @@
-import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js";
+import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js?v=consulting-tagline-removed";
 
 const root = document.getElementById("svc-full-page");
 const service = root && SERVICE_PAGES[root.dataset.servicePage];
