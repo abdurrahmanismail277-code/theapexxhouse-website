@@ -351,6 +351,7 @@
   <link rel="stylesheet" href="assets/css/project-management.css">
   <link rel="stylesheet" href="assets/css/pricing-category-intros.css">
   <link rel="stylesheet" href="assets/css/contact-section.css">
+  <link rel="stylesheet" href="assets/css/hero-service-dialog.css">
   <link rel="stylesheet" href="assets/css/responsive-refinements.css">
 </head>
 <body>
@@ -377,7 +378,7 @@
           <h1>Elevate your <span>moment.<svg class="headline-sweep" viewBox="0 0 300 20" aria-hidden="true"><path d="M4 14C75 3 201 3 294 13"/></svg></span></h1>
           <p>We bring people together and make meaningful moments feel effortless&mdash;from the first welcome to the final applause.</p>
           <div class="hero-actions"><a class="btn js-booking-link" href="book.html" aria-label="Start a booking request with The Apex House">Book a Service <svg class="btn-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a><a class="btn btn-outline" href="index.html#work">See Our Work <svg class="btn-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a></div>
-          <div class="hero-service-chooser"><span>Or message us about a specific service</span><div class="hero-service-links"><a href="https://wa.me/2348038326349?text=Hello%2C%20The%20Apex%20House%2C%20I%20need%20trust%20building%2C%20a%20better%20structure%2C%20and%20more%20visibility%20for%20my%20brand.%20Can%20we%20discuss%20my%20brand%20objective%20and%20next%20steps%3F%20Thank%20you." target="_blank" rel="noopener noreferrer">Apex Consulting</a><a href="https://wa.me/2348038326349?text=Hello%2C%20The%20Apex%20House%2C%20I%20have%20an%20event%2Fwebinar%20and%20would%20love%20you%20to%20serve%20as%20the%20moderator%20or%20speaker.%20Can%20we%20discuss%20the%20purpose%2C%20details%2C%20and%20next%20steps%3F%20Thank%20you." target="_blank" rel="noopener noreferrer">Apex Media</a><a href="https://wa.me/2348038326349?text=Hello%2C%20The%20Apex%20House%2C%20I%E2%80%99m%20interested%20in%20Apex%20Communication%20services.%20Could%20we%20discuss%20my%20communication%20goals%2C%20the%20support%20available%2C%20and%20next%20steps%3F%20Thank%20you." target="_blank" rel="noopener noreferrer">Apex Communication</a></div></div>
+          <div class="hero-service-chooser"><span>Or message us about a specific service</span><div class="hero-service-links" role="group" aria-label="Explore a service"><button type="button" aria-expanded="false" aria-controls="hero-service-dialog" data-hero-service="consulting">Apex Consulting</button><button type="button" aria-expanded="false" aria-controls="hero-service-dialog" data-hero-service="media">Apex Media</button><button type="button" aria-expanded="false" aria-controls="hero-service-dialog" data-hero-service="communication">Apex Communication</button></div></div>
           <div class="hero-tags"><span><i></i> Meaningful connection</span><span><i></i> Thoughtfully led</span><span><i></i> Made memorable</span></div>
         </div>
         <div class="hero-visual fade-up">
@@ -387,6 +388,12 @@
         </div>
       </div>
     </section>
+    <div class="hero-service-overlay" id="hero-service-dialog" hidden>
+      <section class="hero-service-dialog" role="dialog" aria-modal="true" aria-labelledby="hero-service-title" aria-describedby="hero-service-tagline" tabindex="-1">
+        <button class="hero-service-close" type="button" aria-label="Close service details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+        <div class="hero-service-content" aria-live="polite"></div>
+      </section>
+    </div>
     <section class="partner-logo-strip surface-adaptive" aria-label="Trusted partner brands">
       <div class="partner-trust-row">
         <div class="avatar-stack" aria-label="EMQUE, UniqueZayt, and Al-Khayr logos">
@@ -619,6 +626,7 @@
   </aside>
   
   <script type="module" src="assets/js/pricing.js"></script>
+  <script type="module" src="assets/js/hero-service-dialog.js"></script>
   <script>
     const INSTAGRAM_URL = "https://instagram.com/the.apex.house";
     const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61595060085783";
