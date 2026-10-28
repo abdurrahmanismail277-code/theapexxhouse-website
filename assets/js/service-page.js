@@ -75,11 +75,15 @@ sectionDefinitions.forEach(definition => {
   if (definition.signoff) section.append(make("p", "svc-full-signoff", definition.signoff));
   if (definition.extra) section.append(make("p", "svc-full-extra", definition.extra));
   if (definition.id === "together") {
-    const wa = make("a", "svc-full-whatsapp", `Talk to us about ${service.name}`);
-    wa.href = `https://wa.me/2348038326349?text=${encodeURIComponent(service.whatsappMessage)}`;
-    wa.target = "_blank";
-    wa.rel = "noopener noreferrer";
-    section.append(wa);
+    const contact = make("a", "svc-full-whatsapp", `Talk to us about ${service.name}`);
+    if (root.dataset.servicePage === "communication") {
+      contact.href = `mailto:theapexhouse2026@gmail.com?subject=${encodeURIComponent(`Enquiry about ${service.name}`)}&body=${encodeURIComponent(service.emailMessage)}`;
+    } else {
+      contact.href = `https://wa.me/2348038326349?text=${encodeURIComponent(service.whatsappMessage)}`;
+      contact.target = "_blank";
+      contact.rel = "noopener noreferrer";
+    }
+    section.append(contact);
   }
   sections.append(section);
 });
