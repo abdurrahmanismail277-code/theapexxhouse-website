@@ -356,6 +356,75 @@
   <link rel="stylesheet" href="assets/css/founder-team.css">
   <link rel="stylesheet" href="assets/css/hero-service-dialog.css">
   <link rel="stylesheet" href="assets/css/responsive-refinements.css">
+  <style>
+    /* Homepage hero background only. */
+    .hero-bg-host {
+      --hero-bg-from: #ffffff;
+      --hero-bg-to: #f8fbff;
+      --hero-bg-page: #ffffff;
+      --hero-bg-glow: rgba(83, 151, 255, 0.14);
+      --hero-bg-mark-opacity: 0.055;
+      position: relative;
+      isolation: isolate;
+      background:
+        radial-gradient(ellipse at 84% 12%, var(--hero-bg-glow), transparent 38%),
+        linear-gradient(180deg, var(--hero-bg-from) 0%, var(--hero-bg-to) 70%, var(--hero-bg-page) 100%);
+    }
+
+    :root[data-theme="dark"] .hero-bg-host {
+      --hero-bg-from: #071427;
+      --hero-bg-to: #0a1b33;
+      --hero-bg-page: #071427;
+      --hero-bg-glow: rgba(1, 100, 255, 0.2);
+      --hero-bg-mark-opacity: 0.08;
+    }
+
+    .hero-bg-layer {
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .hero-bg-layer::before {
+      position: absolute;
+      inset: -4% -3% 0;
+      content: "";
+      background-image: url("assets/apex-house-mark-pattern.svg");
+      background-position: 0 0;
+      background-repeat: repeat;
+      background-size: 272px 250px;
+      opacity: var(--hero-bg-mark-opacity);
+      mask-image:
+        linear-gradient(to bottom, #000 0%, #000 58%, transparent 100%),
+        radial-gradient(ellipse 84% 74% at 50% 42%, transparent 0%, rgba(0, 0, 0, 0.2) 43%, #000 100%);
+      mask-composite: intersect;
+      -webkit-mask-image:
+        linear-gradient(to bottom, #000 0%, #000 58%, transparent 100%),
+        radial-gradient(ellipse 84% 74% at 50% 42%, transparent 0%, rgba(0, 0, 0, 0.2) 43%, #000 100%);
+      -webkit-mask-composite: source-in;
+      animation: hero-bg-drift 78s ease-in-out infinite alternate;
+      will-change: transform;
+    }
+
+    @media (min-width: 641px) and (max-width: 1023px) {
+      .hero-bg-layer::before { background-size: 232px 213px; }
+    }
+
+    @media (max-width: 640px) {
+      .hero-bg-layer::before { background-size: 190px 175px; }
+    }
+
+    @keyframes hero-bg-drift {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(14px, 10px, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-bg-layer::before { animation: none; will-change: auto; }
+    }
+  </style>
 </head>
 <body>
   <div class="intro-screen" id="intro-screen">
@@ -374,7 +443,8 @@
   </header>
 <a class="back-to-top" id="back-to-top" href="#home" aria-label="Back to top" title="Back to top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg></a>
   <main id="main-content">
-    <section class="hero surface-adaptive" id="home">
+    <section class="hero surface-adaptive hero-bg-host" id="home">
+      <div class="hero-bg-layer" aria-hidden="true"></div>
       <div class="wrap hero-grid">
         <div class="hero-copy fade-up">
           <div class="hero-badge">EVENTS <span>&bull;</span> LAUNCHES <span>&bull;</span> COMMUNITIES</div>
