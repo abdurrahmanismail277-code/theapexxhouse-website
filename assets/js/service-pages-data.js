@@ -4,7 +4,6 @@ export const SERVICE_PAGES = {
   communication: {
     name: "Apex Communication",
     page: "apex-communication.html",
-    tagline: "Where Excellence Meets Expression.",
     summary: "Apex Communication exists to help individuals, organisations, and event organisers communicate with purpose.",
     audience: "Individuals, organisations, and event organisers communicating with purpose.",
     outcome: "We help you communicate with clarity, confidence, and intention.",
@@ -13,14 +12,6 @@ export const SERVICE_PAGES = {
       { name: "Launch Hosting and Facilitation", summary: "Professional hosting for product launches, book launches, and brand unveilings." },
       { name: "Event Community Management", summary: "Purposeful communication and audience engagement before and during events." },
       { name: "Public Speaking", summary: "Speaking engagements for events, communities, organisations, and institutional gatherings." }
-    ],
-    about: [
-      "Talking is one thing. Communicating with purpose is another.",
-      "Communication is more than having something to say. It is about how a message is delivered, how people receive it, and what that message enables them to understand or do.",
-      "At The Apex House, we understand that the right words, delivered with the right structure and intention, can shape an experience, direct a conversation, and give a voice the clarity it deserves.",
-      "Apex Communication exists to help individuals, organisations, and event organisers communicate with purpose. Through professional event moderation, launch hosting, community management, and public speaking, we provide the structure and professional expression that help communication achieve its intended purpose.",
-      "Whether you are organising an event, unveiling a brand, engaging a community, or looking for someone to represent your message, we help you communicate with clarity, confidence, and intention.",
-      "Because communication should not merely fill the silence. It should give direction to the moment, meaning to the message, and structure to the experience."
     ],
     services: [
       {
@@ -133,7 +124,6 @@ export const SERVICE_PAGES = {
   consulting: {
     name: "Apex Consulting",
     page: "apex-consulting.html",
-    tagline: "",
     summary: "Apex Consulting exists to help event organisers move from uncertainty to clarity and from ideas to intentional planning.",
     audience: "Event organisers who have an idea or an event in development and need professional guidance before proceeding; event organisers who want continued strategic guidance as they develop and prepare their events; and event organisers and teams who need structured coordination to move work from plan to delivery.",
     outcome: "We help you build with intention and approach your event with purpose and direction.",
@@ -141,15 +131,6 @@ export const SERVICE_PAGES = {
       { name: "Event Clarity Session", summary: "A focused consultation to think through your event, identify areas that need attention, and gain clarity on your next steps." },
       { name: "Event Advisory", summary: "Ongoing strategic consultation to help organisers navigate event planning with greater clarity and intention." },
       { name: "Project Management", summary: "Turn your project goals into a clear plan and keep the moving parts coordinated." }
-    ],
-    about: [
-      "Every successful event begins with a clear direction.",
-      "An event is more than a date, a venue, and a list of activities. It is an experience designed to achieve a purpose. But sometimes, organisers have the vision without a clear structure for bringing it to life.",
-      "Questions about the event's direction, audience experience, programme structure, and overall execution can become overwhelming when there is no one to help put things into perspective.",
-      "Apex Consulting exists to help event organisers move from uncertainty to clarity and from ideas to intentional planning.",
-      "We provide strategic guidance to help you think through your event, make informed decisions, and approach its development with a clearer sense of direction.",
-      "Whether you need clarity before you begin or professional guidance throughout your planning process, we help you build with intention.",
-      "Because an event shouldn't just happen. It should have a clear purpose and a well-considered direction."
     ],
     services: [
       {
@@ -237,7 +218,6 @@ export const SERVICE_PAGES = {
   media: {
     name: "Apex Media",
     page: "apex-media.html",
-    tagline: "Where Excellence Meets Expression.",
     summary: "Apex Media helps brands and event organisers approach visibility and content with intention.",
     audience: "Brands and event organisers approaching visibility and content with intention.",
     outcome: "Our focus goes beyond showing up. It is about how you show up, what people understand, and what they remember.",
@@ -245,12 +225,6 @@ export const SERVICE_PAGES = {
       { name: "Brand Influencing", summary: "Purposeful brand promotion through content shared on The Apex House's WhatsApp Status." },
       { name: "Brand Influencing & Broadcast Amplification", summary: "Promotional content shared through WhatsApp Status and broadcast lists." },
       { name: "Event Content Support", summary: "Clear, purposeful, and engaging written content for events." }
-    ],
-    about: [
-      "Visibility is one thing. Being understood is another.",
-      "A brand can appear on people's screens every day and still struggle to communicate its value. An event can offer something meaningful and still fail to capture the attention of its intended audience.",
-      "Apex Media helps brands and event organisers approach visibility and content with intention. Through strategic brand promotion and event content support, we help communicate what you offer and create opportunities for your message to reach the right audience.",
-      "Our focus goes beyond showing up. It is about how you show up, what people understand, and what they remember."
     ],
     services: [
       {

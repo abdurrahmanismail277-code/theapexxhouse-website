@@ -1,4 +1,4 @@
-import { SERVICE_PAGES } from "./service-pages-data.js";
+import { SERVICE_PAGES } from "./service-pages-data.js?v=service-intros-removed";
 
 const services = SERVICE_PAGES;
 
@@ -26,9 +26,7 @@ if (chooser && overlay) {
       chip.classList.toggle("is-selected", selected);
       chip.setAttribute("aria-expanded", String(selected));
     });
-    content.innerHTML = `<p class="svc-panel-eyebrow">THE APEX HOUSE · SERVICE OVERVIEW</p>
-      <h2 id="svc-panel-title">${service.name}</h2>
-      <p class="svc-panel-tagline" id="svc-panel-tagline">${service.tagline}</p>
+    content.innerHTML = `<h2 id="svc-panel-title">${service.name}</h2>
       <div class="svc-panel-switcher" role="group" aria-label="Choose a service">${chips.map(chip => `<button type="button" data-svc-panel-service="${chip.dataset.heroService}" aria-pressed="${chip.dataset.heroService === key}">${chip.textContent}</button>`).join("")}</div>
       <div class="svc-panel-grid">
         <section><h3>What it means</h3><p>${service.summary}</p></section>

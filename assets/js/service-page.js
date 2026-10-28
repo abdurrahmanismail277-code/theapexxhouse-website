@@ -1,4 +1,4 @@
-import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js?v=consulting-tagline-removed";
+import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js?v=service-intros-removed";
 
 const root = document.getElementById("svc-full-page");
 const service = root && SERVICE_PAGES[root.dataset.servicePage];
@@ -15,21 +15,14 @@ const appendParagraphs = (parent, paragraphs, className = "svc-full-paragraph") 
 };
 const serviceLabel = key => SERVICE_PAGES[key].name;
 const sectionDefinitions = [
-  { id: "about", label: `About ${service.name}`, title: `About ${service.name}`, paragraphs: service.about },
+  { id: "services", label: "Our services", title: "Our services", services: service.services },
   ...(service.areas.length ? [{ id: "areas", label: "Areas we help you think through", title: "Areas we help you think through", list: service.areas }] : []),
   ...(service.who.length ? [{ id: "who", label: "Who Apex Consulting is for", title: "Who Apex Consulting is for", list: service.who }] : []),
-  { id: "services", label: "Our services", title: "Our services", services: service.services },
   { id: "why", label: `Why ${service.name}`, title: `Why ${service.name}`, paragraphs: service.why },
   { id: "together", label: "Let's work together", title: service.closingTitle, paragraphs: service.closing, signoff: service.signoff, extra: service.closingExtra }
 ];
 
 document.title = `${service.name} | The Apex House`;
-const hero = root.querySelector("[data-svc-full-hero]");
-hero.append(make("p", "svc-full-eyebrow", "THE APEX HOUSE"));
-hero.append(make("h1", "svc-full-title", service.name));
-const pageTagline = service.pageTagline ?? service.tagline;
-if (pageTagline) hero.append(make("p", "svc-full-tagline", pageTagline));
-
 const navigation = root.querySelector("[data-svc-full-navigation]");
 sectionDefinitions.forEach(section => {
   const link = make("a", "svc-full-nav-link", section.label);
@@ -38,6 +31,7 @@ sectionDefinitions.forEach(section => {
 });
 
 const sections = root.querySelector("[data-svc-full-sections]");
+sections.append(make("h1", "svc-full-sr-only", service.name));
 sectionDefinitions.forEach(definition => {
   const section = make("section", "svc-full-section");
   section.id = `svc-full-${definition.id}`;
