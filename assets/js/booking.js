@@ -51,6 +51,7 @@
     const bookingForm = document.getElementById("booking-form");
     const bookingStatus = document.getElementById("booking-status");
     const RECAPTCHA_SITE_KEY = "6Lf_IQUuAAAAAEvfsUMYCAx9ILd35Lm32OJ-I8aQ";
+    const RECAPTCHA_VERIFY_URL = "https://apex-house-site.abdurrahmanismail277.workers.dev/api/recaptcha/verify";
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
@@ -67,7 +68,11 @@
         script.src = "https://www.google.com/recaptcha/api.js?onload=apexRecaptchaLoaded&render=explicit";
         script.async = true;
         script.defer = true;
-        script.onerror = () => reject(new Error("reCAPTCHA could not be loaded."));
+        script.onerror = () => {
+          script.remove();
+          recaptchaPromise = null;
+          reject(new Error("reCAPTCHA could not be loaded."));
+        };
         document.head.append(script);
       });
       return recaptchaPromise;
@@ -413,7 +418,7 @@
       submitButton.disabled = true;
       status.textContent = "Verifying your request...";
       try {
-        const response = await fetch("/api/recaptcha/verify", {
+        const response = await fetch(RECAPTCHA_VERIFY_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: recaptchaToken }),
