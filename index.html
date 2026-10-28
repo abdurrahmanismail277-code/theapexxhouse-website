@@ -357,29 +357,33 @@
   <link rel="stylesheet" href="assets/css/hero-service-dialog.css">
   <link rel="stylesheet" href="assets/css/responsive-refinements.css">
   <style>
-    /* Homepage hero background only. */
+    /* Homepage hero background only: decorative layers are clipped inside #home. */
     .hero-bg-host {
       --hero-bg-from: #ffffff;
-      --hero-bg-to: #f8fbff;
+      --hero-bg-to: #dceaff;
       --hero-bg-page: #ffffff;
-      --hero-bg-glow: rgba(83, 151, 255, 0.1);
-      --hero-bg-mark-opacity: 0.045;
+      --hero-glow-a: rgba(29, 111, 255, 0.38);
+      --hero-glow-b: rgba(86, 202, 255, 0.3);
+      --hero-pattern-opacity: 0.18;
+      --hero-signature-opacity: 0.1;
       position: relative;
       isolation: isolate;
       background:
-        radial-gradient(ellipse at 84% 12%, var(--hero-bg-glow), transparent 38%),
-        linear-gradient(180deg, var(--hero-bg-from) 0%, var(--hero-bg-to) 70%, var(--hero-bg-page) 100%);
+        linear-gradient(90deg, transparent 0%, rgba(86, 152, 255, 0.22) 48%, rgba(129, 197, 255, 0.72) 82%, transparent 100%) top / 100% 2px no-repeat,
+        linear-gradient(135deg, var(--hero-bg-from) 4%, var(--hero-bg-to) 80%, var(--hero-bg-page) 100%);
     }
 
     :root[data-theme="dark"] .hero-bg-host {
-      --hero-bg-from: #071427;
-      --hero-bg-to: #0a1b33;
+      --hero-bg-from: #061230;
+      --hero-bg-to: #103c83;
       --hero-bg-page: #071427;
-      --hero-bg-glow: rgba(1, 100, 255, 0.16);
-      --hero-bg-mark-opacity: 0.065;
+      --hero-glow-a: rgba(20, 101, 255, 0.5);
+      --hero-glow-b: rgba(30, 190, 255, 0.3);
+      --hero-pattern-opacity: 0.24;
+      --hero-signature-opacity: 0.1;
     }
 
-    .hero-bg-layer {
+    .hero-bg-host > .hero-bg-layer {
       position: absolute;
       z-index: -1;
       inset: 0;
@@ -387,42 +391,119 @@
       pointer-events: none;
     }
 
-    .hero-bg-layer::before {
+    .hero-bg-host .hero-bg-glows,
+    .hero-bg-host .hero-bg-signature,
+    .hero-bg-host .hero-bg-grain {
       position: absolute;
-      inset: -4% -3% 0;
+      pointer-events: none;
+    }
+
+    .hero-bg-host .hero-bg-glows {
+      z-index: 0;
+      inset: 0;
+    }
+
+    .hero-bg-host .hero-bg-glows::before,
+    .hero-bg-host .hero-bg-glows::after {
+      position: absolute;
+      content: "";
+      border-radius: 50%;
+      filter: blur(30px);
+      will-change: transform, opacity;
+    }
+
+    .hero-bg-host .hero-bg-glows::before {
+      top: -38vw;
+      right: -24vw;
+      width: min(88vw, 1040px);
+      aspect-ratio: 1;
+      background: radial-gradient(circle, var(--hero-glow-a) 0%, rgba(29, 111, 255, 0.2) 38%, transparent 72%);
+      animation: hero-bg-glow-a 14s ease-in-out infinite alternate;
+    }
+
+    .hero-bg-host .hero-bg-glows::after {
+      bottom: -44vw;
+      left: -30vw;
+      width: min(82vw, 920px);
+      aspect-ratio: 1;
+      background: radial-gradient(circle, var(--hero-glow-b) 0%, rgba(86, 202, 255, 0.14) 39%, transparent 72%);
+      animation: hero-bg-glow-b 16s ease-in-out infinite alternate;
+    }
+
+    .hero-bg-host > .hero-bg-layer::before {
+      position: absolute;
+      z-index: 1;
+      inset: -5% -3% 0;
       content: "";
       background-image: url("assets/apex-house-mark-pattern.svg");
       background-position: 0 0;
       background-repeat: repeat;
-      background-size: 220px 200px;
-      opacity: var(--hero-bg-mark-opacity);
+      background-size: 280px 240px;
+      opacity: var(--hero-pattern-opacity);
       mask-image:
         linear-gradient(to bottom, #000 0%, #000 58%, transparent 100%),
-        radial-gradient(ellipse 84% 74% at 50% 42%, transparent 0%, rgba(0, 0, 0, 0.2) 43%, #000 100%);
+        radial-gradient(ellipse 58% 82% at 29% 47%, transparent 0%, rgba(0, 0, 0, 0.18) 46%, #000 100%);
       mask-composite: intersect;
       -webkit-mask-image:
         linear-gradient(to bottom, #000 0%, #000 58%, transparent 100%),
-        radial-gradient(ellipse 84% 74% at 50% 42%, transparent 0%, rgba(0, 0, 0, 0.2) 43%, #000 100%);
+        radial-gradient(ellipse 58% 82% at 29% 47%, transparent 0%, rgba(0, 0, 0, 0.18) 46%, #000 100%);
       -webkit-mask-composite: source-in;
-      animation: hero-bg-drift 78s ease-in-out infinite alternate;
+      animation: hero-bg-drift 84s ease-in-out infinite alternate;
       will-change: transform;
     }
 
+    .hero-bg-host .hero-bg-signature {
+      z-index: 2;
+      top: 14%;
+      right: -38%;
+      width: 82%;
+      aspect-ratio: 1;
+      background: url("assets/apex-house-logo.svg") left center / 350% auto no-repeat;
+      opacity: var(--hero-signature-opacity);
+      transform: rotate(13deg);
+    }
+
+    .hero-bg-host .hero-bg-grain {
+      z-index: 3;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      mix-blend-mode: soft-light;
+    }
+
     @media (min-width: 641px) and (max-width: 1023px) {
-      .hero-bg-layer::before { background-size: 185px 168px; }
+      .hero-bg-host > .hero-bg-layer::before { background-size: 240px 206px; }
+      .hero-bg-host .hero-bg-signature { top: 18%; right: -40%; }
     }
 
     @media (max-width: 640px) {
-      .hero-bg-layer::before { background-size: 158px 144px; }
+      .hero-bg-host > .hero-bg-layer::before { background-size: 190px 163px; }
+      .hero-bg-host .hero-bg-glows::before { top: -58vw; right: -42vw; width: 112vw; }
+      .hero-bg-host .hero-bg-glows::after { bottom: -64vw; left: -48vw; width: 104vw; }
+      .hero-bg-host .hero-bg-signature { top: 30%; right: -58%; width: 108%; }
+      .hero-bg-host .hero-bg-glows::before,
+      .hero-bg-host .hero-bg-glows::after { filter: blur(22px); }
     }
 
     @keyframes hero-bg-drift {
       from { transform: translate3d(0, 0, 0); }
-      to { transform: translate3d(14px, 10px, 0); }
+      to { transform: translate3d(12px, 10px, 0); }
+    }
+
+    @keyframes hero-bg-glow-a {
+      from { transform: scale(0.96); opacity: 0.76; }
+      to { transform: scale(1.06); opacity: 1; }
+    }
+
+    @keyframes hero-bg-glow-b {
+      from { transform: scale(1.04); opacity: 0.7; }
+      to { transform: scale(0.96); opacity: 0.92; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .hero-bg-layer::before { animation: none; will-change: auto; }
+      .hero-bg-host > .hero-bg-layer::before,
+      .hero-bg-host .hero-bg-glows::before,
+      .hero-bg-host .hero-bg-glows::after { animation: none; will-change: auto; }
     }
   </style>
 </head>
@@ -444,7 +525,11 @@
 <a class="back-to-top" id="back-to-top" href="#home" aria-label="Back to top" title="Back to top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg></a>
   <main id="main-content">
     <section class="hero surface-adaptive hero-bg-host" id="home">
-      <div class="hero-bg-layer" aria-hidden="true"></div>
+      <div class="hero-bg-layer" aria-hidden="true">
+        <span class="hero-bg-glows"></span>
+        <span class="hero-bg-signature"></span>
+        <span class="hero-bg-grain"></span>
+      </div>
       <div class="wrap hero-grid">
         <div class="hero-copy fade-up">
           <div class="hero-badge">EVENTS <span>&bull;</span> LAUNCHES <span>&bull;</span> COMMUNITIES</div>
