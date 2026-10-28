@@ -1,4 +1,4 @@
-import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js?v=service-intros-removed";
+import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js?v=consulting-why-removed";
 
 const root = document.getElementById("svc-full-page");
 const service = root && SERVICE_PAGES[root.dataset.servicePage];
@@ -18,7 +18,7 @@ const sectionDefinitions = [
   { id: "services", label: "Our services", title: "Our services", services: service.services },
   ...(service.areas.length ? [{ id: "areas", label: "Areas we help you think through", title: "Areas we help you think through", list: service.areas }] : []),
   ...(service.who.length ? [{ id: "who", label: "Who Apex Consulting is for", title: "Who Apex Consulting is for", list: service.who }] : []),
-  { id: "why", label: `Why ${service.name}`, title: `Why ${service.name}`, paragraphs: service.why },
+  ...(service.why?.length ? [{ id: "why", label: `Why ${service.name}`, title: `Why ${service.name}`, paragraphs: service.why }] : []),
   { id: "together", label: "Let's work together", title: service.closingTitle, paragraphs: service.closing, signoff: service.signoff, extra: service.closingExtra }
 ];
 

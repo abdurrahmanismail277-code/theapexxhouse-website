@@ -199,19 +199,11 @@ export const SERVICE_PAGES = {
       "Event organisers who want continued strategic guidance as they develop and prepare their events.",
       "Event organisers and teams who have a goal in mind and need structured coordination to move the work from plan to delivery."
     ],
-    why: [
-      "At The Apex House, we believe intentional execution begins with intentional thinking.",
-      "A clear vision deserves a structure that supports it, and important decisions deserve careful consideration.",
-      "Through Apex Consulting, we help event organisers examine their ideas, clarify their direction, and approach their plans with greater confidence.",
-      "We don't take away your vision. We help you think through how to bring it to life.",
-      "At The Apex House, excellence is not an option; it is the standard."
-    ],
     closingTitle: "Ready to build your event with intention?",
     closing: [
       "Whether you need clarity on an idea or continued guidance throughout your planning process, Apex Consulting is here to help you approach your event with purpose and direction."
     ],
     signoff: "Work with us. Build with us. Show up at your Apex.",
-    closingExtra: "",
     emailMessage: "Hello, I'm interested in Apex Consulting. Please share more about how you can support my event or project.",
     whatsappMessage: "Hello, I'm interested in Apex Consulting. Please share how you can support my event or project."
   },
