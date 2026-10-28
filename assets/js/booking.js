@@ -50,10 +50,55 @@
     const offerOptions = document.getElementById("booking-package");
     const bookingForm = document.getElementById("booking-form");
     const bookingStatus = document.getElementById("booking-status");
+    const RECAPTCHA_SITE_KEY = "6Lf_IQUuAAAAAEvfsUMYCAx9ILd35Lm32OJ-I8aQ";
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
     let bookingInputs;
+    let recaptchaWidgetId = null;
+    let recaptchaPromise;
+    let recaptchaError;
+    function loadRecaptcha() {
+      if (window.grecaptcha?.render) return Promise.resolve(window.grecaptcha);
+      if (recaptchaPromise) return recaptchaPromise;
+      recaptchaPromise = new Promise((resolve, reject) => {
+        window.apexRecaptchaLoaded = () => resolve(window.grecaptcha);
+        const script = document.createElement("script");
+        script.src = "https://www.google.com/recaptcha/api.js?onload=apexRecaptchaLoaded&render=explicit";
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => reject(new Error("reCAPTCHA could not be loaded."));
+        document.head.append(script);
+      });
+      return recaptchaPromise;
+    }
+    function prepareRecaptcha() {
+      if (recaptchaWidgetId !== null) return;
+      const reviewStep = steps[3];
+      let container = document.getElementById("booking-recaptcha");
+      if (!container) {
+        container = document.createElement("div");
+        container.id = "booking-recaptcha";
+        container.setAttribute("aria-label", "reCAPTCHA verification");
+        container.style.marginTop = "20px";
+        recaptchaError = document.createElement("p");
+        recaptchaError.className = "field-error";
+        recaptchaError.setAttribute("role", "status");
+        recaptchaError.setAttribute("aria-live", "polite");
+        reviewStep.append(container, recaptchaError);
+      }
+      loadRecaptcha().then(grecaptcha => {
+        if (recaptchaWidgetId !== null) return;
+        recaptchaWidgetId = grecaptcha.render(container, {
+          sitekey: RECAPTCHA_SITE_KEY,
+          callback: () => { if (recaptchaError) recaptchaError.textContent = ""; },
+          "expired-callback": () => { if (recaptchaError) recaptchaError.textContent = "Please complete the reCAPTCHA check again."; },
+          "error-callback": () => { if (recaptchaError) recaptchaError.textContent = "reCAPTCHA could not load. Check your connection and try again."; },
+        });
+      }).catch(() => {
+        if (recaptchaError) recaptchaError.textContent = "reCAPTCHA could not load. Check your connection and try again.";
+      });
+    }
     function priceLabel(amount) { return `${naira(amount)} NGN`; }
     serviceOptions.innerHTML = `<option value="">Choose a service</option>${Object.entries(SERVICES).map(([, group]) => `<optgroup label="${group.label}">${group.services.map(service => `<option value="${service.id}">${service.name}</option>`).join("")}</optgroup>`).join("")}`;
     serviceOptions.classList.remove("booking-services-loading");
@@ -253,6 +298,7 @@
       });
       bookingForm.querySelector(".booking-progress").setAttribute("aria-label", `Step ${currentStep + 1} of 4`);
       if (currentStep === 3) {
+        prepareRecaptcha();
         const data = new FormData(bookingForm);
         const service = selectedService();
         const offer = service?.offers.find(item => item.id === data.get("offerId") && item.mode === data.get("mode"));
@@ -350,10 +396,41 @@
         paymentTitle.focus({ preventScroll: true });
       });
     }
-    bookingForm.addEventListener("submit", event => {
+    bookingForm.addEventListener("submit", async event => {
       event.preventDefault();
       const status = document.getElementById("booking-status");
       if (!validateStep(steps[currentStep])) return;
+      if (recaptchaWidgetId === null || !window.grecaptcha) {
+        status.textContent = "Please wait for the reCAPTCHA check to load, then try again.";
+        return;
+      }
+      const recaptchaToken = window.grecaptcha.getResponse(recaptchaWidgetId);
+      if (!recaptchaToken) {
+        status.textContent = "Please complete the reCAPTCHA check before continuing.";
+        return;
+      }
+      const submitButton = document.getElementById("booking-submit");
+      submitButton.disabled = true;
+      status.textContent = "Verifying your request...";
+      try {
+        const response = await fetch("/api/recaptcha/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: recaptchaToken }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.success !== true) {
+          window.grecaptcha.reset(recaptchaWidgetId);
+          status.textContent = result.error || "We could not verify your request. Please try the reCAPTCHA check again.";
+          return;
+        }
+      } catch {
+        window.grecaptcha.reset(recaptchaWidgetId);
+        status.textContent = "We could not verify your request. Check your connection and try again.";
+        return;
+      } finally {
+        submitButton.disabled = false;
+      }
       const data = Object.fromEntries(new FormData(bookingForm));
       const service = selectedService();
       const offer = service?.offers.find(item => item.id === data.offerId && item.mode === data.mode);
