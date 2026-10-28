@@ -3,10 +3,10 @@
   --site-bg-from: #081326;
   --site-bg-to: #102446;
   --site-line-color: #0866f5;
-  --site-line-opacity: .12;
+  --site-line-opacity: .085;
   --site-glow-color: rgba(32, 104, 235, .24);
   --site-vignette-color: rgba(0, 2, 8, .52);
-  --site-tile-size: 230px;
+  --site-tile-size: 300px;
   background:
     radial-gradient(ellipse at center, transparent 55%, var(--site-vignette-color) 100%),
     radial-gradient(ellipse at 100% 100%, var(--site-glow-color), transparent 40%),
@@ -21,7 +21,7 @@
   --site-bg-from: #ffffff;
   --site-bg-to: #eaf2ff;
   --site-line-color: #0866f5;
-  --site-line-opacity: .12;
+  --site-line-opacity: .085;
   --site-glow-color: rgba(102, 169, 255, .18);
   --site-vignette-color: rgba(15, 58, 120, .035);
 }
@@ -29,7 +29,7 @@
   --site-bg-from: #050c19;
   --site-bg-to: #0b1b34;
   --site-line-color: #0866f5;
-  --site-line-opacity: .12;
+  --site-line-opacity: .085;
   --site-glow-color: rgba(34, 104, 255, .24);
   --site-vignette-color: rgba(0, 2, 8, .52);
 }
@@ -37,7 +37,7 @@
   background: rgba(255, 255, 255, .92) !important;
 }
 @media (max-width: 700px) {
-  .site-bg-page { --site-tile-size: 180px; }
+  .site-bg-page { --site-tile-size: 230px; }
 }
 /* Let the lattice run behind page sections. Preserve dark text surfaces where white copy depends on them. */
 .site-bg-page .hero,
