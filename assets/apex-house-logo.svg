@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 455 135" role="img" aria-labelledby="logo-title">
   <title id="logo-title">The Apex House</title>
-  <g fill="#0866f5">
+  <g id="apex-mark" fill="#0866f5">
     <path d="M0 38 35 3h58l35 35v21L99 31H29L0 59z"/>
     <path d="m0 74 35-35h58l35 35v21L99 67H29L0 95z"/>
     <path d="m0 110 35-35h58l35 35v21L99 103H29L0 131z"/>
