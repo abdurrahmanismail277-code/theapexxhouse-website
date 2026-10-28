@@ -1,4 +1,6 @@
-.hero-service-links button{display:inline-flex;align-items:center;min-height:34px;padding:0 11px;border:1px solid #dce8f9;border-radius:999px;background:#ffffffd9;color:var(--navy);font:600 10px var(--head);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
+.hero-service-chooser>span{display:block;margin-bottom:11px;color:#52637b;font:600 14px/1.4 var(--head)}
+.hero-service-links{gap:9px}
+.hero-service-links button{display:inline-flex;align-items:center;min-height:42px;padding:0 15px;border:1px solid #dce8f9;border-radius:999px;background:#ffffffd9;color:var(--navy);font:600 12px var(--head);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
 .hero-service-links button:hover{transform:translateY(-2px);border-color:#9bc2ff;box-shadow:0 6px 18px #0164ff1c}
 .hero-service-links button.is-selected{border-color:#0164ff;background:#edf4ff;box-shadow:0 0 0 2px #0164ff24;color:#021a40}
 .hero-service-links button:focus-visible,.hero-service-switcher button:focus-visible,.hero-service-close:focus-visible,.hero-service-contact:focus-visible{outline:3px solid #75aaff;outline-offset:3px}
@@ -32,5 +34,6 @@ body.hero-service-open{overflow:hidden}
 :root[data-theme="dark"] .hero-service-grid section{border-color:#ffffff24}
 :root[data-theme="dark"] .hero-service-close,:root[data-theme="dark"] .hero-service-switcher button{border-color:#ffffff30;background:#10233d;color:#f2f6fc}
 :root[data-theme="dark"] .hero-service-switcher button[aria-pressed="true"]{border-color:#75aaff;background:#19345a}
+:root[data-theme="dark"] .hero-service-chooser>span{color:#c5d3e6}
 @media(max-width:640px){.hero-service-overlay{align-items:end;padding:0;background:rgba(2,14,34,.6)}.hero-service-dialog{width:100%;max-height:calc(100dvh - env(safe-area-inset-top,0px));padding:31px 22px calc(22px + env(safe-area-inset-bottom,0px));border-radius:23px 23px 0 0;border-bottom:0}.hero-service-overlay.is-closing .hero-service-dialog{transform:translateY(18px)}.hero-service-close{top:14px;right:15px}.hero-service-content h2{font-size:32px}.hero-service-tagline{font-size:13px;margin:10px 0 17px}.hero-service-switcher{gap:6px;margin-bottom:21px}.hero-service-switcher button{min-height:37px;padding:0 10px;font-size:10px}.hero-service-grid{grid-template-columns:1fr;gap:14px}.hero-service-grid section{padding-top:12px}.hero-service-grid h3{margin-bottom:5px}.hero-service-grid p,.hero-service-grid ul{font-size:12px}.hero-service-contact{margin-top:20px}}
 @media(prefers-reduced-motion:reduce){.hero-service-overlay,.hero-service-dialog,.hero-service-contact{transition:none!important}}
