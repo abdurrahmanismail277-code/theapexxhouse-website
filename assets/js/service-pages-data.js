@@ -133,8 +133,7 @@ export const SERVICE_PAGES = {
   consulting: {
     name: "Apex Consulting",
     page: "apex-consulting.html",
-    tagline: "Where Excellence Meets Expression.",
-    pageTagline: "",
+    tagline: "",
     summary: "Apex Consulting exists to help event organisers move from uncertainty to clarity and from ideas to intentional planning.",
     audience: "Event organisers who have an idea or an event in development and need professional guidance before proceeding; event organisers who want continued strategic guidance as they develop and prepare their events; and event organisers and teams who need structured coordination to move work from plan to delivery.",
     outcome: "We help you build with intention and approach your event with purpose and direction.",
