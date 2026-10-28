@@ -1,6 +1,6 @@
 .svc-panel-chooser>span{display:block;margin-bottom:11px;color:#52637b;font:600 14px/1.4 var(--head)}
 .svc-panel-chips{gap:9px}
-.svc-panel-chips button{display:inline-flex;align-items:center;min-height:42px;padding:0 15px;border:1px solid #dce8f9;border-radius:999px;background:#ffffffd9;color:var(--navy);font:600 12px var(--head);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
+.svc-panel-chooser .svc-panel-chips button{display:inline-flex;align-items:center;min-height:48px;padding:0 15px;border:1px solid #dce8f9;border-radius:999px;background:#ffffffd9;color:var(--navy);font:600 12px var(--head);cursor:pointer;touch-action:manipulation;transition:transform .2s,border-color .2s,box-shadow .2s}
 .svc-panel-chips button:hover{transform:translateY(-2px);border-color:#9bc2ff;box-shadow:0 6px 18px #0164ff1c}
 .svc-panel-chips button.is-selected{border-color:#0164ff;background:#edf4ff;box-shadow:0 0 0 2px #0164ff24;color:#021a40}
 .svc-panel-chips button:focus-visible,.svc-panel-switcher button:focus-visible,.svc-panel-close:focus-visible,.svc-panel-contact:focus-visible{outline:3px solid #75aaff;outline-offset:3px}

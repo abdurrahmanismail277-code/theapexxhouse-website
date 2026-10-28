@@ -13,6 +13,8 @@ if (chooser && overlay) {
   let previousBodyOverflow = "";
   let isClosing = false;
   let closeTimer = null;
+  let touchActivatedChip = null;
+  let touchActivationTime = 0;
   const focusable = () => [...dialog.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')]
     .filter(element => element.getClientRects().length);
 
@@ -85,10 +87,25 @@ if (chooser && overlay) {
     overlay.addEventListener("transitionend", finishClose);
     closeTimer = window.setTimeout(finishClose, 260);
   };
-  chips.forEach(chip => chip.addEventListener("click", () => {
+  const activateChip = chip => {
     if (overlay.hidden) open(chip.dataset.heroService, chip);
     else render(chip.dataset.heroService);
-  }));
+  };
+  chips.forEach(chip => {
+    chip.addEventListener("pointerup", event => {
+      if (event.pointerType !== "touch") return;
+      touchActivatedChip = chip;
+      touchActivationTime = performance.now();
+      activateChip(chip);
+    });
+    chip.addEventListener("click", () => {
+      if (touchActivatedChip === chip && performance.now() - touchActivationTime < 800) {
+        touchActivatedChip = null;
+        return;
+      }
+      activateChip(chip);
+    });
+  });
   closeButton.addEventListener("click", close);
   overlay.addEventListener("click", event => { if (event.target === overlay) close(); });
 }
