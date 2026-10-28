@@ -1,10 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 272 250">
-  <g fill="#0866f5" transform="scale(.82)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 184 170">
+  <g fill="#0866f5" transform="scale(.62)">
     <path d="M0 38 35 3h58l35 35v21L99 31H29L0 59z"/>
     <path d="m0 74 35-35h58l35 35v21L99 67H29L0 95z"/>
     <path d="m0 110 35-35h58l35 35v21L99 103H29L0 131z"/>
   </g>
-  <g fill="#0866f5" transform="translate(136 125) scale(.82)">
+  <g fill="#0866f5" transform="translate(92 0) scale(.62)">
+    <path d="M0 38 35 3h58l35 35v21L99 31H29L0 59z"/>
+    <path d="m0 74 35-35h58l35 35v21L99 67H29L0 95z"/>
+    <path d="m0 110 35-35h58l35 35v21L99 103H29L0 131z"/>
+  </g>
+  <g fill="#0866f5" transform="translate(46 85) scale(.62)">
+    <path d="M0 38 35 3h58l35 35v21L99 31H29L0 59z"/>
+    <path d="m0 74 35-35h58l35 35v21L99 67H29L0 95z"/>
+    <path d="m0 110 35-35h58l35 35v21L99 103H29L0 131z"/>
+  </g>
+  <g fill="#0866f5" transform="translate(138 85) scale(.62)">
     <path d="M0 38 35 3h58l35 35v21L99 31H29L0 59z"/>
     <path d="m0 74 35-35h58l35 35v21L99 67H29L0 95z"/>
     <path d="m0 110 35-35h58l35 35v21L99 103H29L0 131z"/>
