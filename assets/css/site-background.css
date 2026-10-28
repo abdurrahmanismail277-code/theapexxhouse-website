@@ -1,45 +1,40 @@
-/* Static Apex lattice background. Keep the page tuning in this one file. */
+/* Static, shared Apex chevron background. Tune theme values here. */
 .site-bg-page {
-  --site-bg-from: #081326;
-  --site-bg-to: #102446;
-  --site-line-color: #0866f5;
-  --site-line-opacity: .085;
-  --site-glow-color: rgba(32, 104, 235, .24);
-  --site-vignette-color: rgba(0, 2, 8, .52);
-  --site-tile-size: 300px;
+  --site-bg-from: #ffffff;
+  --site-bg-to: #d6e2ff;
+  --site-mark-color: #0866f5;
+  --site-mark-opacity-fill: .17;
+  --site-mark-opacity-outline: .21;
+  --site-beam-opacity: .10;
+  --site-glow-color: rgba(101, 159, 255, .38);
+  --site-mark-size: 190px;
   background:
-    radial-gradient(ellipse at center, transparent 55%, var(--site-vignette-color) 100%),
-    radial-gradient(ellipse at 100% 100%, var(--site-glow-color), transparent 40%),
+    radial-gradient(ellipse at 100% 0%, var(--site-glow-color), transparent 38%),
+    linear-gradient(130deg, transparent 21%, rgba(255,255,255,var(--site-beam-opacity)) 40%, transparent 62%),
+    linear-gradient(143deg, transparent 43%, rgba(255,255,255,var(--site-beam-opacity)) 56%, transparent 73%),
+    linear-gradient(90deg, var(--site-bg-from) 0%, color-mix(in srgb, var(--site-bg-from) 94%, transparent) 23%, transparent 66%),
+    linear-gradient(0deg, var(--site-bg-from) 0%, color-mix(in srgb, var(--site-bg-from) 72%, transparent) 19%, transparent 58%),
     url("../apex-house-pattern-tile.svg"),
     linear-gradient(135deg, var(--site-bg-from), var(--site-bg-to)) !important;
-  background-size: cover, cover, var(--site-tile-size) calc(var(--site-tile-size) * .888889), cover;
-  background-position: center, center, 0 0, center;
-  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-size: cover, cover, cover, cover, cover,
+    calc(var(--site-mark-size) * 4) calc(var(--site-mark-size) * 3), cover;
+  background-position: center, center, center, center, center, right top, center;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, no-repeat;
   background-attachment: scroll;
 }
-:root:not([data-theme="dark"]) .site-bg-page {
-  --site-bg-from: #ffffff;
-  --site-bg-to: #eaf2ff;
-  --site-line-color: #0866f5;
-  --site-line-opacity: .085;
-  --site-glow-color: rgba(102, 169, 255, .18);
-  --site-vignette-color: rgba(15, 58, 120, .035);
-}
 :root[data-theme="dark"] .site-bg-page {
-  --site-bg-from: #050c19;
-  --site-bg-to: #0b1b34;
-  --site-line-color: #0866f5;
-  --site-line-opacity: .085;
-  --site-glow-color: rgba(34, 104, 255, .24);
-  --site-vignette-color: rgba(0, 2, 8, .52);
-}
- :root[data-theme="dark"] .site-bg-page .trusted {
-  background: rgba(255, 255, 255, .92) !important;
+  --site-bg-from: #061230;
+  --site-bg-to: #0b2a6f;
+  --site-mark-color: #5b9cff;
+  --site-mark-opacity-fill: .15;
+  --site-mark-opacity-outline: .24;
+  --site-beam-opacity: .065;
+  --site-glow-color: rgba(39, 111, 255, .34);
 }
 @media (max-width: 700px) {
-  .site-bg-page { --site-tile-size: 230px; }
+  .site-bg-page { --site-mark-size: 140px; }
 }
-/* Let the lattice run behind page sections. Preserve dark text surfaces where white copy depends on them. */
+/* Transparent page sections reveal the shared background; retain readable dark/blue text surfaces. */
 .site-bg-page .hero,
 .site-bg-page .services,
 .site-bg-page .consulting,
@@ -67,4 +62,7 @@
 .site-bg-page .footer,
 .site-bg-page .page-footer {
   background: rgba(3, 15, 34, .90) !important;
+}
+:root[data-theme="dark"] .site-bg-page .trusted {
+  background: rgba(255, 255, 255, .92) !important;
 }

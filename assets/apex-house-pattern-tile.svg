@@ -1,12 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="270" height="240" viewBox="0 0 270 240">
-<g opacity=".085">
-<use href="apex-house-logo.svg#apex-mark" x="-67.5" y="-120"/>
-<use href="apex-house-logo.svg#apex-mark" x="67.5" y="-120"/>
-<use href="apex-house-logo.svg#apex-mark" x="202.5" y="-120"/>
-<use href="apex-house-logo.svg#apex-mark" x="-67.5" y="120"/>
-<use href="apex-house-logo.svg#apex-mark"/>
-<use href="apex-house-logo.svg#apex-mark" x="135"/>
-<use href="apex-house-logo.svg#apex-mark" x="67.5" y="120"/>
-<use href="apex-house-logo.svg#apex-mark" x="202.5" y="120"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="405" viewBox="0 0 540 405">
+<defs>
+<g id="apex-chevron-mark">
+<path d="M0 38 35 3h58l35 35v21L99 31H29L0 59z"/>
+<path d="m0 74 35-35h58l35 35v21L99 67H29L0 95z"/>
+<path d="m0 110 35-35h58l35 35v21L99 103H29L0 131z"/>
+</g>
+</defs>
+<g fill="none" stroke="#0866f5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity=".21">
+<use href="#apex-chevron-mark" x="0" y="0"/>
+<use href="#apex-chevron-mark" x="0" y="270"/>
+<use href="#apex-chevron-mark" x="135" y="67.5"/>
+<use href="#apex-chevron-mark" x="135" y="337.5"/>
+<use href="#apex-chevron-mark" x="270" y="135"/>
+<use href="#apex-chevron-mark" x="405" y="-67.5"/>
+<use href="#apex-chevron-mark" x="405" y="202.5"/>
+</g>
+<g fill="#0866f5" opacity=".17">
+<use href="#apex-chevron-mark" x="0" y="135"/>
+<use href="#apex-chevron-mark" x="135" y="-67.5"/>
+<use href="#apex-chevron-mark" x="135" y="202.5"/>
+<use href="#apex-chevron-mark" x="270" y="0"/>
+<use href="#apex-chevron-mark" x="270" y="270"/>
+<use href="#apex-chevron-mark" x="405" y="67.5"/>
+<use href="#apex-chevron-mark" x="405" y="337.5"/>
 </g>
 </svg>
