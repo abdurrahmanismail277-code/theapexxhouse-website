@@ -27,7 +27,8 @@ document.title = `${service.name} | The Apex House`;
 const hero = root.querySelector("[data-svc-full-hero]");
 hero.append(make("p", "svc-full-eyebrow", "THE APEX HOUSE"));
 hero.append(make("h1", "svc-full-title", service.name));
-hero.append(make("p", "svc-full-tagline", service.tagline));
+const pageTagline = service.pageTagline ?? service.tagline;
+if (pageTagline) hero.append(make("p", "svc-full-tagline", pageTagline));
 
 const navigation = root.querySelector("[data-svc-full-navigation]");
 sectionDefinitions.forEach(section => {
