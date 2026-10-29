@@ -4,14 +4,14 @@ export const SERVICE_PAGES = {
   communication: {
     name: "Apex Communication",
     page: "apex-communication.html",
-    summary: "Apex Communication exists to help individuals, organisations, and event organisers communicate with purpose.",
-    audience: "Individuals, organisations, and event organisers communicating with purpose.",
+    summary: "Apex Communication provides speaking, event moderation, hosting, and community management services exclusively for Muslim women.",
+    audience: "Muslim women event organisers, community leaders, and women-led organisations communicating with purpose.",
     outcome: "We help you communicate with clarity, confidence, and intention.",
     covers: [
       { name: "Event Moderation and Panel Facilitation", summary: "Professional event moderation and panel facilitation for virtual and physical events." },
       { name: "Launch Hosting and Facilitation", summary: "Professional hosting for product launches, book launches, and brand unveilings." },
       { name: "Event Community Management", summary: "Purposeful communication and audience engagement before and during events." },
-      { name: "Public Speaking", summary: "Speaking engagements for events, communities, organisations, and institutional gatherings." }
+      { name: "Public Speaking", summary: "Speaking engagements for events, communities, women-led organisations, and institutions." }
     ],
     services: [
       {
@@ -33,7 +33,7 @@ export const SERVICE_PAGES = {
           "Professional coordination that helps keep the programme flowing."
         ],
         audienceTitle: "Who is this for?",
-        ideal: "Conference organisers, webinar hosts, event planners, institutions, and organisations that need a professional to guide their programmes and represent their events.",
+        ideal: "Muslim women who organise conferences, webinars, panels, and community events and need a professional moderator.",
         outcomeTitle: "The Apex House difference",
         outcome: "We don't simply move an event from one item on the programme to another. We help give the gathering structure, direction, and an experience worth remembering."
       },
@@ -56,7 +56,7 @@ export const SERVICE_PAGES = {
           "Audience engagement throughout the launch."
         ],
         audienceTitle: "Who is this for?",
-        ideal: "Authors, entrepreneurs, businesses, organisations, and brands preparing to introduce a product, publish a book, or unveil a new offering.",
+        ideal: "Muslim women authors, entrepreneurs, and women-led organisations or brands preparing to introduce a product, publish a book, or unveil a new offering.",
         outcomeTitle: "The Apex House difference",
         outcome: "We understand that a launch is not just about presenting something new. It is about helping the audience understand what is being introduced and giving the moment the professional expression it deserves."
       },
@@ -77,7 +77,7 @@ export const SERVICE_PAGES = {
           "Support for organised communication within event communities."
         ],
         audienceTitle: "Who is this for?",
-        ideal: "Conference organisers, webinar hosts, training providers, and organisations managing online communities for their events.",
+        ideal: "Muslim women leading conferences, webinars, training programmes, and event communities.",
         outcomeTitle: "The Apex House difference",
         outcome: "We help organisers approach event communication as an ongoing responsibility, not something that begins only when the programme starts."
       },
@@ -87,18 +87,18 @@ export const SERVICE_PAGES = {
           "Some messages require more than being written or announced. They need a voice that can communicate them with purpose.",
           "Public speaking creates an opportunity to inform, educate, inspire, and influence how an audience understands a subject.",
           "But effective speaking is not simply about being audible or delivering a prepared speech. It requires understanding the audience, communicating the message clearly, and presenting ideas in a way that serves the purpose of the engagement.",
-          "Through our Public Speaking service, The Apex House provides speaking engagements for events, communities, organisations, and institutional gatherings.",
+          "Through our Public Speaking service, The Apex House provides speaking engagements exclusively for Muslim women and women-led events, communities, organisations, and institutions.",
           "We approach each engagement with attention to its context, audience, and intended message, ensuring that our contribution aligns with the purpose of the gathering."
         ],
         listTitle: "What we offer",
         items: [
           "Speaking engagements at events and organised gatherings.",
           "Contributions to community programmes and initiatives.",
-          "Speaking engagements for organisations and institutions.",
+          "Speaking engagements for women-led organisations and institutions.",
           "Purposeful delivery tailored to the engagement's subject and audience."
         ],
         audienceTitle: "Who is this for?",
-        ideal: "Event organisers, community leaders, organisations, and institutions seeking a speaker for their programmes and gatherings.",
+        ideal: "Muslim women event organisers, community leaders, and women-led organisations or institutions seeking a speaker for their programmes and gatherings.",
         outcomeTitle: "The Apex House difference",
         outcome: "We recognise that a message's value lies not only in what is said, but also in how clearly and purposefully it is communicated."
       }
@@ -124,8 +124,8 @@ export const SERVICE_PAGES = {
   consulting: {
     name: "Apex Consulting",
     page: "apex-consulting.html",
-    summary: "Apex Consulting exists to help event organisers move from uncertainty to clarity and from ideas to intentional planning.",
-    audience: "Event organisers who have an idea or an event in development and need professional guidance before proceeding; event organisers who want continued strategic guidance as they develop and prepare their events; and event organisers and teams who need structured coordination to move work from plan to delivery.",
+    summary: "Apex Consulting helps Muslim women event organisers move from uncertainty to clarity and from ideas to intentional planning.",
+    audience: "Muslim women event organisers who need professional guidance, continued strategic support, or structured coordination to move their event from plan to delivery.",
     outcome: "We help you build with intention and approach your event with purpose and direction.",
     covers: [
       { name: "Event Clarity Session", summary: "A focused consultation to think through your event, identify areas that need attention, and gain clarity on your next steps." },
@@ -149,7 +149,7 @@ export const SERVICE_PAGES = {
           "Clearer direction on the next steps to consider."
         ],
         audienceTitle: "Who is this for?",
-        ideal: "Event organisers who have an idea or an event in development and need professional guidance before proceeding.",
+        ideal: "Muslim women event organisers developing an idea or event who need professional guidance before proceeding.",
         outcomeTitle: "The outcome",
         outcome: "A clearer perspective on your event and a better understanding of the steps ahead."
       },
@@ -170,7 +170,7 @@ export const SERVICE_PAGES = {
           "Professional input as questions and challenges arise throughout the planning process."
         ],
         audienceTitle: "Who is this for?",
-        ideal: "Event organisers who want continued strategic guidance as they develop and prepare their events.",
+        ideal: "Muslim women event organisers who want continued strategic guidance as they develop and prepare their events.",
         outcomeTitle: "The outcome",
         outcome: "A more considered approach to event planning, with professional guidance to support your decisions along the way.",
         note: "Engagement details are discussed based on the scope of support required."
@@ -188,16 +188,16 @@ export const SERVICE_PAGES = {
           "Track progress and surface decisions or risks."
         ],
         audienceTitle: "Who is this for?",
-        ideal: "Event organisers and teams who have a goal in mind and need structured coordination to move the work from plan to delivery.",
+        ideal: "Muslim women event organisers and women-led teams who need structured coordination to move work from plan to delivery.",
         outcomeTitle: "The outcome",
         outcome: "A clearer plan, coordinated work, and steady progress toward your project goals."
       }
     ],
     areas: ["The event's direction", "Audience experience", "Programme structure", "Overall execution"],
     who: [
-      "Event organisers who have an idea or an event in development and need professional guidance before proceeding.",
-      "Event organisers who want continued strategic guidance as they develop and prepare their events.",
-      "Event organisers and teams who have a goal in mind and need structured coordination to move the work from plan to delivery."
+      "Muslim women event organisers developing an idea or event who need professional guidance before proceeding.",
+      "Muslim women event organisers who want continued strategic guidance as they develop and prepare their events.",
+      "Muslim women event organisers and women-led teams who need structured coordination to move work from plan to delivery."
     ],
     closingTitle: "Ready to build your event with intention?",
     closing: [
@@ -210,8 +210,8 @@ export const SERVICE_PAGES = {
   media: {
     name: "Apex Media",
     page: "apex-media.html",
-    summary: "Apex Media helps brands and event organisers approach visibility and content with intention.",
-    audience: "Brands and event organisers approaching visibility and content with intention.",
+    summary: "Apex Media helps Muslim women and women-led brands approach visibility and content with intention.",
+    audience: "Muslim women and women-led brands approaching visibility and content with intention.",
     outcome: "Our focus goes beyond showing up. It is about how you show up, what people understand, and what they remember.",
     covers: [
       { name: "Brand Influencing", summary: "Purposeful brand promotion through content shared on The Apex House's WhatsApp Status." },
@@ -233,7 +233,7 @@ export const SERVICE_PAGES = {
           "An additional avenue for brand visibility and audience engagement."
         ],
         audienceTitle: "Ideal for",
-        ideal: "Businesses, entrepreneurs, and service providers seeking additional visibility for their offerings.",
+        ideal: "Muslim women entrepreneurs and women-led businesses seeking additional visibility for their offerings.",
         outcomeTitle: "The outcome",
         outcome: "An additional avenue for brand visibility and audience engagement."
       },
@@ -252,7 +252,7 @@ export const SERVICE_PAGES = {
           "Broader opportunities for your audience to encounter your brand."
         ],
         audienceTitle: "Ideal for",
-        ideal: "Brands seeking to expand their promotional reach through a combination of Status and broadcast promotion.",
+        ideal: "Muslim women-led brands seeking to expand their promotional reach through Status and broadcast promotion.",
         outcomeTitle: "The outcome",
         outcome: "Broader opportunities for your audience to encounter your brand."
       },
@@ -270,7 +270,7 @@ export const SERVICE_PAGES = {
           "Event Copywriting — Purposeful writing that helps you communicate your event's message across its promotional materials."
         ],
         audienceTitle: "Ideal for",
-        ideal: "Event organisers, conference teams, webinar hosts, and organisations that need written content to promote and communicate their events.",
+        ideal: "Muslim women event organisers, conference or webinar hosts, and women-led organisations that need written content to promote their events.",
         outcomeTitle: "The outcome",
         outcome: "We help you present the information your audience needs while communicating the purpose behind the event."
       }

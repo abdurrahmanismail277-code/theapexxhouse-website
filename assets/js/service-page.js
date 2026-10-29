@@ -1,4 +1,4 @@
-import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js?v=consulting-why-removed";
+import { SERVICE_ORDER, SERVICE_PAGES } from "./service-pages-data.js?v=muslim-women-scope-20261029";
 
 const root = document.getElementById("svc-full-page");
 const service = root && SERVICE_PAGES[root.dataset.servicePage];

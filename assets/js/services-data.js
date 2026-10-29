@@ -5,7 +5,7 @@ window.APEX_SERVICE_DETAILS = Object.freeze({
       "Guidance through the programme, speaker introductions, and transitions.",
       "Live facilitation to keep the event flowing and the audience engaged."
     ],
-    bestFor: "Conferences, webinars, panels, and community events that need a confident host to guide the programme and keep people connected."
+    bestFor: "For Muslim women organising conferences, webinars, panels, and community events that need a confident host."
   },
   "launch-hosting": {
     included: [
@@ -13,7 +13,7 @@ window.APEX_SERVICE_DETAILS = Object.freeze({
       "Hosting and facilitation through the programme and key moments.",
       "Clear transitions and audience engagement through the event close."
     ],
-    bestFor: "Product, brand, or initiative launches that need a polished host to welcome guests and guide the programme."
+    bestFor: "For Muslim women launching a product, brand, or initiative and seeking a polished host."
   },
   "event-community-management": {
     included: [
@@ -21,7 +21,7 @@ window.APEX_SERVICE_DETAILS = Object.freeze({
       "Monitoring conversations and responding to participant questions.",
       "Encouraging thoughtful, respectful participation in the event community."
     ],
-    bestFor: "Events with an online or messaging community that needs consistent attention and participant engagement during the programme."
+    bestFor: "For Muslim women organisers whose event communities need consistent attention and participant engagement."
   },
   "public-speaking": {
     included: [
@@ -29,7 +29,7 @@ window.APEX_SERVICE_DETAILS = Object.freeze({
       "Clear, engaging delivery of the agreed key ideas.",
       "A pre-event conversation to align on the brief and programme flow."
     ],
-    bestFor: "Events looking for a speaker to share ideas with clarity, warmth, and presence."
+    bestFor: "For Muslim women organisers seeking a speaker to share ideas with clarity, warmth, and presence."
   },
   "project-management": {
     included: [
@@ -38,6 +38,6 @@ window.APEX_SERVICE_DETAILS = Object.freeze({
       "Coordinating tasks, contributors, and project updates.",
       "Tracking progress and surfacing decisions or risks as they arise."
     ],
-    bestFor: "Event organisers and teams who need structured coordination to keep a project moving from plan to delivery."
+    bestFor: "For Muslim women event organisers and women-led teams who need structured project coordination."
   }
 });
