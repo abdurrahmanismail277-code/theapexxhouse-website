@@ -243,7 +243,7 @@ mark[data-flow-highlight].flow-highlight-drawn::after {
 
 /* assets/css/service-interactions.css */
 ï»¿.service-grid{align-items:start}
-.service-card[data-service-card]{align-self:start;min-width:0;min-height:320px;transform-style:preserve-3d;transform-origin:center;outline:none;transition:transform .25s ease,opacity .75s cubic-bezier(.2,.7,.2,1),filter .75s cubic-bezier(.2,.7,.2,1)}
+.service-card[data-service-card]{align-self:start;min-width:0;min-height:320px;border:1px solid rgba(255,255,255,.28);transform-style:preserve-3d;transform-origin:center;outline:none;transition:transform .25s ease,opacity .75s cubic-bezier(.2,.7,.2,1),filter .75s cubic-bezier(.2,.7,.2,1)}
 .service-card[data-service-card]:focus-within{outline:3px solid #6ea5ff;outline-offset:4px}
 .service-card[data-service-card]::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;background:radial-gradient(280px circle at var(--spot-x,50%) var(--spot-y,50%),rgba(111,168,255,.2),transparent 70%);transition:opacity .25s ease}
 .service-card[data-service-card]>*{position:relative;z-index:1}
