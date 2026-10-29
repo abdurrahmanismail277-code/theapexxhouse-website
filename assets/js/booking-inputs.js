@@ -12,7 +12,7 @@ function flagImage(flag) {
   image.alt = "";
   image.loading = "lazy";
   image.decoding = "async";
-  image.src = flag ? `assets/flags/${String(flag?v=20261029).toLowerCase()}.svg` : GLOBE_SRC;
+  image.src = flag ? `assets/flags/${String(flag).toLowerCase()}.svg?v=20261029` : GLOBE_SRC;
   image.addEventListener("error", () => {
     if (!image.src.endsWith("/globe.svg")) image.src = GLOBE_SRC;
     else image.hidden = true;
@@ -89,7 +89,7 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
     input.value = label(item);
     input.title = label(item);
     input.setAttribute("aria-label", `Selected: ${label(item)}`);
-    triggerFlag.src = `assets/flags/${String(item.flag?v=20261029 || "").toLowerCase() || "globe"}.svg`;
+    triggerFlag.src = `assets/flags/${String(item.flag || "").toLowerCase() || "globe"}.svg?v=20261029`;
     triggerFlag.hidden = false;
     triggerFlag.onerror = () => { triggerFlag.onerror = null; triggerFlag.src = GLOBE_SRC; };
     input.dataset.selected = "true";
