@@ -10,6 +10,7 @@
   <link rel="preload" as="style" href="assets/css/nav.css?v=20261029-encoding-menu-fix" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" as="style" href="assets/css/responsive-refinements.css?v=20261029" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" as="style" href="assets/css/site-background.css?v=20261029" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="stylesheet" href="css/swoosh-line.css">
 <noscript><link rel="stylesheet" href="assets/css/section-pages.css?v=20261029"><link rel="stylesheet" href="assets/css/nav.css?v=20261029-encoding-menu-fix"><link rel="stylesheet" href="assets/css/responsive-refinements.css?v=20261029"><link rel="stylesheet" href="assets/css/site-background.css?v=20261029"></noscript>
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
 </head>
@@ -17,7 +18,7 @@
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="nav"><div class="site-wrap nav-inner"><a class="brand" href="index.html" aria-label="The Apex House home"><img src="assets/apex-house-logo.svg?v=20261029" width="300" height="90" alt="The Apex House"></a><button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="main-nav"><span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span></button><nav class="nav-links" id="main-nav" aria-label="Main navigation"><a href="index.html">Home</a><a href="services.html">Services</a><a href="index.html#work">Projects</a><a href="about.html" aria-current="page">About</a><a href="insights.html">Insights</a><a href="faq.html">FAQ</a><a href="contact.html">Contact</a></nav><a class="nav-cta" href="book.html">Book a service</a></div></header>
   <main class="page-main" id="main-content">
-    <section class="page-hero"><div class="site-wrap"><span class="eyebrow">The Apex difference</span><h1>Thoughtful experiences. Clear communication.</h1><p>We help brands strengthen their voice and visibility, and create thoughtful experiences that bring people together.</p></div></section>
+    <section class="page-hero"><div class="site-wrap"><span class="eyebrow">The Apex difference</span><h1>Thoughtful experiences. Clear communication.</h1><p>The Apex House is a Muslim women-centered business. We offer speaking engagements, event moderation, hosting, consulting, and media services exclusively for Muslim women.</p></div></section>
     <section class="page-section"><div class="site-wrap"><span class="page-eyebrow">Our core values</span><h2 class="section-heading">How we show up.</h2><div class="value-grid">
       <article class="value-card"><h3>Voice</h3><p>We help people and brands express who they are with confidence and purpose.</p></article>
       <article class="value-card"><h3>Empowerment</h3><p>We help people recognize their worth and take ownership of their growth.</p></article>
@@ -34,6 +35,33 @@
     </div></div></section>
     <section class="site-wrap page-cta" id="process"><div><h2>From first hello to a moment that lasts.</h2><p>Tell us what matters, make a plan together, and enjoy the moment.</p></div><a class="page-button" href="book.html">Let&rsquo;s plan your event</a></section>
   </main>
+  <script>
+    (() => {
+      const heading = document.querySelector('.page-hero h1');
+      if (!heading) return;
+      const namespace = 'http://www.w3.org/2000/svg';
+      const swoosh = document.createElementNS(namespace, 'svg');
+      swoosh.setAttribute('class', 'apx-swoosh');
+      swoosh.setAttribute('viewBox', '0 0 300 20');
+      swoosh.setAttribute('preserveAspectRatio', 'none');
+      swoosh.setAttribute('aria-hidden', 'true');
+      const path = document.createElementNS(namespace, 'path');
+      path.setAttribute('d', 'M4 14C75 3 201 3 294 13');
+      swoosh.append(path);
+      heading.insertAdjacentElement('afterend', swoosh);
+      const reveal = () => swoosh.classList.add('apx-swoosh-visible');
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+        reveal();
+        return;
+      }
+      const observer = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) return;
+        reveal();
+        observer.disconnect();
+      }, { threshold: 0.5 });
+      observer.observe(swoosh);
+    })();
+  </script>
   <footer class="page-footer"><div class="site-wrap page-footer-inner"><small>&copy; <span id="year">2026</span> The Apex House</small><nav aria-label="Footer navigation"><a href="services.html">Services</a><a href="index.html#work">Projects</a><a href="privacy-policy.html">Privacy</a><a href="terms.html">Terms</a></nav></div></footer>
   <script src="assets/js/site-ui.js?v=20261029" defer></script><script src="assets/js/page-transitions.js?v=20261029" defer></script><script src="assets/js/nav.js?v=20261029-encoding-menu-fix" defer></script>
 </body>

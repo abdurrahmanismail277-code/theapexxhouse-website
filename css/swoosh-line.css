@@ -1,0 +1,5 @@
+.apx-swoosh{display:block;width:min(100%,460px);height:16px;margin:4px 0 15px;overflow:visible;color:#8abaff}
+.apx-swoosh path{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-dasharray:320;stroke-dashoffset:320}
+.apx-swoosh.apx-swoosh-visible path{animation:apx-swoosh-draw 1.2s cubic-bezier(.22,.7,.2,1) forwards}
+@keyframes apx-swoosh-draw{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.apx-swoosh path{animation:none;stroke-dashoffset:0}}
