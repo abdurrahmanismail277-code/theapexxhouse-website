@@ -48,7 +48,8 @@ async function verifyRecaptcha(request, env) {
 
 export default {
   async fetch(request, env) {
-    const { pathname } = new URL(request.url);
+    const url = new URL(request.url);
+    const { pathname } = url;
 
     if (pathname === "/api/recaptcha/verify") return verifyRecaptcha(request, env);
 
@@ -56,6 +57,22 @@ export default {
       return json({ error: "API route not found." }, 404);
     }
 
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    const headers = new Headers(response.headers);
+    const staticAsset = /\.(?:css|js|mjs|json|svg|png|jpe?g|webp|avif|ico|woff2?)$/i.test(pathname);
+    const versionedAsset = staticAsset && url.searchParams.has("v");
+    const isHtml = /\.html?$/.test(pathname) || pathname === "/";
+
+    if (versionedAsset) {
+      headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    } else if (isHtml) {
+      headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
   },
 };

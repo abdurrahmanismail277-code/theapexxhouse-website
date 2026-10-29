@@ -1,6 +1,7 @@
 .git/
 .github/
 .wrangler/
+lh-*.json
 apex-house-site/
 functions/
 supabase/

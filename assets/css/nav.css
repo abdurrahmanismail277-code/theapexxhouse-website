@@ -1,5 +1,4 @@
-@import url("./brand-palette.css");
-/* Shared responsive navigation and slide-in drawer */
+﻿/* Shared responsive navigation and slide-in drawer */
 html.js-ready .menu-toggle{display:none!important}
 @media(max-width:1023px){
   html.js-ready .nav-inner>.menu-toggle{display:grid!important;place-items:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;padding:0;order:-1;position:relative;z-index:1;border:1px solid #ffffff45;border-radius:50%;background:#ffffff08;color:#fff;cursor:pointer}
@@ -35,7 +34,7 @@ body.ah-menu-open .ah-menu-drawer{transform:translateX(0);visibility:visible}
 .ah-menu-links li{position:relative}
 .ah-menu-links li:after{position:absolute;content:"";height:1px;left:24px;right:24px;bottom:0;background:rgba(255,255,255,.12)}
 .ah-menu-links li:last-child:after{display:none}
-.ah-menu-links a:after{content:"›";color:#9abfff;font-size:25px;font-weight:400}
+.ah-menu-links a:after{content:"\203A";color:#9abfff;font-size:25px;font-weight:400}
 .ah-menu-links a:hover,.ah-menu-links a:focus-visible,.ah-menu-links a:active{background:rgba(66,142,255,.16);color:#fff;outline:none}
 .ah-menu-links a[aria-current="page"]{color:#8db9ff;background:rgba(1,100,255,.14)}
 .ah-menu-links a[aria-current="page"]:before{position:absolute;content:"";left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:#3d8cff}

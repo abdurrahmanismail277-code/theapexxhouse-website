@@ -1,6 +1,6 @@
-import { COUNTRIES } from "./countries.js";
+import { COUNTRIES } from "./countries.js?v=20261029";
 
-const GLOBE_SRC = "assets/flags/globe.svg";
+const GLOBE_SRC = "assets/flags/globe.svg?v=20261029";
 const NIGERIA_TIME_ZONE = "Africa/Lagos";
 const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
 
@@ -12,7 +12,7 @@ function flagImage(flag) {
   image.alt = "";
   image.loading = "lazy";
   image.decoding = "async";
-  image.src = flag ? `assets/flags/${String(flag).toLowerCase()}.svg` : GLOBE_SRC;
+  image.src = flag ? `assets/flags/${String(flag?v=20261029).toLowerCase()}.svg` : GLOBE_SRC;
   image.addEventListener("error", () => {
     if (!image.src.endsWith("/globe.svg")) image.src = GLOBE_SRC;
     else image.hidden = true;
@@ -72,9 +72,9 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
     window.setTimeout(() => { if (input.getAttribute("aria-expanded") !== "true") panel.hidden = true; }, 180);
   };
   const open = (focusSearch = true) => {
+    const fieldRect = wrapper.getBoundingClientRect();
     panel.hidden = false;
     backdrop.hidden = false;
-    const fieldRect = wrapper.getBoundingClientRect();
     const isMobileSheet = window.matchMedia("(max-width: 768px)").matches;
     panel.classList.toggle("opens-up", !isMobileSheet && fieldRect.bottom + 326 > window.innerHeight && fieldRect.top > 326);
     requestAnimationFrame(() => panel.classList.add("is-open"));
@@ -89,7 +89,7 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
     input.value = label(item);
     input.title = label(item);
     input.setAttribute("aria-label", `Selected: ${label(item)}`);
-    triggerFlag.src = `assets/flags/${String(item.flag || "").toLowerCase() || "globe"}.svg`;
+    triggerFlag.src = `assets/flags/${String(item.flag?v=20261029 || "").toLowerCase() || "globe"}.svg`;
     triggerFlag.hidden = false;
     triggerFlag.onerror = () => { triggerFlag.onerror = null; triggerFlag.src = GLOBE_SRC; };
     input.dataset.selected = "true";

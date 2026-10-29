@@ -1,6 +1,6 @@
 
-    import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js";
-    import { initBookingInputs } from "./booking-inputs.js";
+    import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js?v=20261029";
+    import { initBookingInputs } from "./booking-inputs.js?v=20261029";
     const BANK_NAME = "OPay";
     const ACCOUNT_NAME = "MUTMAINNAH OLUNLE TIRMIDHIY";
     const ACCOUNT_NUMBER = "6550785344";

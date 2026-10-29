@@ -29,9 +29,9 @@ The payment flow can be previewed using a local HTTP server; it does not need a 
 
 ## Deploy
 
-Deploy the project with the root `wrangler.toml` as the **Cloudflare Worker** `apex-house-site`. The current page prepares payment instructions locally after the visitor reviews their service details, then offers a WhatsApp payment confirmation link. It does not send booking requests or emails.
+The current production domain is served by GitHub Pages (the live response identifies `GitHub.com` and Fastly). GitHub Pages returns `Cache-Control: max-age=600` for HTML and CSS and compresses responses with gzip; it does not provide per-path cache header configuration in this repository.
 
-GitHub Pages can host the static HTML. The Worker currently serves site assets and does not expose a booking API.
+The root `wrangler.toml` is an optional Cloudflare Worker deployment named `apex-house-site`; it is not the active production host. When deployed, the Worker applies revalidation to HTML and one-year immutable caching to versioned static assets. The current page prepares payment instructions locally after the visitor reviews their service details, then offers a WhatsApp payment confirmation link. It does not send booking requests or emails.
 
 ## Editing content and images
 

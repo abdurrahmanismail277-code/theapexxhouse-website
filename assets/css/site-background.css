@@ -14,7 +14,7 @@
     linear-gradient(143deg, transparent 43%, rgba(255,255,255,var(--site-beam-opacity)) 56%, transparent 73%),
     linear-gradient(90deg, var(--site-bg-from) 0%, color-mix(in srgb, var(--site-bg-from) 94%, transparent) 23%, transparent 66%),
     linear-gradient(0deg, var(--site-bg-from) 0%, color-mix(in srgb, var(--site-bg-from) 72%, transparent) 19%, transparent 58%),
-    url("../apex-house-pattern-tile.svg"),
+    url("../apex-house-pattern-tile.svg?v=20261029"),
     linear-gradient(135deg, var(--site-bg-from), var(--site-bg-to)) !important;
   background-size: cover, cover, cover, cover, cover,
     calc(var(--site-mark-size) * 4) calc(var(--site-mark-size) * 3), cover;
@@ -52,8 +52,7 @@
   background: transparent !important;
 }
 .site-bg-page .why,
-.site-bg-page .booking-section,
-.site-bg-page .insights {
+.site-bg-page .booking-section {
   background: rgba(3, 15, 34, .90) !important;
 }
 .site-bg-page .cta-band {
@@ -61,7 +60,7 @@
 }
 .site-bg-page .footer,
 .site-bg-page .page-footer {
-  background: rgba(3, 15, 34, .90) !important;
+  background: #021a40 !important;
 }
 :root[data-theme="dark"] .site-bg-page .trusted {
   background: rgba(255, 255, 255, .92) !important;

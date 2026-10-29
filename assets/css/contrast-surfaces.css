@@ -1,4 +1,6 @@
-:root {
+﻿:root {
+  --muted: #52647d;
+  --page-muted: #52647d;
   --text-on-light: #021a40;
   --text-on-light-muted: #40536d;
   --accent-on-light: #0164ff;

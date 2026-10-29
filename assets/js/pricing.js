@@ -1,4 +1,4 @@
-import { SERVICES, SETTINGS } from "../../services.js";
+import { SERVICES, SETTINGS } from "../../services.js?v=20261029";
 
 const content = document.getElementById("pricing-content");
 const tabs = [...document.querySelectorAll(".pricing-tab")];

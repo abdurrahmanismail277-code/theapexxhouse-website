@@ -113,15 +113,17 @@
       const button = target.querySelector(".service-expand");
       const content = target.querySelector(".service-expanded");
       if (!button || !content || button.getAttribute("aria-expanded") !== "true") return;
-      button.setAttribute("aria-expanded", "false");
       if (reducedMotion.matches) {
+        button.setAttribute("aria-expanded", "false");
         content.hidden = true;
         content.style.height = "";
         content.style.opacity = "";
         if (restoreFocus) button.focus();
         return;
       }
-      content.style.height = `${content.getBoundingClientRect().height}px`;
+      const contentHeight = content.getBoundingClientRect().height;
+      button.setAttribute("aria-expanded", "false");
+      content.style.height = `${contentHeight}px`;
       requestAnimationFrame(() => {
         content.style.height = "0px";
         content.style.opacity = "0";

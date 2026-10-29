@@ -3,6 +3,7 @@
   const paragraph = document.querySelector(".hero-copy > p");
   if (paragraph && !root.classList.contains("hero-motion-initialized")) {
 
+  const originalParagraphHeight = paragraph.getBoundingClientRect().height;
   const originalText = paragraph.textContent.replace(/\s+/g, " ").trim();
   paragraph.setAttribute("aria-label", originalText);
 
@@ -36,13 +37,14 @@
     if (index < words.length - 1) fragment.append(document.createTextNode(" "));
   }
   paragraph.replaceChildren(fragment);
-
+  paragraph.style.minHeight = `${originalParagraphHeight}px`;
   const reserveParagraphHeight = () => {
     paragraph.style.minHeight = "";
-    paragraph.style.minHeight = `${paragraph.getBoundingClientRect().height}px`;
+    window.requestAnimationFrame(() => {
+      paragraph.style.minHeight = `${paragraph.getBoundingClientRect().height}px`;
+    });
   };
-  reserveParagraphHeight();
-  window.addEventListener("resize", () => window.requestAnimationFrame(reserveParagraphHeight));
+  window.addEventListener("resize", () => window.requestAnimationFrame(reserveParagraphHeight), { passive: true });
 
   const heroActions = paragraph.parentElement.querySelector(".hero-actions");
   const heroServiceChooser = paragraph.parentElement.querySelector(".hero-service-chooser");
@@ -85,12 +87,12 @@
   const intro = document.getElementById("intro-screen");
   if (intro && !intro.hidden && !motionPreference.matches) {
     introObserver = new MutationObserver(() => {
-      if (!intro.hidden) return;
+      if (!intro.hidden && !intro.classList.contains("intro-finished")) return;
       introObserver.disconnect();
       if (introFallback) window.clearTimeout(introFallback);
       startReveal();
     });
-    introObserver.observe(intro, { attributes: true, attributeFilter: ["hidden"] });
+    introObserver.observe(intro, { attributes: true, attributeFilter: ["hidden", "class"] });
     introFallback = window.setTimeout(() => {
       introObserver.disconnect();
       startReveal();
@@ -114,6 +116,7 @@
   }
 
   const flowElements = [...document.querySelectorAll("[data-flow]")];
+  const flowHeights = new Map(flowElements.map(element => [element, element.getBoundingClientRect().height]));
   const flowWords = new Map();
   let animatedWordCount = 0;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -127,7 +130,7 @@
   };
 
   const prepareFlow = element => {
-    const reservedHeight = element.getBoundingClientRect().height;
+    const reservedHeight = flowHeights.get(element);
     element.setAttribute("aria-label", accessibleText(element));
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
     const textNodes = [];

@@ -4,6 +4,16 @@ body {
   min-width: 320px;
 }
 
+.back-to-top-sentinel {
+  position: absolute;
+  top: 420px;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 :where(.hero-copy, .hero-visual, .service-detail, .consulting-service, .program-card, .stat-card, .step, .site-wrap, .page-hero, .page-section, .bio-page, .booking-section, #booking-form, .insight-layout, .insight-body) {
   min-width: 0;
 }

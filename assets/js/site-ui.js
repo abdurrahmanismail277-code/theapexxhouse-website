@@ -2,9 +2,32 @@
   const root = document.documentElement;
   const top = document.getElementById("back-to-top");
   if (top) {
-    const update = () => top.classList.toggle("is-visible", window.scrollY > 420);
-    window.addEventListener("scroll", update, { passive: true });
-    update();
+    const progress = top.querySelector(".scroll-progress-value");
+    const circumference = 2 * Math.PI * 24;
+    let framePending = false;
+    const updateScrollProgress = () => {
+      framePending = false;
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const amount = maxScroll ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
+      if (progress) {
+        progress.style.strokeDasharray = String(circumference);
+        progress.style.strokeDashoffset = String(circumference * (1 - amount));
+      }
+      top.classList.toggle("is-visible", window.scrollY > 200);
+    };
+    const requestProgressUpdate = () => {
+      if (!framePending) {
+        framePending = true;
+        window.requestAnimationFrame(updateScrollProgress);
+      }
+    };
+    window.addEventListener("scroll", requestProgressUpdate, { passive: true });
+    window.addEventListener("resize", requestProgressUpdate, { passive: true });
+    top.addEventListener("click", event => {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    });
+    updateScrollProgress();
   }
   const year = document.getElementById("year");
   if (year) year.textContent = String(new Date().getFullYear());

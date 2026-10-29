@@ -59,9 +59,12 @@
     list.append(li);
   });
   drawer.style.setProperty('--menu-count', links.length);
+  drawer.inert = true;
+  drawer.setAttribute("aria-hidden", "true");
   document.body.append(backdrop, drawer);
 
   let scrollY = 0;
+  let previousBodyStyles = null;
   let returnFocus = toggle;
   let closeTimer;
   let touchStartX = null;
@@ -72,6 +75,9 @@
     clearTimeout(closeTimer);
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : toggle;
     scrollY = window.scrollY;
+    previousBodyStyles = { position: document.body.style.position, top: document.body.style.top, width: document.body.style.width };
+    drawer.inert = false;
+    drawer.setAttribute("aria-hidden", "false");
     document.body.style.position = 'fixed';
     document.body.style.top = `-${scrollY}px`;
     document.body.style.width = '100%';
@@ -85,11 +91,14 @@
   const close = (restore = true) => {
     if (!document.body.classList.contains('ah-menu-open')) return;
     document.body.classList.add('ah-menu-closing');
+    drawer.inert = true;
+    drawer.setAttribute("aria-hidden", "true");
     document.body.classList.remove('ah-menu-open');
     backgroundNodes.forEach(node => { node.inert = false; node.removeAttribute('aria-hidden'); });
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
+    document.body.style.position = previousBodyStyles?.position || '';
+    document.body.style.top = previousBodyStyles?.top || '';
+    document.body.style.width = previousBodyStyles?.width || '';
+    previousBodyStyles = null;
     window.scrollTo(0, scrollY);
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', 'Open menu');

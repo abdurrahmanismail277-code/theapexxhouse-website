@@ -1,5 +1,7 @@
 # Cloudflare performance settings
 
+The production domain currently responds from GitHub Pages/Fastly, so these Cloudflare settings are not active for the live site. The optional Worker in `wrangler.toml` applies versioned asset and HTML cache headers if the domain is moved to that deployment.
+
 Configure these in the Cloudflare dashboard for `theapexxhouse.com`:
 
 1. **Caching → Cache Rules → Create rule**

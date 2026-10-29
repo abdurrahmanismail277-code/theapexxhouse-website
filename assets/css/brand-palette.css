@@ -16,7 +16,7 @@
 }
 html{accent-color:var(--brand-blue)}
 body{color:var(--brand-charcoal);background:var(--brand-white);-webkit-font-smoothing:auto}
-h1,h2,h3,h4{color:var(--brand-navy)}
+h1,h2,h3,h4{color:inherit}
 ::selection{color:var(--brand-navy);background:var(--brand-pale-blue)}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline-color:var(--brand-blue)}
 .eyebrow,.service-number,.stat-kicker,.insight-category{color:var(--brand-blue)}

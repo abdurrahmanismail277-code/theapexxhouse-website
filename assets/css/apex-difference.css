@@ -1,0 +1,54 @@
+/* Keep the Apex Difference surface aligned with the header in either theme. */
+.why.surface-gradient {
+  background: linear-gradient(105deg, #082755, #061d41) !important;
+  isolation: isolate;
+}
+.why.surface-gradient::before,
+.why.surface-gradient::after {
+  content: none !important;
+  display: none !important;
+}
+.why .eyebrow {
+  color: #fff !important;
+}
+.why .eyebrow::before {
+  background: var(--light-blue) !important;
+}
+.why .section-title {
+  color: #fff !important;
+}
+.why .section-intro {
+  color: rgba(255, 255, 255, .88) !important;
+}
+.why .stat-card {
+  background: #f6f9ff !important;
+  border-color: #dce8f9 !important;
+  backdrop-filter: none !important;
+}
+.why .stat-card strong,
+.why .stat-kicker {
+  color: var(--accent-text-on-light) !important;
+}
+.why .stat-card h3 {
+  color: #021a40 !important;
+}
+.why .stat-card p {
+  color: #3e4b5d !important;
+}
+:root:not([data-theme="dark"]) .why .stat-card strong,
+:root:not([data-theme="dark"]) .why .stat-card .stat-kicker,
+:root[data-theme="dark"] .why .stat-card strong,
+:root[data-theme="dark"] .why .stat-card .stat-kicker {
+  color: var(--accent-text-on-light) !important;
+}
+:root:not([data-theme="dark"]) .why .stat-card h3,
+:root[data-theme="dark"] .why .stat-card h3 {
+  color: #021a40 !important;
+}
+:root:not([data-theme="dark"]) .why .stat-card p,
+:root[data-theme="dark"] .why .stat-card p {
+  color: #3e4b5d !important;
+}
+:root[data-theme="dark"] .why.surface-gradient {
+  background: linear-gradient(105deg, #0b2c58, #071b39) !important;
+}
