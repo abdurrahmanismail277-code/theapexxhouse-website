@@ -51,7 +51,7 @@
     const bookingForm = document.getElementById("booking-form");
     const bookingStatus = document.getElementById("booking-status");
     const RECAPTCHA_SITE_KEY = "6Lf_IQUuAAAAAEvfsUMYCAx9ILd35Lm32OJ-I8aQ";
-    const BOOKING_API_URL = "/api/book";
+    const BOOKING_API_URL = "https://apex-house-site.abdurrahmanismail277.workers.dev/api/book";
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
