@@ -226,6 +226,7 @@
     .bank-account-value dt{color:#ffffffad;font:500 12px/1.4 var(--head)}
     .bank-account-value dd{margin:4px 0 0;color:#fff;font:600 16px/1.35 var(--head);overflow-wrap:anywhere}
     .bank-account-value .account-number-large,.bank-account-value .account-amount-large{font-size:clamp(28px,7vw,30px);font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:.045em}
+    .bank-account-value .account-number-large{white-space:nowrap;overflow-wrap:normal;word-break:keep-all;letter-spacing:.01em}
     .bank-narration-row{margin-top:4px;padding:12px;border:0;border-radius:12px;background:#ffe5a3;color:#071b39}
     .bank-narration-row .bank-account-value dt{color:#526078}
     .bank-narration-row .bank-account-value dd{color:#071b39;font-weight:750;letter-spacing:.08em}
@@ -523,7 +524,7 @@
             </div>
             <div class="exact-payment-notice" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16.5 9"/></svg><p>Send exactly <strong id="exact-payment-amount"></strong> for <strong id="exact-payment-service"></strong>. Underpayment or overpayment may delay payment confirmation.</p></div>
             <button type="button" class="payment-made-button" id="payment-open-modal" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>I've Made the Payment</button>
-            <div class="payment-confirmation-card" id="payment-confirmation" role="status" aria-live="polite" tabindex="-1" hidden><span aria-hidden="true">âœ“</span><p>Thanks! We'll confirm your payment shortly.</p></div>
+            <div class="payment-confirmation-card" id="payment-confirmation" role="status" aria-live="polite" tabindex="-1" hidden><span aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></span><p>Thanks! We'll confirm your payment shortly.</p></div>
           </div>
         </section>
 <div class="payment-modal-backdrop" id="payment-modal-backdrop" hidden>

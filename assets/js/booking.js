@@ -51,7 +51,7 @@
     const bookingForm = document.getElementById("booking-form");
     const bookingStatus = document.getElementById("booking-status");
     const RECAPTCHA_SITE_KEY = "6Lf_IQUuAAAAAEvfsUMYCAx9ILd35Lm32OJ-I8aQ";
-    const RECAPTCHA_VERIFY_URL = "https://apex-house-site.abdurrahmanismail277.workers.dev/api/recaptcha/verify";
+    const BOOKING_API_URL = "/api/book";
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
@@ -59,6 +59,7 @@
     let recaptchaWidgetId = null;
     let recaptchaPromise;
     let recaptchaError;
+    let bookingIdempotencyKey = "";
     function loadRecaptcha() {
       if (window.grecaptcha?.render) return Promise.resolve(window.grecaptcha);
       if (recaptchaPromise) return recaptchaPromise;
@@ -323,20 +324,6 @@
     const paymentScreen = document.getElementById("booking-payment");
     const paymentTitle = document.getElementById("payment-title");
     let currentBooking = null;
-    function createBookingReference() {
-      const now = new Date();
-      const date = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}`;
-      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let suffix = "";
-      if (window.crypto && window.crypto.getRandomValues) {
-        const values = new Uint32Array(4);
-        window.crypto.getRandomValues(values);
-        suffix = [...values].map(value => alphabet[value % alphabet.length]).join("");
-      } else {
-        suffix = Array.from({ length: 4 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
-      }
-      return `APEX-${date}-${suffix}`;
-    }
     function displayBookingPayment(booking) {
       document.querySelector(".bank-transfer-card").hidden = false;
       document.getElementById("payment-guidance").textContent = booking.amountKnown
@@ -415,27 +402,7 @@
         return;
       }
       const submitButton = document.getElementById("booking-submit");
-      submitButton.disabled = true;
-      status.textContent = "Verifying your request...";
-      try {
-        const response = await fetch(RECAPTCHA_VERIFY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: recaptchaToken }),
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.success !== true) {
-          window.grecaptcha.reset(recaptchaWidgetId);
-          status.textContent = result.error || "We could not verify your request. Please try the reCAPTCHA check again.";
-          return;
-        }
-      } catch {
-        window.grecaptcha.reset(recaptchaWidgetId);
-        status.textContent = "We could not verify your request. Check your connection and try again.";
-        return;
-      } finally {
-        submitButton.disabled = false;
-      }
+      status.textContent = "Submitting your booking securely...";
       const data = Object.fromEntries(new FormData(bookingForm));
       const service = selectedService();
       const offer = service?.offers.find(item => item.id === data.offerId && item.mode === data.mode);
@@ -451,25 +418,80 @@
         return;
       }
       if (String(data.website || "").trim()) return;
-      const amountKnown = data.mode !== "physical" && service.id !== "launch-hosting";
       const platform = data.mode === "virtual" ? (data.platformPreference === "Other" ? String(data.platformOther || "").trim() : String(data.platformPreference || "")) : "";
-      const booking = {
-        reference: createBookingReference(),
-        name: String(data.name).trim(), email: String(data.email).trim(),
-        country: selectedCountry.name, countryISO: selectedCountry.isoCode,
-        phoneDialCode: bookingInputs.dialCountry.dialCode, whatsapp: selectedPhone.e164,
-        service: service.name, mode: data.mode, package: offer.label,
-        quantity: Number(data.quantity), unit: offer.unit,
-        amount: quote.amount, amountNGN: quote.amount, amountKnown, paymentNarration: getPaymentNarrationCode(),
-        eventName: String(data.eventName || "").trim(), eventType: String(data.eventType || "").trim(),
-        date: data.eventDate, time: String(data.eventTime || ""),
+      if (!bookingIdempotencyKey) {
+        const bytes = new Uint8Array(18);
+        window.crypto.getRandomValues(bytes);
+        bookingIdempotencyKey = [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+      }
+      const payload = {
+        ...data,
+        token: recaptchaToken,
+        country: selectedCountry.name,
+        countryISO: selectedCountry.isoCode,
+        whatsapp: selectedPhone.e164,
+        mode: data.mode,
+        quantity: Number(data.quantity),
+        extraHours: Number(data.extraHours || 0),
+        eventDate: data.eventDate,
         eventTimezone: data.mode === "virtual" ? bookingInputs.timeZone : "",
-        platform, additionalNotes: String(data.additionalNotes || "").trim(),
+        platform: platform,
       };
-      try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this payment summary for refresh recovery.", error); }
-      try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
-      status.textContent = "Review complete. Payment instructions are below.";
-      displayBookingPayment(booking);
+      submitButton.disabled = true;
+      try {
+        const response = await fetch(BOOKING_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Idempotency-Key": bookingIdempotencyKey },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.ok !== true) throw new Error(result.error || "We could not submit your booking. Please try again.");
+        const booking = {
+          reference: result.reference, name: String(data.name).trim(), email: String(data.email).trim(),
+          country: selectedCountry.name, countryISO: selectedCountry.isoCode,
+          phoneDialCode: bookingInputs.dialCountry.dialCode, whatsapp: selectedPhone.e164,
+          service: result.service, mode: data.mode, package: result.package,
+          quantity: Number(data.quantity), unit: result.unit,
+          amount: result.amount, amountNGN: result.amount, amountKnown: result.amountKnown, paymentNarration: result.reference,
+          eventName: String(data.eventName || "").trim(), eventType: String(data.eventType || "").trim(),
+          date: data.eventDate, time: String(data.eventTime || ""),
+          eventTimezone: data.mode === "virtual" ? bookingInputs.timeZone : "",
+          platform, additionalNotes: String(data.additionalNotes || "").trim(),
+        };
+        try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this payment summary for refresh recovery.", error); }
+        try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
+        status.textContent = "Booking received. Payment instructions are below.";
+        displayBookingPayment(booking);
+      } catch (error) {
+        window.grecaptcha.reset(recaptchaWidgetId);
+        status.textContent = `${error.message || "We could not submit your booking."} Complete reCAPTCHA again and retry, or contact us on WhatsApp.`;
+        let retry = document.getElementById("booking-retry");
+        if (!retry) {
+          retry = document.createElement("button");
+          retry.type = "button";
+          retry.id = "booking-retry";
+          retry.className = "payment-copy";
+          retry.textContent = "Retry booking";
+          status.insertAdjacentElement("afterend", retry);
+          retry.addEventListener("click", () => {
+            retry.remove();
+            bookingForm.requestSubmit();
+          });
+        }
+        let fallback = document.getElementById("booking-whatsapp-fallback");
+        if (!fallback) {
+          fallback = document.createElement("a");
+          fallback.id = "booking-whatsapp-fallback";
+          fallback.href = "https://wa.me/2348038326349";
+          fallback.target = "_blank";
+          fallback.rel = "noopener noreferrer";
+          fallback.textContent = "Contact Apex House on WhatsApp";
+          fallback.style.marginLeft = "12px";
+          status.insertAdjacentElement("afterend", fallback);
+        }
+      } finally {
+        submitButton.disabled = false;
+      }
     });
     document.querySelectorAll(".payment-copy").forEach(button => button.addEventListener("click", async () => {
       const value = button.dataset.copyValue;
@@ -552,6 +574,7 @@
       try { sessionStorage.removeItem(BOOKING_STORAGE_KEY); } catch (error) {}
       currentBooking = null;
       paymentNarrationCode = "";
+      bookingIdempotencyKey = "";
       paymentScreen.hidden = true;
       bookingForm.hidden = false;
       bookingForm.reset();
