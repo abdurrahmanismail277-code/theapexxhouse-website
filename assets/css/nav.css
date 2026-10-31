@@ -1,4 +1,4 @@
-﻿/* Shared responsive navigation and slide-in drawer */
+/* Shared responsive navigation and slide-in drawer */
 html.js-ready .menu-toggle{display:none!important}
 @media(max-width:1023px){
   html.js-ready .nav-inner>.menu-toggle{display:grid!important;place-items:center;flex:0 0 44px;width:44px;height:44px;min-width:44px;padding:0;order:-1;position:relative;z-index:1;border:1px solid #ffffff45;border-radius:50%;background:#ffffff08;color:#fff;cursor:pointer}

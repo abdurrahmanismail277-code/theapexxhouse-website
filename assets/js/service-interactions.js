@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const cards = [...document.querySelectorAll("[data-service-card]")];
   const packageBar = document.getElementById("service-package-bar");
   const countLabel = document.getElementById("service-package-count");

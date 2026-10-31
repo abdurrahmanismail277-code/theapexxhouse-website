@@ -213,6 +213,12 @@ export default {
     const versionedAsset = staticAsset && url.searchParams.has("v");
     const isHtml = /\.html?$/.test(pathname) || pathname === "/";
 
+    const textMime = isHtml ? "text/html" : /\.css$/i.test(pathname) ? "text/css" : "text/javascript";
+    if (isHtml || /\.(?:css|js|mjs)$/i.test(pathname)) {
+      const contentType = headers.get("Content-Type") || textMime;
+      headers.set("Content-Type", /;\s*charset=/i.test(contentType) ? contentType : `${contentType}; charset=utf-8`);
+    }
+
     if (versionedAsset) headers.set("Cache-Control", "public, max-age=31536000, immutable");
     else if (isHtml) headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     return new Response(response.body, { status: response.status, statusText: response.statusText, headers });

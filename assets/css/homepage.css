@@ -267,10 +267,10 @@ mark[data-flow-highlight].flow-highlight-drawn::after {
 .service-panel-primary:active,.service-panel-secondary:active,.service-package-bar button:active,.service-package-bar a:active{transform:scale(.97)}
 .service-select{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:13px;color:#d6e5fb;font:11px var(--mono);cursor:pointer}
 .service-select input{position:absolute;width:1px;height:1px;opacity:0}
-.service-checkmark{display:grid;width:18px;height:18px;place-items:center;border:1px solid #8ebaff;border-radius:5px;color:#021a40;transition:background .2s,transform .25s cubic-bezier(.22,1,.36,1)}
-.service-checkmark::after{content:"âœ“";font:700 12px var(--mono);opacity:0;transform:scale(.3);transition:opacity .2s,transform .25s cubic-bezier(.22,1,.36,1)}
-.service-select input:checked+.service-checkmark{background:#8ebaff;transform:scale(1.08)}
-.service-select input:checked+.service-checkmark::after{opacity:1;transform:scale(1)}
+.service-checkmark{display:grid;width:19px;height:19px;place-items:center;border:1px solid #8ebaff;border-radius:5px;background:transparent;transition:background .2s,transform .25s cubic-bezier(.22,1,.36,1)}
+.service-checkmark::after{content:"";width:5px;height:9px;border:solid transparent;border-width:0 2px 2px 0;opacity:0;transform:rotate(45deg) translate(-1px,-1px) scale(.3);transition:opacity .2s,transform .25s cubic-bezier(.22,1,.36,1)}
+.service-select input:checked+.service-checkmark{border-color:#0164ff;background:#0164ff;transform:scale(1.05)}
+.service-select input:checked+.service-checkmark::after{border-color:#fff;opacity:1;transform:rotate(45deg) translate(-1px,-1px) scale(1)}
 .service-select input:focus-visible+.service-checkmark{outline:3px solid #8ebaff;outline-offset:3px}
 .service-package-bar{position:fixed;z-index:80;right:16px;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:16px;display:flex;min-height:70px;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px;border:1px solid #ffffff24;border-radius:18px;background:#021a40;color:#fff;box-shadow:0 14px 50px #00122c70;opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s}
 .service-package-bar[hidden]{display:none}
