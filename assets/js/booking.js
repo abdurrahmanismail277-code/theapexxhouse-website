@@ -360,6 +360,12 @@
     let currentBooking = null;
     function displayBookingPayment(booking) {
       document.querySelector(".bank-transfer-card").hidden = false;
+      const emailWarning = document.getElementById("booking-email-warning");
+      const emailStatus = booking.emailStatus || "sent";
+      emailWarning.hidden = emailStatus === "sent";
+      emailWarning.textContent = emailStatus === "pending"
+        ? `Your booking ${booking.reference} is saved. Its email confirmation is still processing; your payment instructions are below.`
+        : `Your booking ${booking.reference} is saved, but the email confirmation could not be sent. Your payment instructions are below.`;
       document.getElementById("payment-guidance").textContent = booking.amountKnown
         ? "Your service details are reviewed. Transfer the exact amount in Nigerian naira from a Nigerian bank account using the details below. International transfers and foreign currencies are not accepted."
         : "Please contact us on WhatsApp to confirm the final amount before transferring from a Nigerian bank account. International transfers and foreign currencies are not accepted.";
@@ -430,7 +436,7 @@
         status.textContent = "Please wait for the reCAPTCHA check to load, then try again.";
         return;
       }
-      const recaptchaToken = window.grecaptcha.getResponse(recaptchaWidgetId);
+      const recaptchaToken = window.grecaptcha.getResponse(recaptchaWidgetId) || "";
       if (!recaptchaToken) {
         status.textContent = "Please complete the reCAPTCHA check before continuing.";
         return;
@@ -472,33 +478,30 @@
         platform: platform,
       };
       submitButton.disabled = true;
+      let result;
       try {
         const response = await fetch(BOOKING_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Idempotency-Key": bookingIdempotencyKey },
           body: JSON.stringify(payload),
         });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.ok !== true) throw new Error(result.error || "We could not submit your booking. Please try again.");
-        const booking = {
-          reference: result.reference, name: String(data.name).trim(), email: String(data.email).trim(),
-          country: selectedCountry.name, countryISO: selectedCountry.isoCode,
-          phoneDialCode: bookingInputs.dialCountry.dialCode, whatsapp: selectedPhone.e164,
-          service: result.service, mode: data.mode, package: result.package,
-          quantity: Number(data.quantity), unit: result.unit,
-          amount: result.amount, amountNGN: result.amount, amountKnown: result.amountKnown, paymentNarration: result.reference,
-          eventName: String(data.eventName || "").trim(), eventType: String(data.eventType || "").trim(),
-          date: data.eventDate, time: String(data.eventTime || ""),
-          eventTimezone: data.mode === "virtual" ? bookingInputs.timeZone : "",
-          platform, additionalNotes: String(data.additionalNotes || "").trim(),
-        };
-        try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this payment summary for refresh recovery.", error); }
-        try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
-        status.textContent = "Booking received. Payment instructions are below.";
-        displayBookingPayment(booking);
+        const responseBody = await response.text();
+        try { result = JSON.parse(responseBody); } catch { result = {}; }
+        if (!response.ok || result.ok !== true) {
+          console.error("Booking API response", { status: response.status, body: responseBody });
+          const serverError = new Error(result.error || (response.status >= 500
+            ? "The booking server encountered an error. Please retry in a moment."
+            : `The booking request was rejected (${response.status}). Please review your details and retry.`));
+          serverError.status = response.status;
+          serverError.code = result.code || "BOOKING_REQUEST_FAILED";
+          throw serverError;
+        }
       } catch (error) {
         window.grecaptcha.reset(recaptchaWidgetId);
-        status.textContent = `${error.message || "We could not submit your booking."} Complete reCAPTCHA again and retry, or contact us on WhatsApp.`;
+        console.error("Booking submission failed", { status: error.status || "network", code: error.code || "NETWORK_ERROR", error: error.message || "Unknown error" });
+        status.textContent = error instanceof TypeError
+          ? "We could not reach the booking server. Check your connection and retry."
+          : error.message || "The booking could not be completed. Please retry.";
         let retry = document.getElementById("booking-retry");
         if (!retry) {
           retry = document.createElement("button");
@@ -523,9 +526,27 @@
           fallback.style.marginLeft = "12px";
           status.insertAdjacentElement("afterend", fallback);
         }
+        return;
       } finally {
         submitButton.disabled = false;
       }
+
+      const booking = {
+          reference: result.reference, name: String(data.name).trim(), email: String(data.email).trim(),
+          country: selectedCountry.name, countryISO: selectedCountry.isoCode,
+          phoneDialCode: bookingInputs.dialCountry.dialCode, whatsapp: selectedPhone.e164,
+          service: result.service, mode: data.mode, package: result.package,
+          quantity: Number(data.quantity), unit: result.unit,
+          amount: result.amount, amountNGN: result.amount, amountKnown: result.amountKnown, paymentNarration: result.reference,
+          eventName: String(data.eventName || "").trim(), eventType: String(data.eventType || "").trim(),
+          date: data.eventDate, time: String(data.eventTime || ""),
+          eventTimezone: data.mode === "virtual" ? bookingInputs.timeZone : "",
+          platform, additionalNotes: String(data.additionalNotes || "").trim(), emailStatus: result.emailStatus || "sent",
+        };
+        try { sessionStorage.setItem(BOOKING_STORAGE_KEY, JSON.stringify(booking)); } catch (error) { console.warn("Could not save this payment summary for refresh recovery.", error); }
+        try { localStorage.removeItem(BOOKING_DRAFT_KEY); } catch {}
+        status.textContent = "Booking received. Payment instructions are below.";
+        displayBookingPayment(booking);
     });
     document.querySelectorAll(".payment-copy").forEach(button => button.addEventListener("click", async () => {
       const value = button.dataset.copyValue;
