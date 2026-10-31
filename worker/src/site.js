@@ -174,8 +174,9 @@ async function submitBooking(request, env) {
   const whatsappMessage = `Hello Apex House, I have paid for booking ${reference} (${quote.service.name}). My name is ${booking.name}. Receipt attached.`;
   const whatsappUrl = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(whatsappMessage)}`;
   const complete = bookingFields(booking, quote, reference, reference, whatsappUrl);
-  const clientMessage = { from: "The Apex House <bookings@theapexxhouse.com>", to: [booking.email], subject: `Booking received · ${reference}`, html: emailMarkup(complete), text: emailText(complete) };
-  const ownerMessage = { from: "The Apex House <bookings@theapexxhouse.com>", to: [env.NOTIFY_EMAIL], reply_to: booking.email, subject: `New booking · ${reference} · ${booking.name}`, html: emailMarkup(complete, true), text: emailText(complete, true) };
+  const sender = env.RESEND_FROM_EMAIL || env.RESEND_FROM || "The Apex House <bookings@theapexxhouse.com>";
+  const clientMessage = { from: sender, to: [booking.email], subject: `Booking received · ${reference}`, html: emailMarkup(complete), text: emailText(complete) };
+  const ownerMessage = { from: sender, to: [env.NOTIFY_EMAIL], reply_to: booking.email, subject: `New booking · ${reference} · ${booking.name}`, html: emailMarkup(complete, true), text: emailText(complete, true) };
   idempotentBookings.set(idempotencyKey, { body: {}, status: 0, expires: Date.now() + 10 * 60_000 });
   try {
     for (const message of [clientMessage, ownerMessage]) {

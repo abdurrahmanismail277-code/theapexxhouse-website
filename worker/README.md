@@ -5,7 +5,7 @@ This plain JavaScript Cloudflare Worker accepts booking JSON from the static sit
 ## One-time setup
 
 1. Create a Google Sheet with a tab named `Bookings` (or change `GOOGLE_SHEET_NAME`). Add this header row in cells A1:W1: `Received at`, `Reference`, `Name`, `Email`, `Phone / WhatsApp`, `Service ID`, `Service`, `Mode`, `Offer ID`, `Package`, `Quantity`, `Unit`, `Amount NGN`, `Quote status`, `Event name`, `Event type`, `Preferred date`, `Second-choice date`, `Venue`, `Platform`, `Audience size`, `Extra hours`, `Brief`. Share the sheet with the Google service account email as an Editor. Enable the Google Sheets API for that service account's Google Cloud project.
-2. Create a Resend account, verify the sending domain, and use a verified sender address in `RESEND_FROM`.
+2. Create a Resend account, verify the sending domain, and set a verified sender address in `RESEND_FROM_EMAIL` (or `RESEND_FROM`).
 3. Install Wrangler locally (`npm install --global wrangler`) and authenticate (`wrangler login`). Wrangler is only a deployment tool; this Worker has no runtime dependencies.
 4. From this folder, deploy with `wrangler deploy`.
 5. Copy the deployed `https://...workers.dev/` URL into the `BOOKING_ENDPOINT` constant near the top of the module script in the root `index.html`, then publish the site.
