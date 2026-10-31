@@ -26,7 +26,10 @@ const BANK = Object.freeze({ name: "OPay", accountName: "MUTMAINNAH OLUNLE TIRMI
 const OWNER_WHATSAPP = "2348038326349";
 
 async function verifyRecaptchaToken(token, env) {
-  if (!env.RECAPTCHA_SECRET_KEY) return { success: false, status: 503, error: "Verification is temporarily unavailable. Please try again later." };
+  if (!env.RECAPTCHA_SECRET_KEY) {
+    console.error("reCAPTCHA verification is unavailable: RECAPTCHA_SECRET_KEY is missing.");
+    return { success: false, status: 503, code: "CAPTCHA_CONFIG_ERROR", error: "CAPTCHA verification is temporarily unavailable. Please contact us on WhatsApp." };
+  }
   const parameters = new URLSearchParams({ secret: env.RECAPTCHA_SECRET_KEY, response: token });
   try {
     const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
@@ -35,14 +38,29 @@ async function verifyRecaptchaToken(token, env) {
       body: parameters,
     });
     const verification = await response.json();
+    console.info("Google reCAPTCHA siteverify response", verification);
+    if (!response.ok) {
+      return { success: false, status: 503, code: "CAPTCHA_SERVICE_ERROR", error: "Google could not verify the CAPTCHA right now. Please try again." };
+    }
     const validHostnames = env.ENVIRONMENT === "development"
       ? new Set(["theapexxhouse.com", "www.theapexxhouse.com", "localhost", "127.0.0.1"])
       : new Set(["theapexxhouse.com", "www.theapexxhouse.com"]);
-    return verification.success === true && validHostnames.has(verification.hostname)
-      ? { success: true }
-      : { success: false, status: 400, error: "We could not verify your request. Please complete reCAPTCHA again." };
-  } catch {
-    return { success: false, status: 503, error: "Verification is temporarily unavailable. Please try again." };
+    if (verification.success === true && !validHostnames.has(verification.hostname)) {
+      console.error("reCAPTCHA hostname mismatch", { hostname: verification.hostname, allowed: [...validHostnames] });
+      return { success: false, status: 403, code: "CAPTCHA_HOSTNAME_MISMATCH", error: "CAPTCHA is not enabled for this website address. Please contact us on WhatsApp." };
+    }
+    if (verification.success === true) return { success: true };
+    const errorCodes = Array.isArray(verification["error-codes"]) ? verification["error-codes"] : [];
+    if (errorCodes.includes("invalid-input-secret")) {
+      return { success: false, status: 503, code: "CAPTCHA_CONFIG_ERROR", error: "CAPTCHA verification is misconfigured. Please contact us on WhatsApp." };
+    }
+    if (errorCodes.includes("timeout-or-duplicate")) {
+      return { success: false, status: 400, code: "CAPTCHA_EXPIRED", error: "Your CAPTCHA expired. Please complete it again and retry." };
+    }
+    return { success: false, status: 400, code: "CAPTCHA_FAILED", error: "CAPTCHA verification failed. Please complete it again and retry." };
+  } catch (error) {
+    console.error("Google reCAPTCHA siteverify request failed", error instanceof Error ? error.message : "Unknown error");
+    return { success: false, status: 503, code: "CAPTCHA_SERVICE_ERROR", error: "Google could not verify the CAPTCHA right now. Please try again." };
   }
 }
 
@@ -57,7 +75,7 @@ async function verifyRecaptcha(request, env) {
   const token = typeof body?.token === "string" ? body.token : "";
   if (!token || token.length > 4096) return json({ success: false, error: "Please complete the reCAPTCHA check." }, 400, corsHeaders);
   const result = await verifyRecaptchaToken(token, env);
-  return json(result.success ? { success: true } : { success: false, error: result.error }, result.success ? 200 : result.status, corsHeaders);
+  return json(result.success ? { success: true } : { success: false, code: result.code, error: result.error }, result.success ? 200 : result.status, corsHeaders);
 }
 
 function bookingFields(input, quote, reference, narration, whatsappUrl) {
@@ -130,9 +148,17 @@ async function submitBooking(request, env) {
   const corsHeaders = verificationCorsHeaders(origin);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, corsHeaders);
-  if (!env.RESEND_API_KEY || !env.NOTIFY_EMAIL) return json({ error: "Booking is temporarily unavailable. Please try again later." }, 503, corsHeaders);
   const idempotencyKey = request.headers.get("Idempotency-Key") || "";
   if (!/^[A-Za-z0-9_-]{16,80}$/.test(idempotencyKey)) return json({ error: "Please retry your booking." }, 400, corsHeaders);
+  if (!env.APEX_HOUSE_BOOKINGS) return json({ code: "BOOKING_STORAGE_UNAVAILABLE", error: "Booking storage is temporarily unavailable. Please retry or contact us on WhatsApp." }, 503, corsHeaders);
+  let savedRecord;
+  try {
+    savedRecord = await env.APEX_HOUSE_BOOKINGS.get(`booking:${idempotencyKey}`, { type: "json" });
+  } catch (error) {
+    console.error("Booking storage read failed", error instanceof Error ? error.message : "Unknown error");
+    return json({ code: "BOOKING_STORAGE_UNAVAILABLE", error: "We could not check your saved booking. Please retry or contact us on WhatsApp." }, 503, corsHeaders);
+  }
+  if (savedRecord?.response) return json(savedRecord.response, 201, corsHeaders);
   const cached = idempotentBookings.get(idempotencyKey);
   if (cached?.expires > Date.now() && cached.status === 0) return json({ error: "Your booking is still being processed. Please retry in a moment." }, 409, corsHeaders);
   if (cached?.expires > Date.now()) return json(cached.body, cached.status, corsHeaders);
@@ -149,7 +175,7 @@ async function submitBooking(request, env) {
   const token = typeof input.token === "string" ? input.token : "";
   if (!token || token.length > 4096) return json({ error: "Please complete the reCAPTCHA check." }, 400, corsHeaders);
   const captcha = await verifyRecaptchaToken(token, env);
-  if (!captcha.success) return json({ error: captcha.error }, captcha.status, corsHeaders);
+  if (!captcha.success) return json({ code: captcha.code, error: captcha.error }, captcha.status, corsHeaders);
 
   const booking = {
     name: clean(input.name, 120), email: clean(input.email, 254).toLowerCase(), whatsapp: clean(input.whatsapp, 20),
@@ -177,26 +203,49 @@ async function submitBooking(request, env) {
   const sender = env.RESEND_FROM_EMAIL || env.RESEND_FROM || "The Apex House <bookings@theapexxhouse.com>";
   const clientMessage = { from: sender, to: [booking.email], subject: `Booking received · ${reference}`, html: emailMarkup(complete), text: emailText(complete) };
   const ownerMessage = { from: sender, to: [env.NOTIFY_EMAIL], reply_to: booking.email, subject: `New booking · ${reference} · ${booking.name}`, html: emailMarkup(complete, true), text: emailText(complete, true) };
-  idempotentBookings.set(idempotencyKey, { body: {}, status: 0, expires: Date.now() + 10 * 60_000 });
+  const result = { ok: true, reference, amount: quote.amount, amountKnown: complete.amountKnown, service: complete.service, package: complete.package, unit: complete.unit, whatsappUrl, emailStatus: "pending" };
+  const bookingRecord = { createdAt: new Date().toISOString(), booking: complete, response: result };
   try {
-    for (const message of [clientMessage, ownerMessage]) {
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify(message),
-      });
-      if (!response.ok) {
-        console.error("Resend rejected booking email", response.status);
-        idempotentBookings.delete(idempotencyKey);
-        return json({ error: "We could not finish sending your booking confirmation. Please retry or contact us on WhatsApp." }, 502, corsHeaders);
-      }
-    }
-  } catch {
-    console.error("Resend booking request failed");
-    idempotentBookings.delete(idempotencyKey);
-    return json({ error: "We could not finish sending your booking confirmation. Please retry or contact us on WhatsApp." }, 502, corsHeaders);
+    await env.APEX_HOUSE_BOOKINGS.put(`booking:${idempotencyKey}`, JSON.stringify(bookingRecord));
+  } catch (error) {
+    console.error("Booking storage write failed", { reference, error: error instanceof Error ? error.message : "Unknown error" });
+    return json({ code: "BOOKING_STORAGE_FAILED", error: "We could not save your booking, so payment instructions are not available yet. Please retry or contact us on WhatsApp." }, 503, corsHeaders);
   }
-  const result = { ok: true, reference, amount: quote.amount, amountKnown: complete.amountKnown, service: complete.service, package: complete.package, unit: complete.unit, whatsappUrl };
+
+  idempotentBookings.set(idempotencyKey, { body: result, status: 0, expires: Date.now() + 10 * 60_000 });
+  const emailConfigMissing = ["RESEND_API_KEY", "NOTIFY_EMAIL"].filter(name => !env[name]);
+  if (emailConfigMissing.length) {
+    emailStatusFailed(reference, `Missing Worker email configuration: ${emailConfigMissing.join(", ")}`);
+  } else {
+    const sendEmail = async message => {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify(message),
+        signal: AbortSignal.timeout(10_000),
+      });
+      const responseBody = await response.text();
+      if (!response.ok) throw new Error(`Resend returned ${response.status}: ${responseBody}`);
+    };
+    const emailResults = await Promise.allSettled([sendEmail(clientMessage), sendEmail(ownerMessage)]);
+    const failures = emailResults.filter(item => item.status === "rejected");
+    if (failures.length) emailStatusFailed(reference, failures.map(item => item.reason instanceof Error ? item.reason.message : "Unknown Resend error"));
+    else result.emailStatus = "sent";
+  }
+
+  if (result.emailStatus === "pending") result.emailStatus = "failed";
+  bookingRecord.response = result;
+  try {
+    await env.APEX_HOUSE_BOOKINGS.put(`booking:${idempotencyKey}`, JSON.stringify(bookingRecord));
+  } catch (error) {
+    console.error("Booking email status could not be saved", { reference, error: error instanceof Error ? error.message : "Unknown error" });
+  }
   idempotentBookings.set(idempotencyKey, { body: result, status: 201, expires: Date.now() + 24 * 60 * 60_000 });
   return json(result, 201, corsHeaders);
+}
+
+function emailStatusFailed(reference, error) {
+  console.error("Booking saved, but confirmation email delivery failed", { reference, error });
 }
 
 export default {
