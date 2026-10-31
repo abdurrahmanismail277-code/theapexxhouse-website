@@ -202,14 +202,17 @@
       const quantity = Number(document.getElementById("booking-quantity").value);
       const extraHours = Number(document.getElementById("booking-extra-hours").value || 0);
       const quote = calculatePrice(serviceOptions.value, selectedMode(), offerId, quantity, extraHours);
-      const totalText = quote ? `${naira(quote.amount)} NGN` : "Select a service and package";
+      const totalText = quote ? naira(quote.amount) : "Select a service and package";
       animatePrice(document.getElementById("booking-price-live"), totalText);
       animatePrice(document.getElementById("booking-price"), totalText);
       const notes = ["Prices and payments are in Nigerian naira (NGN)."];
       if (selectedMode() === "physical") notes.push("Transport fare is not included.");
       if (service?.extraHoursAllowed) notes.push(SETTINGS.launchExtraHourRateNGN == null ? "Additional hours are confirmed after review." : `Additional hours: ${priceLabel(SETTINGS.launchExtraHourRateNGN)} per hour, confirmed after review.`);
       const note = quote ? notes.join(" ") : "Choose a service and package to see the NGN price.";
-      document.getElementById("estimate-note").textContent = note;
+      const extraNotes = quote ? notes.filter(item => item !== "Prices and payments are in Nigerian naira (NGN)").join(" ") : "";
+      const estimateNote = document.getElementById("estimate-note");
+      estimateNote.textContent = extraNotes;
+      estimateNote.hidden = !extraNotes;
       document.getElementById("estimate-note-live").textContent = note;
     }
     serviceOptions.addEventListener("change", updateOffers);
@@ -294,6 +297,7 @@
     document.getElementById("booking-back").addEventListener("click", () => { currentStep = Math.max(0, currentStep - 1); renderStep(); });
     function renderStep() {
       steps.forEach((step, index) => step.hidden = index !== currentStep);
+      bookingForm.classList.toggle("is-reviewing", currentStep === 3);
       document.getElementById("booking-back").hidden = currentStep === 0;
       document.getElementById("booking-next").hidden = currentStep === 3;
       document.getElementById("booking-submit").hidden = currentStep !== 3;
@@ -310,15 +314,45 @@
         const offer = service?.offers.find(item => item.id === data.get("offerId") && item.mode === data.get("mode"));
         const quote = calculatePrice(data.get("serviceId"), data.get("mode"), data.get("offerId"), Number(data.get("quantity")), Number(data.get("extraHours") || 0));
         const country = bookingInputs.country;
-        const reviewParts = [
-          `${service?.name} / ${offer?.label} / ${data.get("quantity")} ${offer?.unit}(s)`,
-          `${data.get("eventName")} (${data.get("eventDate")}${data.get("eventTime") ? ` ${data.get("eventTime")}` : ""})`,
-          `${data.get("name")} / ${data.get("email")}`,
-          `Country: ${country?.name || "Not selected"}`,
-          data.get("mode") === "virtual" && bookingInputs.timeZone ? `Time zone: ${bookingInputs.timeZone}` : "",
-          quote ? `${naira(quote.amount)} NGN` : "Quote unavailable",
-        ].filter(Boolean);
-        document.getElementById("booking-review").textContent = reviewParts.join(" / ");
+      const setSummaryRow = (key, value) => {
+        const row = document.querySelector(`[data-summary-row="${key}"]`);
+        const target = document.getElementById(`booking-summary-${key}`);
+        const text = String(value || "").trim();
+        row.hidden = !text;
+        target.textContent = text;
+      };
+      const quantity = Number(data.get("quantity"));
+      const unit = String(offer?.unit || "unit").replace(/\(s\)$/, "");
+      const quantityText = `${quantity} ${unit}${quantity === 1 ? "" : "s"}`;
+      const eventDate = String(data.get("eventDate") || "");
+      const eventTime = String(data.get("eventTime") || "");
+      let dateText = "";
+      if (eventDate) {
+        const eventDateTime = new Date(`${eventDate}T${eventTime || "00:00"}:00+01:00`);
+        if (!Number.isNaN(eventDateTime.valueOf())) {
+          const datePart = new Intl.DateTimeFormat("en-GB", {
+            weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Lagos",
+          }).format(eventDateTime);
+          if (eventTime) {
+            const timeParts = new Intl.DateTimeFormat("en-GB", {
+              hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Africa/Lagos",
+            }).formatToParts(eventDateTime);
+            const timePart = timeParts.map(part => part.type === "dayPeriod" ? part.value.toUpperCase() : part.value).join("");
+            dateText = `${datePart} · ${timePart} (WAT)`;
+          } else dateText = datePart;
+        }
+      }
+      document.getElementById("booking-summary-service").textContent = service?.name || "";
+      document.getElementById("booking-summary-package").textContent = offer?.label || "";
+      document.getElementById("booking-summary-package").hidden = !offer?.label;
+      document.getElementById("booking-summary-quantity").textContent = quantityText;
+      setSummaryRow("event", data.get("eventName"));
+      setSummaryRow("date", dateText);
+      setSummaryRow("name", data.get("name"));
+      setSummaryRow("email", data.get("email"));
+      setSummaryRow("country", country?.name);
+      setSummaryRow("timezone", data.get("mode") === "virtual" ? bookingInputs.timeZone : "");
+      animatePrice(document.getElementById("booking-price"), quote ? naira(quote.amount) : "Quote unavailable");
       }
     }
     const paymentScreen = document.getElementById("booking-payment");
