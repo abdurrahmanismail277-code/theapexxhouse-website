@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const header = document.querySelector('.nav') || document.querySelector('.topbar');
   let nav = document.querySelector('.nav-links');
   const navInner = document.querySelector('.nav-inner') || header;
