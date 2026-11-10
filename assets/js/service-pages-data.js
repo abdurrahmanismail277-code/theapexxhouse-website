@@ -3,7 +3,7 @@ export const SERVICE_ORDER = ["communication", "consulting", "media"];
 export const SERVICE_PAGES = {
   communication: {
     name: "Apex Communication",
-    page: "apex-communication.html",
+    page: "/apex-communication",
     summary: "Apex Communication provides speaking, event moderation, hosting, and community management services exclusively for Muslim women.",
     audience: "Muslim women event organisers, community leaders, and women-led organisations communicating with purpose.",
     outcome: "We help you communicate with clarity, confidence, and intention.",
@@ -123,7 +123,7 @@ export const SERVICE_PAGES = {
   },
   consulting: {
     name: "Apex Consulting",
-    page: "apex-consulting.html",
+    page: "/apex-consulting",
     summary: "Apex Consulting helps Muslim women event organisers move from uncertainty to clarity and from ideas to intentional planning.",
     audience: "Muslim women event organisers who need professional guidance, continued strategic support, or structured coordination to move their event from plan to delivery.",
     outcome: "We help you build with intention and approach your event with purpose and direction.",
@@ -209,7 +209,7 @@ export const SERVICE_PAGES = {
   },
   media: {
     name: "Apex Media",
-    page: "apex-media.html",
+    page: "/apex-media",
     summary: "Apex Media helps Muslim women and women-led brands approach visibility and content with intention.",
     audience: "Muslim women and women-led brands approaching visibility and content with intention.",
     outcome: "Our focus goes beyond showing up. It is about how you show up, what people understand, and what they remember.",
