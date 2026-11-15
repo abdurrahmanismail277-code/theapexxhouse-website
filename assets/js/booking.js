@@ -607,8 +607,20 @@
 
         const booking = result.booking;
         if (!booking || booking.reference !== result.reference) {
-          status.textContent = "The booking was saved, but we could not load its secure payment details. Use your email reference to recover it.";
-          return;
+          // Recover through the authenticated-by-reference-and-email route if an
+          // older/stale idempotent response lacks the current response shape.
+          try {
+            const recovered = await retrieveBooking(result.reference, String(data.email || "").trim().toLowerCase());
+            if (!recovered.booking || recovered.booking.reference !== result.reference || !recovered.paymentDetails) throw new Error("Incomplete booking recovery response");
+            recovered.booking.emailStatus = recovered.emailStatus || "failed";
+            status.textContent = "Booking received. Review your service details to continue.";
+            displayBookingPayment(recovered.booking, { paymentDetails: recovered.paymentDetails, emailStatus: recovered.emailStatus, step: 1 });
+            return;
+          } catch (error) {
+            console.error("Saved booking payment recovery failed", { status: error.status || "unknown", error: error.message || "Unknown error" });
+            status.textContent = "The booking was saved, but we could not load its secure payment details. Use your email reference to recover it.";
+            return;
+          }
         }
         booking.emailStatus = result.emailStatus || "sent";
         status.textContent = "Booking received. Review your service details to continue.";

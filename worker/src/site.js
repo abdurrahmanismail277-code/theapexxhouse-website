@@ -193,7 +193,17 @@ async function sendResend(env, message) {
     body: JSON.stringify({ ...emailHeaders(env), ...message }),
     signal: AbortSignal.timeout(10_000),
   });
-  if (!response.ok) throw new Error(`Resend returned ${response.status}: ${await response.text()}`);
+  if (!response.ok) {
+    const body = await response.text();
+    let message = body;
+    try {
+      const parsed = JSON.parse(body);
+      message = parsed.message || parsed.error || parsed.name || body;
+    } catch {}
+    const error = new Error(String(message).slice(0, 300) || `Resend returned ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
 }
 
 const isValidEmail = value => typeof value === "string" && value.length <= 254 && emailPattern.test(value);
@@ -212,12 +222,18 @@ async function retrieveBooking(request, env) {
   const email = typeof input?.email === "string" ? input.email.trim().toLowerCase() : "";
   if (!validReference(reference) || !isValidEmail(email)) return json({ error: "Booking not found. Check the reference and email and try again." }, 404, headers);
   let loaded;
-  try { loaded = await loadBooking(reference, env); } catch { return json({ error: "We could not retrieve the booking right now. Please try again." }, 503, headers); }
+  try { loaded = await loadBooking(reference, env); } catch (error) {
+    console.error("Booking retrieval failed", { step: "kv_lookup", status: error?.status || 503, error: error instanceof Error ? error.message : "Unknown error" });
+    return json({ error: "We could not retrieve the booking right now. Please try again." }, 503, headers);
+  }
   if (!loaded || loaded.record.booking.email.toLowerCase() !== email) return json({ error: "Booking not found. Check the reference and email and try again." }, 404, headers);
   try {
     const record = await markExpired(loaded, env);
     return json({ ok: true, booking: record.booking, status: record.status, expiresAt: record.expiresAt, emailStatus: record.response.emailStatus || "failed", paymentDetails: privatePaymentDetails() }, 200, headers);
-  } catch { return json({ error: "We could not update this booking status right now. Please try again." }, 503, headers); }
+  } catch (error) {
+    console.error("Booking retrieval failed", { step: "payment_response_or_expiry_save", status: error?.status || 503, error: error instanceof Error ? error.message : "Unknown error" });
+    return json({ error: "We could not update this booking status right now. Please try again." }, 503, headers);
+  }
 }
 
 function proofFileType(bytes, contentType) {
@@ -371,7 +387,7 @@ async function getAdminProof(request, env) {
   return new Response(object.body, { status: 200, headers: { ...SECURITY_HEADERS, "Cache-Control": "no-store", "Content-Type": contentType, "Content-Disposition": `attachment; filename="payment-proof-${reference}.${contentType === "application/pdf" ? "pdf" : contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg"}"` } });
 }
 
-async function submitBooking(request, env) {
+async function submitBooking(request, env, ctx) {
   const origin = request.headers.get("Origin");
   if (!origin || !originAllowed(origin, env)) return json({ error: "Request origin is not allowed." }, 403);
   const corsHeaders = verificationCorsHeaders(origin);
@@ -379,12 +395,15 @@ async function submitBooking(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, corsHeaders);
   const idempotencyKey = request.headers.get("Idempotency-Key") || "";
   if (!/^[A-Za-z0-9_-]{16,80}$/.test(idempotencyKey)) return json({ error: "Please retry your booking." }, 400, corsHeaders);
-  if (!env.APEX_HOUSE_BOOKINGS) return json({ code: "BOOKING_STORAGE_UNAVAILABLE", error: "Booking storage is temporarily unavailable. Please retry or contact us on WhatsApp." }, 503, corsHeaders);
+  if (!env.APEX_HOUSE_BOOKINGS) {
+    console.error("Booking submission failed", { step: "kv_binding", status: 503, error: "APEX_HOUSE_BOOKINGS binding is missing" });
+    return json({ code: "BOOKING_STORAGE_UNAVAILABLE", error: "Booking storage is temporarily unavailable. Please retry or contact us on WhatsApp." }, 503, corsHeaders);
+  }
   let savedRecord;
   try {
     savedRecord = await env.APEX_HOUSE_BOOKINGS.get(`booking:${idempotencyKey}`, { type: "json" });
   } catch (error) {
-    console.error("Booking storage read failed", error instanceof Error ? error.message : "Unknown error");
+    console.error("Booking storage read failed", { step: "kv_idempotency_read", status: error?.status || 503, error: error instanceof Error ? error.message : "Unknown error" });
     return json({ code: "BOOKING_STORAGE_UNAVAILABLE", error: "We could not check your saved booking. Please retry or contact us on WhatsApp." }, 503, corsHeaders);
   }
   if (savedRecord?.response) return json(savedRecord.response, 201, corsHeaders);
@@ -445,37 +464,40 @@ async function submitBooking(request, env) {
 
   idempotentBookings.set(idempotencyKey, { body: result, status: 0, expires: Date.now() + 10 * 60_000 });
   const emailConfigMissing = ["RESEND_API_KEY", "NOTIFY_EMAIL"].filter(name => !env[name]);
-  if (emailConfigMissing.length) {
-    emailStatusFailed(reference, `Missing Worker email configuration: ${emailConfigMissing.join(", ")}`);
-  } else {
-    const emailResults = await Promise.allSettled([sendResend(env, clientMessage), sendResend(env, ownerMessage)]);
-    const failures = emailResults.filter(item => item.status === "rejected");
-    if (failures.length) emailStatusFailed(reference, failures.map(item => item.reason instanceof Error ? item.reason.message : "Unknown Resend error"));
-    else result.emailStatus = "sent";
-  }
-
-  if (result.emailStatus === "pending") result.emailStatus = "failed";
-  bookingRecord.response = result;
-  try {
-    await saveBooking(reference, idempotencyKey, bookingRecord, env);
-  } catch (error) {
-    console.error("Booking email status could not be saved", { reference, error: error instanceof Error ? error.message : "Unknown error" });
-  }
+  const emailWork = (async () => {
+    try {
+      if (emailConfigMissing.length) {
+        result.emailStatus = "failed";
+        console.error("Booking email delivery failed", { reference, step: "email_config", status: 0, error: `Missing Worker configuration: ${emailConfigMissing.join(", ")}` });
+      } else {
+        const emailResults = await Promise.allSettled([sendResend(env, clientMessage), sendResend(env, ownerMessage)]);
+        const failures = emailResults.flatMap((item, index) => item.status === "rejected" ? [{ recipient: index === 0 ? "client" : "owner", status: item.reason?.status || 0, error: item.reason instanceof Error ? item.reason.message : "Unknown Resend error" }] : []);
+        if (failures.length) {
+          result.emailStatus = "failed";
+          for (const failure of failures) console.error("Booking email delivery failed", { reference, step: `resend_${failure.recipient}`, status: failure.status, error: failure.error });
+        } else result.emailStatus = "sent";
+      }
+      bookingRecord.response = result;
+      await saveBooking(reference, idempotencyKey, bookingRecord, env);
+      idempotentBookings.set(idempotencyKey, { body: result, status: 201, expires: Date.now() + 24 * 60 * 60_000 });
+    } catch (error) {
+      result.emailStatus = "failed";
+      console.error("Booking email status update failed", { reference, step: "email_status_save", status: error?.status || 0, error: error instanceof Error ? error.message : "Unknown error" });
+    }
+  })();
+  if (ctx?.waitUntil) ctx.waitUntil(emailWork);
+  else void emailWork;
   idempotentBookings.set(idempotencyKey, { body: result, status: 201, expires: Date.now() + 24 * 60 * 60_000 });
   return json(result, 201, corsHeaders);
 }
 
-function emailStatusFailed(reference, error) {
-  console.error("Booking saved, but confirmation email delivery failed", { reference, error });
-}
-
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const { pathname } = url;
 
     if (pathname === "/api/recaptcha/verify") return verifyRecaptcha(request, env);
-    if (pathname === "/api/book") return submitBooking(request, env);
+    if (pathname === "/api/book") return submitBooking(request, env, ctx);
     if (pathname === "/api/booking/retrieve") return retrieveBooking(request, env);
     if (pathname === "/api/booking/proof") return submitPaymentProof(request, env);
     if (pathname === "/api/admin/booking/status") return updateAdminStatus(request, env);
