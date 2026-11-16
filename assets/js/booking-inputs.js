@@ -47,7 +47,17 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   search.autocomplete = "off"; searchRow.append(searchIcon, search);
   const clear = document.createElement("button");
   clear.type = "button"; clear.className = "combobox-clear"; clear.setAttribute("aria-label", "Clear search"); clear.textContent = "×";
-  clear.addEventListener("click", () => { search.value = ""; search.dispatchEvent(new Event("input", { bubbles: true })); search.focus(); });
+  const clearSearch = () => {
+    search.value = "";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    search.focus({ preventScroll: true });
+  };
+  clear.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!search.value) close({ returnFocus: true });
+    else clearSearch();
+  });
   searchRow.append(clear);
   panel.append(searchRow, listbox); wrapper.append(panel);
   input.readOnly = true;
@@ -237,6 +247,7 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
     else if (event.key === "Escape") { event.preventDefault(); close({ returnFocus: true }); }
   });
   search.addEventListener("input", () => render(search.value));
+  search.addEventListener("search", () => search.dispatchEvent(new Event("input", { bubbles: true })));
   search.addEventListener("keydown", event => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); if (matches.length) activeIndex = (activeIndex + (event.key === "ArrowDown" ? 1 : -1) + matches.length) % matches.length; updateActive(); }
     else if (event.key === "Enter") { event.preventDefault(); if (matches[activeIndex]) choose(matches[activeIndex]); }

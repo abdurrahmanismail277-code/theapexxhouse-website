@@ -1,6 +1,6 @@
 
     import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js?v=20261110-project-management-checkout";
-    import { initBookingInputs } from "./booking-inputs.js?v=20261116-mobile-inline-country-picker";
+    import { initBookingInputs } from "./booking-inputs.js?v=20261116-country-search-currency-estimate";
     const PAYMENT_REFERENCE_KEY = "apex-house-booking-reference";
     const PAYMENT_STEP_KEY = "apex-house-payment-step";
     const PAYMENT_REGION_KEY = "apex-house-payment-region";
@@ -15,12 +15,23 @@
     const offerOptions = document.getElementById("booking-package");
     const bookingForm = document.getElementById("booking-form");
     const bookingStatus = document.getElementById("booking-status");
+    const estimateCurrencyNote = document.createElement("p");
+    estimateCurrencyNote.className = "currency-conversion-note currency-rate-info";
+    estimateCurrencyNote.hidden = true;
+    document.querySelector(".booking-estimate-content")?.append(estimateCurrencyNote);
+    const summaryCurrencyNote = document.createElement("p");
+    summaryCurrencyNote.className = "booking-summary-currency currency-rate-info";
+    summaryCurrencyNote.hidden = true;
+    document.querySelector(".booking-summary-currency")?.after(summaryCurrencyNote);
     const RECAPTCHA_SITE_KEY = "6LdErQkuAAAAAI8gaXBFE8381xCeGBTCt1hGwOPf";
     const BOOKING_API_URL = "https://apex-house-site.abdurrahmanismail277.workers.dev/api/book";
     const steps = [...bookingForm.querySelectorAll(".booking-step")];
     const progress = [...bookingForm.querySelectorAll(".booking-progress span")];
     let currentStep = 0;
     let bookingInputs;
+    let fxRates = null;
+    let fxRateRequest = null;
+    let fxRateRetryAfter = 0;
     let recaptchaWidgetId = null;
     let recaptchaPromise;
     let recaptchaError;
@@ -71,12 +82,79 @@
       });
     }
     function priceLabel(amount) { return `${naira(amount)} NGN`; }
+    const FX_RATE_CACHE_KEY = "apex-ngn-display-rates";
+    function loadNairaRates() {
+      if (fxRates) return Promise.resolve(fxRates);
+      if (fxRateRequest) return fxRateRequest;
+      if (fxRateRetryAfter > Date.now()) return Promise.reject(new Error("Currency rates unavailable"));
+      try {
+        const cached = JSON.parse(localStorage.getItem(FX_RATE_CACHE_KEY) || "null");
+        if (cached?.expiresAt > Date.now() && cached.rates?.NGN === 1) {
+          fxRates = cached.rates;
+          return Promise.resolve(fxRates);
+        }
+      } catch {}
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 8000);
+      fxRateRequest = fetch("https://open.er-api.com/v6/latest/NGN", { signal: controller.signal })
+        .then(response => { if (!response.ok) throw new Error("Currency rates unavailable"); return response.json(); })
+        .then(result => {
+          if (result.result !== "success" || result.base_code !== "NGN" || result.rates?.NGN !== 1) throw new Error("Currency rates unavailable");
+          fxRates = result.rates;
+          try { localStorage.setItem(FX_RATE_CACHE_KEY, JSON.stringify({ expiresAt: Date.now() + 24 * 60 * 60 * 1000, rates: fxRates })); } catch {}
+          return fxRates;
+        })
+        .finally(() => { window.clearTimeout(timeout); fxRateRequest = null; });
+      return fxRateRequest;
+    }
+    function showCurrencyEstimate(currency, amount, message = "") {
+      [estimateCurrencyNote, summaryCurrencyNote].forEach(note => {
+        note.replaceChildren();
+        note.hidden = !currency;
+        if (!currency) return;
+        if (message) { note.textContent = message; return; }
+        let formatted;
+        try { formatted = new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 2 }).format(amount); }
+        catch { formatted = `${currency} ${Number(amount).toFixed(2)}`; }
+        note.append(`Approx. ${formatted} (${currency}). Indicative daily rate; payment remains in NGN. `);
+        const attribution = document.createElement("a");
+        attribution.href = "https://www.exchangerate-api.com";
+        attribution.target = "_blank";
+        attribution.rel = "noopener noreferrer";
+        attribution.textContent = "Rates by Exchange Rate API";
+        note.append(attribution);
+      });
+    }
+    function updateCurrencyEstimate(quote, service) {
+      const currency = bookingInputs?.country?.defaultCurrency || "NGN";
+      if (!quote || service?.inquiryOnly || currency === "NGN") {
+        showCurrencyEstimate("");
+        return;
+      }
+      if (fxRates && Number.isFinite(fxRates[currency])) {
+        showCurrencyEstimate(currency, quote.amount * fxRates[currency]);
+        return;
+      }
+      if (fxRates) {
+        showCurrencyEstimate(currency, 0, `${currency} estimate unavailable. Naira pricing and payment are unchanged.`);
+        return;
+      }
+      showCurrencyEstimate(currency, 0, `Loading the ${currency} estimate…`);
+      loadNairaRates().then(() => {
+        if ((bookingInputs?.country?.defaultCurrency || "NGN") === currency) updateEstimate();
+      }).catch(() => {
+        fxRateRetryAfter = Date.now() + 5 * 60 * 1000;
+        if ((bookingInputs?.country?.defaultCurrency || "NGN") === currency) {
+          showCurrencyEstimate(currency, 0, `${currency} estimate unavailable. Naira pricing and payment are unchanged.`);
+        }
+      });
+    }
     serviceOptions.innerHTML = `<option value="">Choose a service</option>${Object.entries(SERVICES).map(([, group]) => {
       const services = [...group.services, ...(group.inquiryServices || [])];
       return `<optgroup label="${group.label}">${services.map(service => `<option value="${service.id}">${service.name}${service.inquiryOnly ? " (Enquiry)" : ""}</option>`).join("")}</optgroup>`;
     }).join("")}`;
     serviceOptions.classList.remove("booking-services-loading");
-    bookingInputs = initBookingInputs({ draft: bookingDraft });
+    bookingInputs = initBookingInputs({ draft: bookingDraft, onCountryChange: () => updateEstimate() });
     document.getElementById("phone-dial-country-iso").value = "NG";
     const allServiceIds = new Set(Object.values(SERVICES).flatMap(group => [...group.services, ...(group.inquiryServices || [])].map(service => service.id).filter(Boolean)));
     const validUrlSelections = readServiceIdsFromUrl(window.location.search);
@@ -191,6 +269,7 @@
       const totalText = service?.inquiryOnly ? "Price confirmed after review" : quote ? naira(quote.amount) : "Select a service and package";
       animatePrice(document.getElementById("booking-price-live"), totalText);
       animatePrice(document.getElementById("booking-price"), totalText);
+      updateCurrencyEstimate(quote, service);
       const notes = ["Prices and payments are in Nigerian naira (NGN)."];
       if (selectedMode() === "physical") notes.push("Transport fare is not included.");
       if (service?.extraHoursAllowed) notes.push(SETTINGS.launchExtraHourRateNGN == null ? "Additional hours are confirmed after review." : `Additional hours: ${priceLabel(SETTINGS.launchExtraHourRateNGN)} per hour, confirmed after review.`);
