@@ -1,8 +1,9 @@
 
     import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js?v=20261110-project-management-checkout";
-    import { initBookingInputs } from "./booking-inputs.js?v=20261029";
+    import { initBookingInputs } from "./booking-inputs.js?v=20261116-international-payments";
     const PAYMENT_REFERENCE_KEY = "apex-house-booking-reference";
     const PAYMENT_STEP_KEY = "apex-house-payment-step";
+    const PAYMENT_REGION_KEY = "apex-house-payment-region";
     try {
       localStorage.removeItem("apex-house-booking-draft");
       sessionStorage.removeItem("apex-house-pending-payment");
@@ -340,6 +341,7 @@
     const paymentTitle = document.getElementById("payment-title");
     const paymentPanels = [...document.querySelectorAll("[data-payment-panel]")];
     let currentBooking = null;
+    let paymentRegion = "nigeria";
     let currentPaymentStep = 1;
     let statusPollTimer = 0;
     let expiryTimer = 0;
@@ -353,7 +355,9 @@
 
     function setPaymentStep(step, moveFocus = true) {
       currentPaymentStep = Math.min(3, Math.max(1, Number(step) || 1));
+      if (paymentRegion === "international" && currentPaymentStep === 3) currentPaymentStep = 2;
       paymentPanels.forEach(panel => { panel.hidden = Number(panel.dataset.paymentPanel) !== currentPaymentStep; });
+      if (paymentRegion === "international") paymentPanels[2].hidden = true;
       document.querySelectorAll("[data-payment-step]").forEach(item => {
         if (Number(item.dataset.paymentStep) === currentPaymentStep) item.setAttribute("aria-current", "step");
         else item.removeAttribute("aria-current");
@@ -368,6 +372,100 @@
       }
       renderPaymentStatus();
     }
+
+    function setPaymentRegion(region, clearMessage = false) {
+      paymentRegion = region === "international" ? "international" : "nigeria";
+      if (currentBooking?.reference) {
+        try { sessionStorage.setItem(PAYMENT_REGION_KEY, `${currentBooking.reference}:${paymentRegion}`); } catch {}
+      }
+      document.getElementById("payment-region-ng").setAttribute("aria-selected", String(paymentRegion === "nigeria"));
+      document.getElementById("payment-region-international").setAttribute("aria-selected", String(paymentRegion === "international"));
+      paymentPanels[1].setAttribute("aria-labelledby", paymentRegion === "international" ? "international-payment-title" : "payment-pay-title");
+      document.querySelectorAll("[data-nigeria-payment]").forEach(element => { element.hidden = paymentRegion !== "nigeria"; });
+      document.getElementById("international-payment-panel").hidden = paymentRegion !== "international";
+      document.querySelector(".payment-total").hidden = paymentRegion === "international";
+      document.querySelector('[data-payment-step="3"]').hidden = paymentRegion === "international";
+      if (paymentRegion === "international") {
+        document.getElementById("payment-bank").textContent = "";
+        document.getElementById("payment-account-name").textContent = "";
+        document.getElementById("payment-account-number").textContent = "";
+        document.querySelectorAll(".payment-copy").forEach(button => { button.dataset.copyValue = ""; });
+      } else if (currentBooking?.paymentDetails) {
+        const account = currentBooking.paymentDetails;
+        document.getElementById("payment-bank").textContent = account.bankName || "";
+        document.getElementById("payment-account-name").textContent = account.accountName || "";
+        document.getElementById("payment-account-number").textContent = account.accountNumber || "";
+        const amount = currentBooking.amountKnown ? naira(Number(currentBooking.amount)) : "To be confirmed";
+        const narration = currentBooking.narration || currentBooking.reference;
+        const copyValues = { bankName: account.bankName, accountName: account.accountName, accountNumber: account.accountNumber, amount: currentBooking.amountKnown ? String(Number(currentBooking.amount)) : "", narration, all: `Bank: ${account.bankName || ""}\nAccount Name: ${account.accountName || ""}\nAccount Number: ${account.accountNumber || ""}\nAmount: ${amount}\nNarration: ${narration}` };
+        document.querySelectorAll(".payment-copy").forEach(button => { button.dataset.copyValue = copyValues[button.dataset.copy] || ""; });
+      }
+      if (paymentRegion === "international" && currentPaymentStep === 3) setPaymentStep(2, false);
+      if (clearMessage) {
+        const status = document.getElementById("international-payment-status");
+        status.textContent = "";
+        status.removeAttribute("data-state");
+        const sendButton = document.getElementById("international-payment-send");
+        sendButton.disabled = false;
+        sendButton.textContent = "Email me the account details";
+        sendButton.removeAttribute("aria-busy");
+        document.getElementById("international-payment-whatsapp").hidden = true;
+      }
+    }
+
+    document.getElementById("payment-region-ng").addEventListener("click", () => setPaymentRegion("nigeria"));
+    document.getElementById("payment-region-international").addEventListener("click", () => setPaymentRegion("international"));
+    document.querySelector(".payment-currency-toggle").addEventListener("keydown", event => {
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+      event.preventDefault();
+      const region = paymentRegion === "nigeria" ? "international" : "nigeria";
+      setPaymentRegion(region);
+      document.getElementById(region === "nigeria" ? "payment-region-ng" : "payment-region-international").focus();
+    });
+    document.querySelectorAll('input[name="internationalCurrency"]').forEach(input => input.addEventListener("change", () => {
+      const status = document.getElementById("international-payment-status");
+      if (status.dataset.state !== "success") setPaymentRegion("international", true);
+    }));
+    document.getElementById("international-payment-send").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      const currency = document.querySelector('input[name="internationalCurrency"]:checked')?.value;
+      const status = document.getElementById("international-payment-status");
+      if (!currentBooking?.reference || !currentBooking?.email || !["USD", "GBP"].includes(currency)) {
+        status.dataset.state = "error";
+        status.textContent = "Choose USD or GBP before requesting account details.";
+        return;
+      }
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      document.querySelectorAll('input[name="internationalCurrency"]').forEach(input => { input.disabled = true; });
+      button.textContent = "Sending account details…";
+      status.removeAttribute("data-state");
+      status.textContent = "Sending account details to your email…";
+      try {
+        const response = await fetch(BOOKING_API_URL.replace("/api/book", "/api/international-payment"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference: currentBooking.reference, email: currentBooking.email, currency, website: "" }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.ok !== true) throw new Error("We couldn’t send the account details. Please try again.");
+        status.dataset.state = "success";
+        status.textContent = `Check your inbox, details sent to ${currentBooking.email}.`;
+        button.textContent = "Account details sent";
+        const whatsapp = document.getElementById("international-payment-whatsapp");
+        whatsapp.href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Salaam, I have sent proof of payment for booking ${currentBooking.reference} (${currentBooking.service}).`)}`;
+        whatsapp.hidden = false;
+      } catch (error) {
+        console.error("International payment details request failed", { status: error.status || "network", error: error.message || "Unknown error", reference: currentBooking.reference, currency });
+        status.dataset.state = "error";
+        status.textContent = error instanceof TypeError ? "We couldn’t reach the server. Please check your connection and retry." : error.message;
+        button.disabled = false;
+        button.textContent = "Retry sending account details";
+      } finally {
+        button.removeAttribute("aria-busy");
+        document.querySelectorAll('input[name="internationalCurrency"]').forEach(input => { input.disabled = false; });
+      }
+    });
 
     function renderPaymentStatus() {
       if (!currentBooking) return;
@@ -424,6 +522,14 @@
         emailStatus: options.emailStatus || booking.emailStatus || "sent",
         paymentDetails: options.paymentDetails || booking.paymentDetails || null,
       };
+      let savedRegion = "";
+      try {
+        const [savedReference, savedValue] = (sessionStorage.getItem(PAYMENT_REGION_KEY) || "").split(":");
+        if (savedReference === currentBooking.reference) savedRegion = savedValue;
+      } catch {}
+      const initialRegion = savedRegion || ((currentBooking.phoneDialCode || (currentBooking.whatsapp || "").slice(0, 4)) === "+234" ? "nigeria" : "international");
+      setPaymentRegion(initialRegion);
+      document.querySelectorAll('input[name="internationalCurrency"]').forEach(input => { input.checked = false; });
       const emailWarning = document.getElementById("booking-email-warning");
       emailWarning.hidden = currentBooking.emailStatus === "sent";
       emailWarning.textContent = currentBooking.emailStatus === "failed"
@@ -456,6 +562,12 @@
       const allDetails = `Bank: ${account.bankName || ""}\nAccount Name: ${account.accountName || ""}\nAccount Number: ${account.accountNumber || ""}\nAmount: ${amountText}\nNarration: ${narration}`;
       const copyValues = { bankName: account.bankName, accountName: account.accountName, accountNumber: account.accountNumber, amount: amountPlain, narration, all: allDetails };
       document.querySelectorAll(".payment-copy").forEach(button => { button.dataset.copyValue = copyValues[button.dataset.copy] || ""; });
+      if (paymentRegion === "international") {
+        document.getElementById("payment-bank").textContent = "";
+        document.getElementById("payment-account-name").textContent = "";
+        document.getElementById("payment-account-number").textContent = "";
+        document.querySelectorAll(".payment-copy").forEach(button => { button.dataset.copyValue = ""; });
+      }
       const whatsappUrl = currentBooking.whatsappUrl || `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`;
       document.getElementById("payment-proof-whatsapp").href = whatsappUrl;
       document.querySelectorAll("[data-payment-help]").forEach(link => { link.href = `https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`; });
@@ -527,8 +639,8 @@
       }
       const selectedCountry = bookingInputs.country;
       const selectedPhone = bookingInputs.phone;
-      if (!selectedCountry || selectedCountry.isoCode !== "NG" || !selectedPhone.valid) {
-        status.textContent = "Bookings are currently available in Nigeria only. Please check the phone number.";
+      if (!selectedCountry || !selectedPhone.valid) {
+        status.textContent = "Please check your country and phone number.";
         return;
       }
       if (String(data.website || "").trim()) return;
@@ -562,17 +674,17 @@
         const responseBody = await response.text();
         try { result = JSON.parse(responseBody); } catch { result = {}; }
         if (!response.ok || result.ok !== true) {
-          console.error("Booking API response", { status: response.status, body: responseBody });
           const serverError = new Error(result.error || (response.status >= 500
             ? "The booking server encountered an error. Please retry in a moment."
             : `The booking request was rejected (${response.status}). Please review your details and retry.`));
           serverError.status = response.status;
           serverError.code = result.code || "BOOKING_REQUEST_FAILED";
+          console.error("Booking API request failed", { kind: "http", status: response.status, code: serverError.code, error: serverError.message });
           throw serverError;
         }
       } catch (error) {
         window.grecaptcha.reset(recaptchaWidgetId);
-        console.error("Booking submission failed", { status: error.status || "network", code: error.code || "NETWORK_ERROR", error: error.message || "Unknown error" });
+        console.error("Booking submission failed", { kind: error.status ? "http" : "network", status: error.status || "network", code: error.code || "NETWORK_ERROR", error: error.message || "Unknown error", endpoint: BOOKING_API_URL, origin: window.location.origin });
         status.textContent = error instanceof TypeError
           ? "We could not reach the booking server. Check your connection and retry."
           : error.message || "The booking could not be completed. Please retry.";
@@ -611,7 +723,8 @@
           // older/stale idempotent response lacks the current response shape.
           try {
             const recovered = await retrieveBooking(result.reference, String(data.email || "").trim().toLowerCase());
-            if (!recovered.booking || recovered.booking.reference !== result.reference || !recovered.paymentDetails) throw new Error("Incomplete booking recovery response");
+            const requiresNigerianDetails = recovered.booking?.phoneDialCode === "+234" || recovered.booking?.whatsapp?.startsWith("+234");
+            if (!recovered.booking || recovered.booking.reference !== result.reference || (requiresNigerianDetails && !recovered.paymentDetails)) throw new Error("Incomplete booking recovery response");
             recovered.booking.emailStatus = recovered.emailStatus || "failed";
             status.textContent = "Booking received. Review your service details to continue.";
             displayBookingPayment(recovered.booking, { paymentDetails: recovered.paymentDetails, emailStatus: recovered.emailStatus, step: 1 });
@@ -663,7 +776,7 @@
       window.clearTimeout(expiryTimer);
       currentBooking = null;
       bookingIdempotencyKey = "";
-      try { sessionStorage.removeItem(PAYMENT_REFERENCE_KEY); sessionStorage.removeItem(PAYMENT_STEP_KEY); } catch {}
+      try { sessionStorage.removeItem(PAYMENT_REFERENCE_KEY); sessionStorage.removeItem(PAYMENT_STEP_KEY); sessionStorage.removeItem(PAYMENT_REGION_KEY); } catch {}
       paymentScreen.hidden = true;
       document.body.classList.remove("booking-payment-open");
       bookingForm.hidden = false;
@@ -749,7 +862,7 @@
       currentBooking = null;
       bookingIdempotencyKey = "";
       currentPaymentStep = 1;
-      try { sessionStorage.removeItem(PAYMENT_REFERENCE_KEY); sessionStorage.removeItem(PAYMENT_STEP_KEY); } catch {}
+      try { sessionStorage.removeItem(PAYMENT_REFERENCE_KEY); sessionStorage.removeItem(PAYMENT_STEP_KEY); sessionStorage.removeItem(PAYMENT_REGION_KEY); } catch {}
       paymentScreen.hidden = true;
       document.getElementById("booking-recovery").hidden = true;
       document.body.classList.remove("booking-payment-open");

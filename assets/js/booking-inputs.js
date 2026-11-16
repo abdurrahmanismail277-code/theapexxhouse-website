@@ -1,4 +1,4 @@
-import { COUNTRIES } from "./countries.js?v=20261029";
+import { COUNTRIES } from "./countries.js?v=20261116-international-dial-countries";
 
 const GLOBE_SRC = "assets/flags/globe.svg?v=20261029";
 const NIGERIA_TIME_ZONE = "Africa/Lagos";
@@ -57,6 +57,7 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   panel.append(panelTop, searchRow, listbox); wrapper.append(backdrop, panel);
   input.readOnly = true;
   input.setAttribute("role", "button"); input.setAttribute("aria-haspopup", "listbox");
+  input.setAttribute("aria-expanded", "false");
   input.setAttribute("aria-label", input.getAttribute("aria-label") || "Choose an option");
   input.placeholder ||= "Select an option";
 
@@ -172,16 +173,42 @@ export function initBookingInputs({ draft = {}, onCountryChange = () => {} } = {
   const phoneInput = document.getElementById("whatsapp-national");
   const e164Hidden = document.getElementById("whatsapp-e164");
 
-  countryInput.value = nigeria.name;
-  countryInput.readOnly = true;
-  countryInput.setAttribute("aria-readonly", "true");
-  countryHidden.value = nigeria.isoCode;
-  dialInput.value = nigeria.dialCode;
-  dialInput.readOnly = true;
-  dialInput.setAttribute("aria-readonly", "true");
-  phoneDialHidden.value = nigeria.dialCode;
-  phoneDialCountryHidden.value = nigeria.isoCode;
-  const dialCountry = nigeria;
+  const countryCombo = createCombobox({
+    input: countryInput,
+    listbox: document.getElementById("country-listbox"),
+    items: COUNTRIES,
+    label: item => item.name,
+    searchText: item => item.name,
+    value: item => item.isoCode,
+    onSelect: item => {
+      countryHidden.value = item.isoCode;
+      if (dialCombo.selected?.isoCode !== item.isoCode) dialCombo.setValue(item.isoCode);
+      onCountryChange(item);
+    },
+  });
+  const dialCountries = COUNTRIES.filter(item => item.dialCode);
+  const dialCombo = createCombobox({
+    input: dialInput,
+    listbox: document.getElementById("phone-dial-listbox"),
+    items: dialCountries,
+    label: item => item.dialCode,
+    searchText: item => `${item.name} ${item.isoCode} ${item.dialCode}`,
+    value: item => item.isoCode,
+    onSelect: item => {
+      phoneDialHidden.value = item.dialCode;
+      phoneDialCountryHidden.value = item.isoCode;
+      if (countryCombo.selected?.isoCode !== item.isoCode) countryCombo.setValue(item.isoCode);
+      updatePhone();
+      document.dispatchEvent(new CustomEvent("booking-dial-country-change", { detail: item }));
+    },
+    renderOption: item => {
+      const flag = flagImage(item.flag);
+      const title = document.createElement("span"); title.className = "combobox-option-title"; title.textContent = `${item.name} (${item.dialCode})`;
+      return [flag, title];
+    },
+  });
+  countryCombo.setValue(nigeria.isoCode);
+  dialCombo.setValue(nigeria.isoCode);
 
   const nigeriaZone = { zone: NIGERIA_TIME_ZONE, label: "Nigeria time (WAT, UTC+1)", flag: "NG" };
   timeZoneInput.placeholder = "Nigeria time (WAT, UTC+1)";
@@ -201,12 +228,13 @@ export function initBookingInputs({ draft = {}, onCountryChange = () => {} } = {
   onCountryChange(nigeria);
 
   function buildPhone() {
-    const dialDigits = nigeria.dialCode.replace(/\D/g, "");
+    const dialCountry = dialCombo.selected || nigeria;
+    const dialDigits = dialCountry.dialCode.replace(/\D/g, "");
     let digits = phoneInput.value.replace(/\D/g, "");
     if (digits.startsWith(dialDigits)) digits = digits.slice(dialDigits.length);
     digits = digits.replace(/^0+/, "");
     const e164 = digits ? `+${dialDigits}${digits}` : "";
-    const [minimum, maximum] = PHONE_LENGTHS.NG;
+    const [minimum, maximum] = PHONE_LENGTHS[dialCountry.isoCode] || [6, 14];
     e164Hidden.value = e164;
     return { e164, valid: digits.length >= minimum && digits.length <= maximum && dialDigits.length + digits.length <= 15 };
   }
@@ -216,18 +244,16 @@ export function initBookingInputs({ draft = {}, onCountryChange = () => {} } = {
   updatePhone();
 
   return {
-    get country() { return nigeria; },
-    get dialCountry() { return nigeria; },
+    get country() { return countryCombo.selected || nigeria; },
+    get dialCountry() { return dialCombo.selected || nigeria; },
     get timeZone() { return zoneCombo.selected?.zone || ""; },
     get phone() { return buildPhone(); },
-    setCountry() { countryInput.value = nigeria.name; countryHidden.value = nigeria.isoCode; },
+    setCountry(isoCode = "NG") { countryCombo.setValue(isoCode); },
+    setDialCountry(isoCode = "NG") { dialCombo.setValue(isoCode); },
     setTimeZone(zone) { zoneCombo.setValue(zone); },
     reset() {
-      countryInput.value = nigeria.name;
-      countryHidden.value = nigeria.isoCode;
-      dialInput.value = nigeria.dialCode;
-      phoneDialHidden.value = nigeria.dialCode;
-      phoneDialCountryHidden.value = nigeria.isoCode;
+      countryCombo.setValue("NG");
+      dialCombo.setValue("NG");
       phoneInput.value = "";
       zoneCombo.setValue(NIGERIA_TIME_ZONE);
       updatePhone();

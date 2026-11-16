@@ -1,4 +1,5 @@
 import { calculatePrice } from "../../services.js";
+import { getCountry } from "../../assets/js/countries.js";
 
 const SECURITY_HEADERS = {
   "Cache-Control": "no-store",
@@ -12,12 +13,17 @@ const json = (body, status = 200, headers = {}) => Response.json(body, {
   headers: { ...SECURITY_HEADERS, ...headers },
 });
 
-const allowedOrigins = new Set(["https://theapexxhouse.com", "https://www.theapexxhouse.com"]);
-const originAllowed = (origin, env) => allowedOrigins.has(origin) || (env.ENVIRONMENT === "development" && ["http://localhost:8787", "http://127.0.0.1:8787"].includes(origin));
+const allowedOrigins = new Set([
+  "https://theapexxhouse.com",
+  "https://www.theapexxhouse.com",
+  "https://abdurrahmanismail277-code.github.io",
+  "http://127.0.0.1:5500",
+]);
+const originAllowed = origin => allowedOrigins.has(origin);
 const verificationCorsHeaders = origin => ({
-  "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Idempotency-Key",
+  ...(originAllowed(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Idempotency-Key, Authorization",
   "Access-Control-Max-Age": "86400",
   "Cache-Control": "no-store",
   Vary: "Origin",
@@ -28,6 +34,7 @@ const clean = (value, limit) => typeof value === "string" ? value.replace(/[\u00
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const rateWindows = new Map();
 const idempotentBookings = new Map();
+const internationalPaymentRequests = new Set();
 const money = amount => `₦${Number(amount).toLocaleString("en-NG")}`;
 const BANK = Object.freeze({ name: "Moniepoint MFB", accountName: "The Apex House", accountNumber: "9115595519" });
 const OWNER_WHATSAPP = "2348038326349";
@@ -76,7 +83,7 @@ async function verifyRecaptchaToken(token, env) {
 
 async function verifyRecaptcha(request, env) {
   const origin = request.headers.get("Origin");
-  if (!origin || !originAllowed(origin, env)) return json({ success: false, error: "Request origin is not allowed." }, 403);
+  if (!origin || !originAllowed(origin)) return json({ success: false, error: "Request origin is not allowed." }, 403);
   const corsHeaders = verificationCorsHeaders(origin);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   if (request.method !== "POST") return json({ success: false, error: "Method not allowed." }, 405, corsHeaders);
@@ -108,7 +115,7 @@ function bookingFields(input, quote, reference, narration, whatsappUrl) {
   };
 }
 
-function emailMarkup(booking, internal = false) {
+function emailMarkup(booking, internal = false, includeNairaPayment = true) {
   const rows = [
     ["Service", `${booking.category} / ${booking.service}`], ["Mode", booking.mode], ["Package", booking.package],
     ["Quantity", `${booking.quantity} ${booking.unit}`], ["Event", `${booking.eventName} (${booking.eventType})`],
@@ -121,16 +128,18 @@ function emailMarkup(booking, internal = false) {
   ];
   if (internal) rows.splice(1, 0, ["Client", `${booking.name} / ${booking.email} / ${booking.whatsapp}`]);
   const detailRows = rows.map(([label, value]) => `<tr><th align="left" style="padding:8px 10px;color:#60718a;border-bottom:1px solid #e5edf7">${escapeHtml(label)}</th><td style="padding:8px 10px;color:#142d50;border-bottom:1px solid #e5edf7;white-space:pre-wrap">${escapeHtml(value)}</td></tr>`).join("");
-  const payment = booking.amountKnown
+  const payment = !includeNairaPayment
+    ? `<div style="margin-top:20px;padding:16px;border-radius:12px;background:#edf4ff"><strong>International bank details will be emailed after you choose USD or GBP in the payment step.</strong></div>`
+    : booking.amountKnown
     ? `<div style="margin-top:20px;padding:16px;border-radius:12px;background:#edf4ff"><h2 style="margin:0 0 10px;font-size:16px">Transfer details</h2><p style="margin:5px 0">Bank: <strong>${BANK.name}</strong></p><p style="margin:5px 0">Account name: <strong>${BANK.accountName}</strong></p><p style="margin:5px 0">Account number: <strong>${BANK.accountNumber}</strong></p><p style="margin:5px 0">Amount: <strong>${escapeHtml(money(booking.amount))}</strong></p><p style="margin:5px 0">Narration: <strong>${escapeHtml(booking.narration)}</strong></p></div>`
     : `<div style="margin-top:20px;padding:16px;border-radius:12px;background:#fff7e4;color:#463914"><strong>The Apex House team will confirm your final amount after reviewing the project scope. Please wait for that confirmation before transferring.</strong></div>`;
   const receipt = `<p style="margin:22px 0"><a href="${escapeHtml(booking.whatsappUrl)}" style="display:inline-block;padding:13px 18px;border-radius:8px;background:#0164ff;color:#fff;text-decoration:none;font-weight:bold">Send your receipt on WhatsApp</a></p>`;
   return `<div style="margin:0;background:#f3f6fb;padding:24px 10px;font-family:Arial,sans-serif;color:#142d50"><div style="max-width:600px;margin:auto;background:#fff;border-radius:14px;overflow:hidden"><div style="padding:24px;background:#021a40;color:#fff"><div style="color:#a9c9ff;font-size:12px;letter-spacing:2px">THE APEX HOUSE</div><h1 style="margin:8px 0 0;font-size:24px">${internal ? "New booking request" : "We received your booking"}</h1></div><div style="padding:24px"><p>Hello ${escapeHtml(booking.name)},</p><p>${internal ? "A new booking was submitted. Status: Pending payment." : "We received your booking. Your payment is pending until we receive and verify your transfer proof."}</p><div style="padding:15px;border:1px solid #c9ddfb;border-radius:10px;background:#f5f9ff"><div style="font-size:11px;color:#60718a">BOOKING REFERENCE / PAYMENT NARRATION</div><strong style="display:block;margin-top:5px;font-size:22px;color:#0164ff">${escapeHtml(booking.reference)}</strong></div><p style="margin:18px 0 8px">Amount: <strong>${escapeHtml(booking.amountText)}</strong></p><table role="presentation" style="width:100%;border-collapse:collapse">${detailRows}</table>${payment}${internal ? "" : receipt}<p style="margin-top:22px;color:#60718a;font-size:12px">The Apex House · +234 803 832 6349</p></div></div></div>`;
 }
 
-function emailText(booking, internal = false) {
+function emailText(booking, internal = false, includeNairaPayment = true) {
   const details = `Reference / narration: ${booking.reference}\n${internal ? `Client: ${booking.name} <${booking.email}>\nWhatsApp: ${booking.whatsapp}\n` : ""}Service: ${booking.category} / ${booking.service}\nMode: ${booking.mode}\nPackage: ${booking.package}\nQuantity: ${booking.quantity} ${booking.unit}\nAdditional hours: ${booking.extraHours || 0}\nEvent: ${booking.eventName} (${booking.eventType})\nPreferred date: ${booking.eventDate}${booking.eventTime ? ` at ${booking.eventTime}` : ""}\nSecond-choice date: ${booking.alternateDate || "Not provided"}\nCountry: ${booking.country} (${booking.countryISO})\nTime zone: ${booking.eventTimezone || "Not applicable"}\nVenue: ${booking.venue || "Not provided"}\nPlatform: ${booking.platform || "Not provided"}\nAudience size: ${booking.audienceSize}\nAdditional notes: ${booking.additionalNotes || "Not provided"}\nBrief: ${booking.brief || "Not provided"}\nAmount: ${booking.amountText}`;
-  const payment = booking.amountKnown ? `\n\nTransfer details\nBank: ${BANK.name}\nAccount name: ${BANK.accountName}\nAccount number: ${BANK.accountNumber}\nAmount: ${money(booking.amount)}\nNarration: ${booking.narration}` : "\n\nThe Apex House team will confirm your final amount after reviewing the project scope. Please wait for that confirmation before transferring.";
+  const payment = !includeNairaPayment ? "\n\nInternational bank details will be emailed after you choose USD or GBP in the payment step." : booking.amountKnown ? `\n\nTransfer details\nBank: ${BANK.name}\nAccount name: ${BANK.accountName}\nAccount number: ${BANK.accountNumber}\nAmount: ${money(booking.amount)}\nNarration: ${booking.narration}` : "\n\nThe Apex House team will confirm your final amount after reviewing the project scope. Please wait for that confirmation before transferring.";
   return `${internal ? "New booking request · Pending payment" : `Hello ${booking.name}, we received your booking. Your payment is pending until we receive and verify your transfer proof.`}\n\n${details}${payment}${internal ? "" : `\n\nSend your receipt on WhatsApp: ${booking.whatsappUrl}`}`;
 }
 
@@ -186,10 +195,12 @@ function emailHeaders(env) {
   return { from: env.RESEND_FROM_EMAIL || env.RESEND_FROM || "The Apex House <bookings@theapexxhouse.com>" };
 }
 
-async function sendResend(env, message) {
+async function sendResend(env, message, idempotencyKey = "") {
+  const headers = { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" };
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ ...emailHeaders(env), ...message }),
     signal: AbortSignal.timeout(10_000),
   });
@@ -210,7 +221,7 @@ const isValidEmail = value => typeof value === "string" && value.length <= 254 &
 
 async function retrieveBooking(request, env) {
   const origin = request.headers.get("Origin");
-  if (!origin || !originAllowed(origin, env)) return json({ error: "Request origin is not allowed." }, 403);
+  if (!origin || !originAllowed(origin)) return json({ error: "Request origin is not allowed." }, 403);
   const headers = verificationCorsHeaders(origin);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...SECURITY_HEADERS, ...headers } });
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, headers);
@@ -229,7 +240,8 @@ async function retrieveBooking(request, env) {
   if (!loaded || loaded.record.booking.email.toLowerCase() !== email) return json({ error: "Booking not found. Check the reference and email and try again." }, 404, headers);
   try {
     const record = await markExpired(loaded, env);
-    return json({ ok: true, booking: record.booking, status: record.status, expiresAt: record.expiresAt, emailStatus: record.response.emailStatus || "failed", paymentDetails: privatePaymentDetails() }, 200, headers);
+    const isNigerianBooking = record.booking.phoneDialCode === "+234" || record.booking.whatsapp?.startsWith("+234");
+    return json({ ok: true, booking: record.booking, status: record.status, expiresAt: record.expiresAt, emailStatus: record.response.emailStatus || "failed", paymentDetails: isNigerianBooking ? privatePaymentDetails() : null }, 200, headers);
   } catch (error) {
     console.error("Booking retrieval failed", { step: "payment_response_or_expiry_save", status: error?.status || 503, error: error instanceof Error ? error.message : "Unknown error" });
     return json({ error: "We could not update this booking status right now. Please try again." }, 503, headers);
@@ -247,7 +259,7 @@ function proofFileType(bytes, contentType) {
 
 async function submitPaymentProof(request, env) {
   const origin = request.headers.get("Origin");
-  if (!origin || !originAllowed(origin, env)) return json({ error: "Request origin is not allowed." }, 403);
+  if (!origin || !originAllowed(origin)) return json({ error: "Request origin is not allowed." }, 403);
   const headers = verificationCorsHeaders(origin);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...SECURITY_HEADERS, ...headers } });
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, headers);
@@ -387,9 +399,99 @@ async function getAdminProof(request, env) {
   return new Response(object.body, { status: 200, headers: { ...SECURITY_HEADERS, "Cache-Control": "no-store", "Content-Type": contentType, "Content-Disposition": `attachment; filename="payment-proof-${reference}.${contentType === "application/pdf" ? "pdf" : contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg"}"` } });
 }
 
+async function requestInternationalPayment(request, env) {
+  const origin = request.headers.get("Origin");
+  if (!origin || !originAllowed(origin)) return json({ error: "Request origin is not allowed." }, 403);
+  const corsHeaders = verificationCorsHeaders(origin);
+  if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, corsHeaders);
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (!await checkRateLimit(`international-payment:${ip}`, env)) return json({ error: "We could not send those account details right now. Please wait and retry." }, 429, corsHeaders);
+
+  let input;
+  try {
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).length > 4096) return json({ error: "We could not send those account details right now. Please retry." }, 413, corsHeaders);
+    input = JSON.parse(raw);
+  } catch { return json({ error: "We could not send those account details right now. Please retry." }, 400, corsHeaders); }
+  if (!input || typeof input !== "object" || Array.isArray(input) || clean(input.website, 100)) return json({ error: "We could not send those account details right now. Please retry." }, 400, corsHeaders);
+
+  const reference = typeof input.reference === "string" ? input.reference.trim().toUpperCase() : "";
+  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+  const currency = input.currency;
+  if (!validReference(reference) || !isValidEmail(email) || !["USD", "GBP"].includes(currency)) return json({ error: "We could not send those account details right now. Please check your booking and retry." }, 400, corsHeaders);
+  let loaded;
+  try { loaded = await loadBooking(reference, env); }
+  catch (error) {
+    console.error("International payment booking lookup failed", { reference, status: error?.status || 503, error: error instanceof Error ? error.message : "Unknown error" });
+    return json({ error: "We could not send those account details right now. Please retry." }, 503, corsHeaders);
+  }
+  if (!loaded || loaded.record.booking.email.toLowerCase() !== email) return json({ error: "We could not send those account details right now. Please check your booking and retry." }, 404, corsHeaders);
+
+  const booking = loaded.record.booking;
+  const verifiedService = calculatePrice(booking.serviceId, booking.mode, booking.offerId, Number(booking.quantity), Number(booking.extraHours || 0));
+  const phoneDialCode = typeof booking.phoneDialCode === "string" ? booking.phoneDialCode : booking.whatsapp?.startsWith("+234") ? "+234" : "";
+  const phoneDialCountryISO = typeof booking.phoneDialCountryISO === "string" ? booking.phoneDialCountryISO : phoneDialCode === "+234" ? "NG" : "";
+  const dialDigits = phoneDialCode.replace(/\D/g, "");
+  const dialCountry = getCountry(phoneDialCountryISO);
+  if (!booking.name || !isValidEmail(booking.email) || !verifiedService || verifiedService.service.name !== booking.service || !dialCountry || dialCountry.dialCode !== phoneDialCode || !/^\+[1-9]\d{0,3}$/.test(phoneDialCode) || !booking.whatsapp?.startsWith(`+${dialDigits}`) || booking.whatsapp.replace(/\D/g, "").length > 15) {
+    console.error("International payment request rejected", { reference, step: "booking_validation", currency });
+    return json({ error: "We could not send those account details right now. Please check your booking and retry." }, 400, corsHeaders);
+  }
+
+  const sentCurrencies = Array.isArray(loaded.record.internationalPaymentCurrencies) ? loaded.record.internationalPaymentCurrencies : [];
+  if (sentCurrencies.includes(currency)) return json({ ok: true, alreadySent: true }, 200, corsHeaders);
+  const requestKey = `${reference}:${currency}`;
+  if (internationalPaymentRequests.has(requestKey)) return json({ error: "Your request is still processing. Please wait a moment." }, 409, corsHeaders);
+  const detailKeys = currency === "USD"
+    ? ["USD_BANK_NAME", "USD_ACCOUNT_NUMBER", "USD_ACCOUNT_NAME", "USD_ROUTING_OR_SWIFT"]
+    : ["GBP_BANK_NAME", "GBP_ACCOUNT_NUMBER", "GBP_ACCOUNT_NAME", "GBP_SORT_CODE"];
+  const missing = detailKeys.filter(key => typeof env[key] !== "string" || !env[key].trim());
+  if (!env.RESEND_API_KEY || !(env.RESEND_FROM_EMAIL || env.RESEND_FROM) || missing.length) {
+    console.error("International payment email configuration is incomplete", { reference, currency, missing: [...(!env.RESEND_API_KEY ? ["RESEND_API_KEY"] : []), ...(!(env.RESEND_FROM_EMAIL || env.RESEND_FROM) ? ["RESEND_FROM_EMAIL"] : []), ...missing] });
+    return json({ error: "We could not send those account details right now. Please try again shortly." }, 503, corsHeaders);
+  }
+
+  internationalPaymentRequests.add(requestKey);
+  try {
+    const details = currency === "USD"
+      ? [["Bank name", env.USD_BANK_NAME], ["Account name", env.USD_ACCOUNT_NAME], ["Account number", env.USD_ACCOUNT_NUMBER], ["Routing / SWIFT", env.USD_ROUTING_OR_SWIFT]]
+      : [["Bank name", env.GBP_BANK_NAME], ["Account name", env.GBP_ACCOUNT_NAME], ["Account number", env.GBP_ACCOUNT_NUMBER], ["Sort code", env.GBP_SORT_CODE]];
+    const safeDetails = details.map(([label, value]) => `<tr><th align="left" style="padding:8px 10px;color:#60718a;border-bottom:1px solid #e5edf7">${escapeHtml(label)}</th><td style="padding:8px 10px;color:#142d50;border-bottom:1px solid #e5edf7">${escapeHtml(value)}</td></tr>`).join("");
+    const summary = `Booking reference: ${reference}\nName: ${booking.name}\nService: ${booking.category || ""} / ${booking.service}\nPackage: ${booking.package || "Not provided"}\nEvent: ${booking.eventName || "Not provided"}\nDate: ${booking.eventDate || "Not provided"}\nPhone / WhatsApp: ${booking.whatsapp}\nCurrency: ${currency}\nBrief: ${booking.brief || "Not provided"}`;
+    const detailsText = details.map(([label, value]) => `${label}: ${value}`).join("\n");
+    const sender = env.RESEND_FROM_EMAIL || env.RESEND_FROM;
+    const clientMessage = {
+      from: sender, to: [booking.email], subject: `${currency} bank details for your Apex House booking ${reference}`,
+      text: `Salaam ${booking.name},\n\nThank you for booking with The Apex House. Here is your booking summary:\n\n${summary}\n\n${currency} bank transfer details:\n${detailsText}\n\nPlease pay the exact amount confirmed for your service, then send your proof of payment on WhatsApp: https://wa.me/${OWNER_WHATSAPP}. Include your booking reference, ${reference}.\n\nThe Apex House team`,
+      html: `<div style="font-family:Arial,sans-serif;color:#142d50;max-width:600px;margin:auto;padding:24px"><div style="padding:22px;border-radius:14px 14px 0 0;background:#021a40;color:#fff"><p style="margin:0;color:#a9c9ff;font-size:12px;letter-spacing:2px">THE APEX HOUSE</p><h1 style="margin:8px 0 0;font-size:22px">${currency} bank transfer details</h1></div><div style="padding:22px;border:1px solid #e5edf7;border-top:0;border-radius:0 0 14px 14px"><p>Salaam ${escapeHtml(booking.name)},</p><p>Thank you for booking with The Apex House. Here is your booking summary:</p><p>${escapeHtml(summary).replace(/\n/g, "<br>")}</p><h2 style="font-size:17px">${currency} bank transfer details</h2><table role="presentation" style="width:100%;border-collapse:collapse">${safeDetails}</table><p>Please pay the exact amount confirmed for your service, then send your proof of payment on WhatsApp: <a href="https://wa.me/${OWNER_WHATSAPP}">+234 803 832 6349</a>. Include your booking reference, <strong>${reference}</strong>.</p><p>The Apex House team</p></div></div>`,
+    };
+    const ownerMessage = {
+      from: sender, to: ["theapexxhouse2026@gmail.com"], reply_to: booking.email,
+      subject: `International payment details requested · ${currency} · ${reference}`,
+      text: `International payment details requested\n\n${summary}`,
+      html: `<p>International payment details requested.</p><table role="presentation" style="width:100%;border-collapse:collapse">${[["Name", booking.name], ["Email", booking.email], ["Phone / WhatsApp", booking.whatsapp], ["Service", `${booking.category || ""} / ${booking.service}`], ["Currency", currency], ["Brief", booking.brief || "Not provided"], ["Reference", reference]].map(([label, value]) => `<tr><th align="left" style="padding:8px 10px">${escapeHtml(label)}</th><td style="padding:8px 10px">${escapeHtml(value)}</td></tr>`).join("")}</table>`,
+    };
+    const results = await Promise.allSettled([
+      sendResend(env, clientMessage, `international-client-${reference}-${currency}`),
+      sendResend(env, ownerMessage, `international-owner-${reference}-${currency}`),
+    ]);
+    const failures = results.flatMap((result, index) => result.status === "rejected" ? [{ recipient: index === 0 ? "client" : "owner", status: result.reason?.status || 0, error: result.reason instanceof Error ? result.reason.message : "Unknown Resend error" }] : []);
+    if (failures.length) {
+      for (const failure of failures) console.error("International payment email delivery failed", { reference, currency, ...failure });
+      return json({ error: "We could not send those account details right now. Please try again." }, 502, corsHeaders);
+    }
+    loaded.record.internationalPaymentCurrencies = [...new Set([...sentCurrencies, currency])];
+    try { await saveBooking(reference, loaded.idempotencyKey, loaded.record, env); }
+    catch (error) { console.error("International payment request status save failed", { reference, currency, error: error instanceof Error ? error.message : "Unknown error" }); }
+    return json({ ok: true }, 200, corsHeaders);
+  } finally {
+    internationalPaymentRequests.delete(requestKey);
+  }
+}
+
 async function submitBooking(request, env, ctx) {
   const origin = request.headers.get("Origin");
-  if (!origin || !originAllowed(origin, env)) return json({ error: "Request origin is not allowed." }, 403);
+  if (!origin || !originAllowed(origin)) return json({ error: "Request origin is not allowed." }, 403);
   const corsHeaders = verificationCorsHeaders(origin);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, corsHeaders);
@@ -427,13 +529,15 @@ async function submitBooking(request, env, ctx) {
 
   const booking = {
     name: clean(input.name, 120), email: clean(input.email, 254).toLowerCase(), whatsapp: clean(input.whatsapp, 20),
-    country: clean(input.country, 80), countryISO: clean(input.countryISO, 2), serviceId: clean(input.serviceId, 80),
+    country: clean(input.country, 80), countryISO: clean(input.countryISO, 2), phoneDialCode: clean(input.phoneDialCode, 6), phoneDialCountryISO: clean(input.phoneDialCountryISO, 2), serviceId: clean(input.serviceId, 80),
     offerId: clean(input.offerId, 80), mode: clean(input.mode, 20), quantity: Number(input.quantity), extraHours: Number(input.extraHours || 0),
     eventName: clean(input.eventName, 120), eventType: clean(input.eventType, 80), eventDate: clean(input.eventDate, 10),
     eventTime: clean(input.eventTime, 5), alternateDate: clean(input.alternateDate, 10), eventTimezone: clean(input.eventTimezone, 80), venue: clean(input.venue, 200),
     platform: clean(input.platform, 120), audienceSize: clean(input.audienceSize, 10), additionalNotes: clean(input.additionalNotes, 800), brief: clean(input.brief, 1200),
   };
-  if (!booking.name || !emailPattern.test(booking.email) || !/^\+234\d{10}$/.test(booking.whatsapp) || booking.countryISO !== "NG" || booking.country !== "Nigeria") return json({ error: "Please check your name, email, WhatsApp number, and country." }, 400, corsHeaders);
+  const dialCountry = getCountry(booking.phoneDialCountryISO);
+  const dialDigits = booking.phoneDialCode.replace(/\D/g, "");
+  if (!booking.name || !emailPattern.test(booking.email) || !booking.country || !/^[A-Z]{2}$/.test(booking.countryISO) || !dialCountry || booking.countryISO !== booking.phoneDialCountryISO || dialCountry.dialCode !== booking.phoneDialCode || !/^\+[1-9]\d{0,3}$/.test(booking.phoneDialCode) || !/^\+[1-9]\d{6,14}$/.test(booking.whatsapp) || !booking.whatsapp.startsWith(`+${dialDigits}`)) return json({ error: "Please check your name, email, WhatsApp number, and country." }, 400, corsHeaders);
   const parsedDate = new Date(`${booking.eventDate}T00:00:00Z`);
   if (!booking.eventName || !booking.eventType || !/^\d{4}-\d{2}-\d{2}$/.test(booking.eventDate) || Number.isNaN(parsedDate.valueOf()) || parsedDate.toISOString().slice(0, 10) !== booking.eventDate || !/^\d{1,7}$/.test(booking.audienceSize) || Number(booking.audienceSize) < 1 || input.consent !== "true") return json({ error: "Please complete all required booking details." }, 400, corsHeaders);
   if (!['virtual', 'physical'].includes(booking.mode) || (booking.mode === "physical" && !booking.venue)) return json({ error: "Please check your booking mode and venue." }, 400, corsHeaders);
@@ -448,12 +552,13 @@ async function submitBooking(request, env, ctx) {
   const whatsappUrl = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(whatsappMessage)}`;
   const complete = bookingFields(booking, quote, reference, reference, whatsappUrl);
   const createdAt = new Date().toISOString();
-  const expiresAt = service.inquiryOnly ? null : new Date(Date.now() + PAYMENT_WINDOW_MS).toISOString();
+  const expiresAt = quote.service.inquiryOnly ? null : new Date(Date.now() + PAYMENT_WINDOW_MS).toISOString();
   complete.expiresAt = expiresAt;
   const sender = env.RESEND_FROM_EMAIL || env.RESEND_FROM || "The Apex House <bookings@theapexxhouse.com>";
-  const clientMessage = { from: sender, to: [booking.email], subject: `Booking received · ${reference}`, html: emailMarkup(complete), text: emailText(complete) };
-  const ownerMessage = { from: sender, to: [env.NOTIFY_EMAIL], reply_to: booking.email, subject: `New booking · ${reference} · ${booking.name}`, html: emailMarkup(complete, true), text: emailText(complete, true) };
-  const result = { ok: true, reference, amount: quote.amount, amountKnown: complete.amountKnown, service: complete.service, package: complete.package, unit: complete.unit, whatsappUrl, status: "pending_payment", expiresAt, paymentDetails: privatePaymentDetails(), booking: complete, emailStatus: "pending" };
+  const isNigerianPhone = booking.phoneDialCode === "+234";
+  const clientMessage = { from: sender, to: [booking.email], subject: `Booking received · ${reference}`, html: emailMarkup(complete, false, isNigerianPhone), text: emailText(complete, false, isNigerianPhone) };
+  const ownerMessage = { from: sender, to: [env.NOTIFY_EMAIL], reply_to: booking.email, subject: `New booking · ${reference} · ${booking.name}`, html: emailMarkup(complete, true, isNigerianPhone), text: emailText(complete, true, isNigerianPhone) };
+  const result = { ok: true, reference, amount: quote.amount, amountKnown: complete.amountKnown, service: complete.service, package: complete.package, unit: complete.unit, whatsappUrl, status: "pending_payment", expiresAt, paymentDetails: isNigerianPhone ? privatePaymentDetails() : null, booking: complete, emailStatus: "pending" };
   const bookingRecord = { createdAt, updatedAt: createdAt, expiresAt, status: "pending_payment", booking: complete, response: result };
   try {
     await saveBooking(reference, idempotencyKey, bookingRecord, env);
@@ -493,37 +598,55 @@ async function submitBooking(request, env, ctx) {
 
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const { pathname } = url;
+    const origin = request.headers.get("Origin") || "";
+    const corsHeaders = verificationCorsHeaders(origin);
+    let requestPath = "unknown";
+    try {
+      const url = new URL(request.url);
+      const { pathname } = url;
+      requestPath = pathname;
+      let response;
 
-    if (pathname === "/api/recaptcha/verify") return verifyRecaptcha(request, env);
-    if (pathname === "/api/book") return submitBooking(request, env, ctx);
-    if (pathname === "/api/booking/retrieve") return retrieveBooking(request, env);
-    if (pathname === "/api/booking/proof") return submitPaymentProof(request, env);
-    if (pathname === "/api/admin/booking/status") return updateAdminStatus(request, env);
-    if (pathname === "/api/admin/proof") return getAdminProof(request, env);
-    if (pathname.startsWith("/api/")) return json({ error: "API route not found." }, 404);
+      if (pathname.startsWith("/api/")) {
+        if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
+        if (pathname === "/api/recaptcha/verify") response = await verifyRecaptcha(request, env);
+        else if (pathname === "/api/book") response = await submitBooking(request, env, ctx);
+        else if (pathname === "/api/international-payment") response = await requestInternationalPayment(request, env);
+        else if (pathname === "/api/booking/retrieve") response = await retrieveBooking(request, env);
+        else if (pathname === "/api/booking/proof") response = await submitPaymentProof(request, env);
+        else if (pathname === "/api/admin/booking/status") response = await updateAdminStatus(request, env);
+        else if (pathname === "/api/admin/proof") response = await getAdminProof(request, env);
+        else response = json({ error: "API route not found." }, 404);
 
-    const response = await env.ASSETS.fetch(request);
-    const headers = new Headers(response.headers);
-    for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
-    const staticAsset = /\.(?:css|js|mjs|json|svg|png|jpe?g|webp|avif|ico|woff2?)$/i.test(pathname);
-    const versionedAsset = staticAsset && url.searchParams.has("v");
-    const isHtml = /\.html?$/.test(pathname) || pathname === "/";
+        const headers = new Headers(response.headers);
+        for (const [name, value] of Object.entries(corsHeaders)) headers.set(name, value);
+        return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+      }
 
-    const textMime = isHtml ? "text/html" : /\.css$/i.test(pathname) ? "text/css" : "text/javascript";
-    if (isHtml || /\.(?:css|js|mjs)$/i.test(pathname)) {
-      const contentType = headers.get("Content-Type") || textMime;
-      headers.set("Content-Type", /;\s*charset=/i.test(contentType) ? contentType : `${contentType}; charset=utf-8`);
+      response = await env.ASSETS.fetch(request);
+      const headers = new Headers(response.headers);
+      for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
+      const staticAsset = /\.(?:css|js|mjs|json|svg|png|jpe?g|webp|avif|ico|woff2?)$/i.test(pathname);
+      const versionedAsset = staticAsset && url.searchParams.has("v");
+      const isHtml = /\.html?$/.test(pathname) || pathname === "/";
+
+      const textMime = isHtml ? "text/html" : /\.css$/i.test(pathname) ? "text/css" : "text/javascript";
+      if (isHtml || /\.(?:css|js|mjs)$/i.test(pathname)) {
+        const contentType = headers.get("Content-Type") || textMime;
+        headers.set("Content-Type", /;\s*charset=/i.test(contentType) ? contentType : `${contentType}; charset=utf-8`);
+      }
+
+      if (isHtml) {
+        headers.set("Content-Security-Policy", "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'self'; upgrade-insecure-requests");
+        if (["theapexxhouse.com", "www.theapexxhouse.com"].includes(url.hostname)) headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+      }
+
+      if (versionedAsset) headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      else if (isHtml) headers.set("Cache-Control", "public, max-age=0, must-revalidate");
+      return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+    } catch (error) {
+      console.error("Unhandled Worker request error", { path: requestPath, method: request.method, error: error instanceof Error ? error.message : "Unknown error" });
+      return json({ error: "The server could not complete this request. Please try again." }, 500, corsHeaders);
     }
-
-    if (isHtml) {
-      headers.set("Content-Security-Policy", "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https:; frame-ancestors 'self'; upgrade-insecure-requests");
-      if (["theapexxhouse.com", "www.theapexxhouse.com"].includes(url.hostname)) headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    }
-
-    if (versionedAsset) headers.set("Cache-Control", "public, max-age=31536000, immutable");
-    else if (isHtml) headers.set("Cache-Control", "public, max-age=0, must-revalidate");
-    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   },
 };

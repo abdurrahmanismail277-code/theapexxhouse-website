@@ -37,7 +37,7 @@ Object.assign(CURRENCY_BY_COUNTRY, {
   AQ: "USD", BV: "NOK", CK: "NZD", EC: "USD", GS: "GBP", HR: "EUR", KP: "KPW", LT: "EUR", MQ: "EUR", NF: "AUD",
   NU: "NZD", PN: "NZD", SV: "USD", TC: "USD", TF: "EUR", TK: "NZD", TL: "USD", VG: "USD", XK: "EUR", YT: "EUR",
 });
-const displayNames = typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames([navigator.language || "en"], { type: "region" }) : null;
+const displayNames = typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames([typeof navigator !== "undefined" ? navigator.language || "en" : "en"], { type: "region" }) : null;
 export const COUNTRIES = Object.freeze(ISO_CODES.map(isoCode => Object.freeze({
   isoCode,
   name: displayNames?.of(isoCode) || isoCode,

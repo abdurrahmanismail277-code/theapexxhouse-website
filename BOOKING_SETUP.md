@@ -53,3 +53,21 @@ Use `"cancelled"` for the status if the booking should be cancelled. Confirmatio
 - A Resend failure does not discard a saved booking. The page reports the email issue, and staff can still verify the booking in KV.
 - For fixed-price virtual services, the server supplies the exact amount. Physical services and Launch Hosting require staff to confirm a final quote before transfer.
 - If an online payment gateway is added later, only a verified, signed server webhook should mark a booking paid; never trust a browser success redirect.
+### International transfers
+
+International clients can choose USD or GBP in the booking payment step. The Worker sends only the selected currency's account details through Resend; keep all international bank data in Cloudflare Worker secrets, never in the site files. Configure the existing verified sender and `RESEND_API_KEY`, then from the project root set the following secrets with `npx wrangler secret put <NAME>`:
+
+```powershell
+npx wrangler secret put USD_BANK_NAME
+npx wrangler secret put USD_ACCOUNT_NUMBER
+npx wrangler secret put USD_ACCOUNT_NAME
+npx wrangler secret put USD_ROUTING_OR_SWIFT
+npx wrangler secret put GBP_BANK_NAME
+npx wrangler secret put GBP_ACCOUNT_NUMBER
+npx wrangler secret put GBP_ACCOUNT_NAME
+npx wrangler secret put GBP_SORT_CODE
+```
+
+Enter each value only at the Wrangler prompt. Missing details disable delivery for the corresponding currency and the site displays a retryable generic message.
+
+After setting the secrets, deploy the active site Worker from the repository root with `npx wrangler deploy`. Publish the GitHub Pages front-end changes through the repository's normal Pages deployment as well.
