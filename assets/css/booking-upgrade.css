@@ -163,3 +163,12 @@
  #booking-form .booking-actions{flex-wrap:wrap;}
  #booking-form .booking-actions>*{flex:1 1 100%;}
 }
+@media(max-width:768px){
+ #booking-form .phone-field-row{display:flex;align-items:stretch;gap:8px;}
+ #booking-form .phone-dial-wrap{display:flex;flex:0 0 112px;align-items:center;gap:6px;min-width:112px;height:54px;padding:0 12px;border:1px solid #cdd9e8;border-radius:9px;background:transparent;}
+ #booking-form .phone-dial-wrap .combobox-trigger-flag{position:static;order:0;flex:0 0 22px;width:22px;height:16px;margin:0;border-radius:2px;object-fit:cover;}
+ #booking-form .phone-dial-wrap>input[readonly]{order:1;flex:1 1 auto;width:auto;min-width:0;min-height:0!important;height:auto;padding:0!important;border:0!important;border-radius:0;background:transparent!important;font-size:16px!important;text-overflow:clip;white-space:nowrap;}
+ #booking-form .phone-dial-wrap.is-enhanced::after{position:static;order:2;flex:0 0 8px;top:auto;right:auto;margin:0 2px 3px 0;}
+ #booking-form .phone-dial-wrap:focus-within{outline:3px solid #75aaff;outline-offset:2px;}
+ #booking-form .phone-dial-wrap>input[readonly]:focus-visible{outline:0;}
+}
