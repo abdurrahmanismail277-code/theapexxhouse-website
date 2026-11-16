@@ -63,7 +63,7 @@ function flagImage(flag) {
   return image;
 }
 
-function createCombobox({ input, listbox, items, label, searchText, value, onSelect, renderOption, limit = 280 }) {
+function createCombobox({ input, listbox, items, label, searchText, value, onSelect, renderOption, suggestedItem, prioritizeMatches = true, limit = 280 }) {
   let selected = null;
   let activeIndex = -1;
   let matches = [];
@@ -168,14 +168,21 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   const render = query => {
     const needle = normalize(query);
     const filtered = items.filter(item => !needle || normalize(searchText(item)).includes(needle));
-    if (needle) {
+    if (needle && prioritizeMatches) {
       const startsWithQuery = item => normalize(searchText(item)).split(/[\s()+/-]+/).some(part => part.startsWith(needle));
       filtered.sort((left, right) => Number(startsWithQuery(right)) - Number(startsWithQuery(left)));
     }
     matches = filtered;
-    activeIndex = matches.length ? 0 : -1;
+    const selectedIndex = selected ? matches.findIndex(item => value(item) === value(selected)) : -1;
+    activeIndex = matches.length ? (selectedIndex >= 0 ? selectedIndex : 0) : -1;
     listbox.replaceChildren();
+    let currentGroup = null;
     matches.forEach((item, index) => {
+      const group = suggestedItem ? (suggestedItem(item) ? "Suggested" : "All countries") : null;
+      if (group && group !== currentGroup) {
+        listbox.append(groupHeading(group));
+        currentGroup = group;
+      }
       const option = document.createElement("li");
       option.id = `${listbox.id}-option-${index}`; option.className = "combobox-option"; option.setAttribute("role", "option"); option.setAttribute("aria-selected", "false");
       if (selected && value(selected) === value(item)) option.dataset.current = "true";
@@ -229,13 +236,16 @@ export function initBookingInputs({ draft = {}, onCountryChange = () => {} } = {
   const phoneInput = document.getElementById("whatsapp-national");
   const e164Hidden = document.getElementById("whatsapp-e164");
 
+  const countriesByName = [...COUNTRIES].sort((left, right) => left.name.localeCompare(right.name));
   const countryCombo = createCombobox({
     input: countryInput,
     listbox: document.getElementById("country-listbox"),
-    items: COUNTRIES,
+    items: [nigeria, ...countriesByName.filter(item => item.isoCode !== nigeria.isoCode)],
     label: item => item.name,
     searchText: item => item.name,
     value: item => item.isoCode,
+    suggestedItem: item => item.isoCode === nigeria.isoCode,
+    prioritizeMatches: false,
     onSelect: item => {
       countryHidden.value = item.isoCode;
       if (dialCombo.selected?.isoCode !== item.isoCode) dialCombo.setValue(item.isoCode);
