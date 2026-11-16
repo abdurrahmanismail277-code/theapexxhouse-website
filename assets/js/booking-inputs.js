@@ -187,7 +187,7 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
       option.id = `${listbox.id}-option-${index}`; option.className = "combobox-option"; option.setAttribute("role", "option"); option.setAttribute("aria-selected", "false");
       if (selected && value(selected) === value(item)) option.dataset.current = "true";
       (renderOption ? renderOption(item) : defaultOption(item)).forEach(node => option.append(node));
-      option.addEventListener("pointerdown", event => { event.preventDefault(); choose(item); });
+      option.addEventListener("click", () => choose(item));
       listbox.append(option);
     });
     if (!matches.length) {
