@@ -10,6 +10,7 @@ const make = (tag, className, text) => {
   if (text) element.textContent = text;
   return element;
 };
+const serviceSlug = value => value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const appendParagraphs = (parent, paragraphs, className = "svc-full-paragraph") => {
   paragraphs.forEach(text => parent.append(make("p", className, text)));
 };
@@ -26,7 +27,7 @@ document.title = `${service.name} | The Apex House`;
 const navigation = root.querySelector("[data-svc-full-navigation]");
 sectionDefinitions.forEach(section => {
   const link = make("a", "svc-full-nav-link", section.label);
-  link.href = `#svc-full-${section.id}`;
+  link.href = `#${section.id}`;
   navigation.append(link);
 });
 
@@ -34,7 +35,7 @@ const sections = root.querySelector("[data-svc-full-sections]");
 sections.append(make("h1", "svc-full-sr-only", service.name));
 sectionDefinitions.forEach(definition => {
   const section = make("section", "svc-full-section");
-  section.id = `svc-full-${definition.id}`;
+  section.id = definition.id;
   section.setAttribute("aria-labelledby", `${section.id}-title`);
   const heading = make("h2", "svc-full-section-title", definition.title);
   heading.id = `${section.id}-title`;
@@ -46,9 +47,9 @@ sectionDefinitions.forEach(definition => {
     section.append(list);
   }
   if (definition.services) {
-    definition.services.forEach((item, index) => {
+    definition.services.forEach(item => {
       const article = make("section", "svc-full-service");
-      article.id = `svc-full-service-${index + 1}`;
+      article.id = serviceSlug(item.title);
       const serviceHeading = make("h3", "svc-full-service-title", item.title);
       serviceHeading.id = `${article.id}-title`;
       article.setAttribute("aria-labelledby", serviceHeading.id);
@@ -82,18 +83,25 @@ sectionDefinitions.forEach(definition => {
   sections.append(section);
 });
 
-// Footer links can target a service section generated above this point.
-if (window.location.hash.indexOf("#svc-full-service-") === 0) {
-  const initialServiceTarget = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+// Keep older numbered fragment links working and replace them with readable anchors.
+if (window.location.hash) {
+  const fragment = decodeURIComponent(window.location.hash.slice(1));
+  const oldServiceMatch = fragment.match(/^svc-full-service-(\d+)$/);
+  const oldSectionMatch = fragment.match(/^svc-full-(services|areas|who|why|together)$/);
+  const serviceIndex = oldServiceMatch ? Number(oldServiceMatch[1]) - 1 : -1;
+  const initialServiceTarget = oldServiceMatch
+    ? sections.querySelectorAll(".svc-full-service")[serviceIndex]
+    : document.getElementById(oldSectionMatch ? oldSectionMatch[1] : fragment);
   if (initialServiceTarget && root.contains(initialServiceTarget)) {
     initialServiceTarget.scrollIntoView({ behavior: "auto", block: "start" });
+    if (oldServiceMatch || oldSectionMatch) history.replaceState(null, "", `${location.pathname}${location.search}#${initialServiceTarget.id}`);
   }
 }
 
 // Shared footer markup is provided directly by each service page.
 
 navigation.addEventListener("click", event => {
-  const link = event.target.closest("a[href^='#svc-full-']");
+  const link = event.target.closest("a.svc-full-nav-link");
   if (!link) return;
   const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
   if (!target) return;
