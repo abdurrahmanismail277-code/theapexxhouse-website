@@ -649,6 +649,7 @@ export default {
       }
 
       if (versionedAsset) headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      else if (isHtml && (pathname === "/" || pathname === "/index.html")) headers.set("Cache-Control", "no-cache, max-age=0, must-revalidate");
       else if (isHtml) headers.set("Cache-Control", "public, max-age=0, must-revalidate");
       return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     } catch (error) {

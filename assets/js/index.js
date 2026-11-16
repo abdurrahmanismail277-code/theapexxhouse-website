@@ -1,3 +1,9 @@
+    (function () {
+      var introMeta = document.querySelector('meta[name="apex-build-id"]');
+      if (!introMeta || introMeta.content !== "20261116-intro-failsafe-v2") {
+        if (window.closeIntro) window.closeIntro("page and running script build mismatch");
+      }
+    })();
 
     (() => {
       const dial = document.getElementById('connect-dial');
@@ -24,12 +30,8 @@
 
     const INSTAGRAM_URL = "https://instagram.com/the.apex.house";
     const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61595060085783";
-    // Mobile navigation and gentle reveal; respects reduced-motion preferences.
-    const introScreen=document.getElementById('intro-screen');
-    const dismissIntro=()=>{if(!introScreen||introScreen.hidden)return;introScreen.hidden=true};
-    document.getElementById('intro-skip').addEventListener('click',dismissIntro);document.getElementById('intro-enter').addEventListener('click',dismissIntro);
-    const finishIntro=()=>{if(!introScreen||introScreen.hidden)return;introScreen.classList.add('intro-finished');introScreen.inert=true;introScreen.setAttribute('aria-hidden','true')};
-    window.setTimeout(finishIntro,3100);
+    // The homepage intro is dismissed by its independent, ES5-safe head guard.
+    // Mobile navigation and gentle reveal continue below.
     const themeButton=document.querySelector('.theme-toggle');
     const themeRoot=document.documentElement;
     const accessibilityTrigger=document.getElementById('accessibility-trigger');

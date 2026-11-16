@@ -22,6 +22,83 @@
   <link rel="canonical" href="https://theapexxhouse.com/">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apex-build-id" content="20261116-intro-failsafe-v2">
+  <script data-build-id="20261116-intro-failsafe-v2">
+    (function () {
+      function closeIntro(reason) {
+        try {
+          var intro = document.getElementById('intro-screen');
+          if (intro) {
+            intro.classList.add('intro-finished');
+            intro.setAttribute('aria-hidden', 'true');
+            intro.hidden = true;
+          }
+          if (reason && window.console && window.console.info) window.console.info('Apex intro closed:', reason);
+        } catch (error) {
+          if (window.console && window.console.error) window.console.error('Apex intro close failed:', error);
+        } finally {
+          try {
+            document.documentElement.classList.remove('intro-open');
+            document.documentElement.style.removeProperty('overflow');
+            if (document.body) {
+              document.body.classList.remove('intro-open');
+              document.body.style.removeProperty('overflow');
+            }
+          } catch (cleanupError) {}
+        }
+      }
+      window.closeIntro = closeIntro;
+      try {
+        window.setTimeout(function () { closeIntro('4-second safety timer'); }, 4000);
+        document.addEventListener('click', function (event) {
+          var target = event.target;
+          while (target && target !== document) {
+            if (target.id === 'intro-skip' || target.id === 'intro-enter') {
+              if (event.preventDefault) event.preventDefault();
+              closeIntro(target.id === 'intro-skip' ? 'skip button' : 'enter button');
+              if (target.id === 'intro-enter') window.location.hash = 'main-content';
+              return;
+            }
+            target = target.parentNode;
+          }
+        }, true);
+        document.addEventListener('touchend', function (event) {
+          var target = event.target;
+          while (target && target !== document) {
+            if (target.id === 'intro-skip' || target.id === 'intro-enter') {
+              closeIntro(target.id === 'intro-skip' ? 'skip button touch' : 'enter button touch');
+              if (target.id === 'intro-enter') window.location.hash = 'main-content';
+              return;
+            }
+            target = target.parentNode;
+          }
+        }, true);
+        window.onerror = function () { closeIntro('script error'); return false; };
+        if (window.addEventListener) window.addEventListener('unhandledrejection', function () { closeIntro('unhandled promise rejection'); });
+        document.addEventListener('DOMContentLoaded', function () {
+          try {
+            var meta = document.querySelector('meta[name="apex-build-id"]');
+            var script = document.querySelector('script[data-apex-main-build]');
+            if (!meta || !script || meta.content !== script.getAttribute('data-apex-main-build')) closeIntro('page and script build mismatch');
+          } catch (error) { closeIntro('build check failed'); }
+        });
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+          navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            for (var i = 0; i < registrations.length; i += 1) registrations[i].unregister();
+          }, function () {});
+        }
+        window.setTimeout(function () {
+          try {
+            var intro = document.getElementById('intro-screen');
+            if (intro && !intro.hidden && window.getComputedStyle(intro).visibility !== 'hidden') closeIntro('6-second visibility watchdog');
+          } catch (error) { closeIntro('visibility watchdog fallback'); }
+        }, 6000);
+      } catch (error) {
+        closeIntro('safety setup failed');
+      }
+    })();
+  </script>
+  <noscript><style>#intro-screen{display:none!important}</style></noscript>
   <link rel="icon" type="image/svg+xml" href="assets/apex-house-icon.svg?v=20261029">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png?v=20261029">
   <link rel="icon" href="/favicon.ico?v=20261029" sizes="96x96" type="image/x-icon">
@@ -92,7 +169,7 @@
     .menu-toggle{width:42px;height:42px;padding:0;display:none;place-items:center;border:1px solid #ffffff50;border-radius:50%;background:#ffffff08;color:#fff;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}.menu-toggle:hover{background:#ffffff16;border-color:#ffffffa0;transform:translateY(-1px)}.menu-icon{position:relative;display:block;width:18px;height:14px}.menu-icon span{position:absolute;left:0;width:100%;height:2px;border-radius:2px;background:currentColor;transition:top .22s ease,transform .22s ease,opacity .16s ease}.menu-icon span:nth-child(1){top:1px}.menu-icon span:nth-child(2){top:6px}.menu-icon span:nth-child(3){top:11px}.menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(1){top:6px;transform:rotate(45deg)}.menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(2){opacity:0}.menu-toggle[aria-expanded="true"] .menu-icon span:nth-child(3){top:6px;transform:rotate(-45deg)}@media(max-width:640px){.menu-toggle{display:grid}}@media(prefers-reduced-motion:reduce){.menu-toggle,.menu-icon span{transition:none!important}}
     .intro-screen{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 60%,#10499d 0,transparent 43%),linear-gradient(145deg,#071427,#020b1c 75%);color:#fff;animation:intro-dismiss .75s cubic-bezier(.7,0,.2,1) 2.3s forwards}.intro-screen[hidden]{display:none}.intro-content{position:relative;z-index:1;width:min(760px,calc(100% - 48px));text-align:center}.intro-skip{position:absolute;z-index:2;top:24px;min-height:48px;right:max(24px,calc((100vw - 1160px)/2));padding:9px 13px;border:1px solid #ffffff45;border-radius:999px;background:#ffffff0a;color:#fff;font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s,border-color .2s}.intro-skip:hover{background:#ffffff18;border-color:#ffffff90}.intro-mark{width:min(320px,72vw);height:100px;margin:0 auto 22px;object-fit:contain;opacity:1;transform:none;animation:intro-logo-settle .95s cubic-bezier(.16,1,.3,1) .05s both}.intro-wordmark{margin:0;color:#fff;font:800 clamp(36px,8vw,76px)/.95 var(--head);letter-spacing:-.075em;opacity:0;transform:translateY(14px);animation:intro-mark-in .7s cubic-bezier(.2,.8,.2,1) .28s forwards}.intro-tagline{margin:17px 0 0;color:#a9c8f5;font:500 10px var(--mono);letter-spacing:.24em;text-transform:uppercase;opacity:0;animation:intro-fade-in .6s ease .58s forwards}.intro-rule{position:relative;width:min(420px,75%);height:1px;margin:56px auto 0;background:#ffffff2b;overflow:hidden}.intro-rule:after{content:'';position:absolute;inset:0;background:#82b4ff;transform:scaleX(0);transform-origin:left;animation:intro-progress 1.45s cubic-bezier(.4,0,.2,1) .65s forwards}.intro-caption{display:flex;justify-content:space-between;width:min(420px,75%);margin:10px auto 0;color:#91a6c5;font:500 8px var(--mono);letter-spacing:.12em;text-transform:uppercase;opacity:0;animation:intro-fade-in .5s ease .7s forwards}.intro-caption span:last-child{color:#dce9fb}
     .intro-screen{contain:layout paint size;will-change:opacity,transform}
-    @keyframes intro-logo-settle{from{transform:translateY(8px) scale(.94)}to{transform:translateY(0) scale(1)}}@keyframes intro-mark-in{to{opacity:1;transform:translateY(0) scale(1)}}@keyframes intro-fade-in{to{opacity:1}}@keyframes intro-progress{to{transform:scaleX(1)}}@keyframes intro-dismiss{to{opacity:0;pointer-events:none}}.intro-screen.intro-finished{animation:none;opacity:0;pointer-events:none;transform:none}
+    @keyframes intro-logo-settle{from{transform:translateY(8px) scale(.94)}to{transform:translateY(0) scale(1)}}@keyframes intro-mark-in{to{opacity:1;transform:translateY(0) scale(1)}}@keyframes intro-fade-in{to{opacity:1}}@keyframes intro-progress{to{transform:scaleX(1)}}@keyframes intro-dismiss{to{opacity:0;visibility:hidden;pointer-events:none}}.intro-screen.intro-finished{animation:none;opacity:0;visibility:hidden;pointer-events:none;transform:none}
     @media(prefers-reduced-motion:reduce){.intro-screen{animation:none;display:none!important}.intro-mark,.intro-wordmark,.intro-tagline,.intro-caption{animation:none;opacity:1;transform:none}.intro-rule:after{animation:none;transform:scaleX(1)}}
     .intro-enter{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;margin-top:27px;padding:0 20px;border:1px solid #ffffff50;border-radius:999px;background:#ffffff12;color:#fff;font:500 11px var(--mono);letter-spacing:.04em;opacity:0;transform:translateY(8px);animation:intro-mark-in .55s ease .75s forwards;transition:background .2s,border-color .2s,transform .2s}.intro-enter:hover{background:#ffffff22;border-color:#ffffffa0;transform:translateY(-2px)}.intro-enter svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.back-to-top{position:fixed;z-index:39;right:96px;bottom:92px;width:52px;height:52px;display:grid;place-items:center;border:1px solid #ffffff75;border-radius:50%;background:#0756d9;color:#fff;box-shadow:0 8px 24px #021a4040;opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .25s,visibility .25s,transform .25s,background .2s}.back-to-top.is-visible{opacity:1;visibility:visible;transform:translateY(0)}.back-to-top:hover{background:#287aff;transform:translateY(-3px)}.back-to-top svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.back-to-top:focus-visible{outline:3px solid #75aaff;outline-offset:4px}@media(max-width:640px){.back-to-top{right:79px;bottom:78px;width:46px;height:46px}.intro-rule{margin-top:38px}}@media(prefers-reduced-motion:reduce){.intro-enter,.back-to-top{animation:none;transition:none;transform:none}.intro-enter{opacity:1}}
     @media(max-width:900px){.menu-toggle{display:grid;flex:none}.nav-links{display:none;position:absolute;z-index:5;top:calc(100% + 8px);left:0;right:0;padding:11px 14px 14px;border:1px solid #ffffff27;border-radius:17px;background:#061d41f7;box-shadow:0 14px 34px #021a4050;backdrop-filter:blur(16px);flex-direction:column;align-items:stretch;gap:0}.nav-links.open{display:flex}.nav-links a{padding:11px 10px;border-radius:9px}.nav-cta{display:none}}
@@ -343,8 +420,8 @@
       .back-to-top{right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));width:56px;height:56px}
     }
   </style>
-  <link rel="preload" as="style" href="assets/css/homepage.css?v=20261107-shared-footer" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="assets/css/homepage.css?v=20261107-shared-footer"></noscript>
+  <link rel="preload" as="style" href="assets/css/homepage.css?v=20261116-intro-failsafe-v2" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="assets/css/homepage.css?v=20261116-intro-failsafe-v2"></noscript>
 
 
 
@@ -383,10 +460,10 @@
       .hero-actions .btn-arrow{width:14px;height:14px}
     }
   </style>
-  <link rel="stylesheet" href="assets/css/scroll-progress.css?v=20261107-scroll-top-redesign">
-  <link rel="stylesheet" href="assets/css/apex-difference.css?v=20261029">
-  <link rel="stylesheet" href="css/catalogs.css?v=20261029-service-catalogs">
-  <link rel="stylesheet" href="footer.css?v=20261107-footer-final8">
+  <link rel="stylesheet" href="assets/css/scroll-progress.css?v=20261116-intro-failsafe-v2">
+  <link rel="stylesheet" href="assets/css/apex-difference.css?v=20261116-intro-failsafe-v2">
+  <link rel="stylesheet" href="css/catalogs.css?v=20261116-intro-failsafe-v2">
+  <link rel="stylesheet" href="footer.css?v=20261116-intro-failsafe-v2">
   <style>.trusted-footer{padding:20px 0 18px;background:transparent}.trusted-footer .trust-line{color:#c9deff}@media(max-width:640px){.trusted-footer{padding:16px 0}}:root[data-theme="dark"] .trusted-footer{background:transparent}</style>
   <style>
     :root{--intro-navy:#021a40;--intro-blue:#0b63f6;--intro-secondary:#b9d4ff;--intro-gold:#c9a961;--intro-serif:Georgia,'Times New Roman',serif;--intro-sans:Inter,Arial,sans-serif}
@@ -398,11 +475,15 @@
     .intro-tagline{margin:clamp(24px,6vh,42px) 0 0;color:var(--intro-secondary);font:500 13px/1.55 var(--intro-serif);letter-spacing:.28em;text-transform:uppercase;opacity:0;transform:translateY(8px);animation:intro-fade-rise .42s ease 1.4s forwards}
     .intro-enter{display:inline-flex;align-items:center;justify-content:center;gap:14px;width:min(280px,100%);min-height:52px;margin-top:30px;padding:0 24px;border:0;border-radius:999px;background:var(--intro-blue);color:#fff;box-shadow:0 8px 26px rgba(11,99,246,.3);font:600 14px/1 var(--intro-sans);text-decoration:none;opacity:0;transform:translateY(8px);animation:intro-fade-rise .42s ease 1.55s forwards;transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease}.intro-enter:hover{transform:translateY(-2px);background:#176ffb;box-shadow:0 11px 30px rgba(11,99,246,.38)}.intro-enter:focus-visible{outline:3px solid #fff;outline-offset:4px}.intro-enter-arrow{display:inline-block;font-size:20px;line-height:1;transition:transform .2s ease}.intro-enter:hover .intro-enter-arrow{transform:translateX(4px)}
     .intro-footer{position:relative;z-index:2;grid-row:2;width:min(460px,100%);margin:0 auto;text-align:center;opacity:0;transform:translateY(8px);animation:intro-fade-rise .42s ease 1.7s forwards}.intro-rule{position:relative;width:100%;height:2px;overflow:hidden;background:rgba(185,212,255,.2)}.intro-rule::after{position:absolute;inset:0;background:var(--intro-blue);content:"";transform:scaleX(0);transform-origin:left;animation:intro-progress 2.3s linear forwards}.intro-caption{margin:12px 0 0;color:var(--intro-secondary);font:500 13px/1.4 var(--intro-sans);letter-spacing:.03em}
-    .intro-screen.intro-finished{animation:none;opacity:0;pointer-events:none;transform:none}
-    @keyframes intro-chevron-arrive{to{opacity:1;transform:translateY(0)}}@keyframes intro-fade-rise{to{opacity:1;transform:translateY(0)}}@keyframes intro-progress{to{transform:scaleX(1)}}@keyframes intro-glow-breathe{0%,100%{transform:scale(1);opacity:.78}50%{transform:scale(1.035);opacity:1}}@keyframes intro-dismiss{to{opacity:0;pointer-events:none}}
+    .intro-screen.intro-finished{animation:none;opacity:0;visibility:hidden;pointer-events:none;transform:none}
+    @keyframes intro-chevron-arrive{to{opacity:1;transform:translateY(0)}}@keyframes intro-fade-rise{to{opacity:1;transform:translateY(0)}}@keyframes intro-progress{to{transform:scaleX(1)}}@keyframes intro-glow-breathe{0%,100%{transform:scale(1);opacity:.78}50%{transform:scale(1.035);opacity:1}}@keyframes intro-dismiss{to{opacity:0;visibility:hidden;pointer-events:none}}
     @media(max-width:480px){.intro-screen{padding-right:18px;padding-left:18px}.intro-lockup{gap:12px}.intro-lockup-icon{width:clamp(60px,19vw,82px)}.intro-logo-name{font-size:clamp(32px,9.8vw,46px)}.intro-footer{width:min(420px,100%)}}
     @media(max-height:620px){.intro-screen{padding-top:calc(env(safe-area-inset-top,0px) + 8px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}.intro-tagline{margin-top:18px}.intro-enter{margin-top:18px}.intro-footer .intro-caption{margin-top:8px}}
-    @media(prefers-reduced-motion:reduce){.intro-screen{display:grid!important;animation:none!important;opacity:1!important}.intro-lockup-chevron,.intro-logo-name,.intro-tagline,.intro-enter,.intro-footer{animation:none!important;opacity:1!important;transform:none!important}.intro-screen::before{animation:none!important;transform:none}.intro-rule::after{animation:none!important;transform:scaleX(1)}.intro-enter,.intro-enter-arrow,.intro-skip{transition:none!important}.intro-enter:hover{transform:none}}
+    @media(prefers-reduced-motion:reduce){.intro-lockup-chevron,.intro-logo-name,.intro-tagline,.intro-enter,.intro-footer{animation:none!important;opacity:1!important;transform:none!important}.intro-screen::before{animation:none!important;transform:none}.intro-rule::after{animation:none!important;transform:scaleX(1)}.intro-enter,.intro-enter-arrow,.intro-skip{transition:none!important}.intro-enter:hover{transform:none}}
+    .intro-screen{z-index:2147483000;animation:intro-dismiss .75s cubic-bezier(.7,0,.2,1) 2.3s forwards}
+    .intro-screen::before,.intro-screen::after,.intro-grain{pointer-events:none}
+    .intro-skip,.intro-enter{z-index:2147483001;min-height:48px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .intro-enter{position:relative;cursor:pointer}
     /* Keep the hero's final appearance while avoiding large animated paint layers on phones. */
     @media(max-width:768px){
       .nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:#021a40}
@@ -437,7 +518,7 @@
         <span class="intro-logo-name"><span>The Apex</span><span>House</span></span>
       </div>
       <p class="intro-tagline">People · Presence · Purpose</p>
-      <a class="intro-enter" href="#main-content" id="intro-enter" data-no-transition>Enter the website <span class="intro-enter-arrow" aria-hidden="true">→</span></a>
+      <button class="intro-enter" id="intro-enter" type="button">Enter the website <span class="intro-enter-arrow" aria-hidden="true">&#8594;</span></button>
     </div>
     <div class="intro-footer"><div class="intro-rule" aria-hidden="true"></div><p class="intro-caption">Moderation · Hosting · Community</p></div>
   </div>
@@ -672,17 +753,17 @@
     </button>
   </aside>
 
-  <script type="module" src="assets/js/pricing.js?v=20261029"></script>
-  <script type="module" src="assets/js/hero-service-dialog.js?v=service-intros-removed"></script>
-  <script src="assets/js/index.js?v=20261029-progress-v2" defer></script>
-  <script src="assets/js/scroll-progress.js?v=20261107-scroll-top-redesign" defer></script>
-  <script src="assets/js/motion.js?v=20261106-circle-word-preserve" defer></script>
-  <script src="assets/js/services-data.js?v=muslim-women-scope-20261029" defer></script>
-  <script src="assets/js/service-interactions.js?v=20261029" defer></script>
+  <script type="module" src="assets/js/pricing.js?v=20261116-intro-failsafe-v2"></script>
+  <script type="module" src="assets/js/hero-service-dialog.js?v=20261116-intro-failsafe-v2"></script>
+  <script src="assets/js/index.js?v=20261116-intro-failsafe-v2" data-apex-main-build="20261116-intro-failsafe-v2" defer></script>
+  <script src="assets/js/scroll-progress.js?v=20261116-intro-failsafe-v2" defer></script>
+  <script src="assets/js/motion.js?v=20261116-intro-failsafe-v2" defer></script>
+  <script src="assets/js/services-data.js?v=20261116-intro-failsafe-v2" defer></script>
+  <script src="assets/js/service-interactions.js?v=20261116-intro-failsafe-v2" defer></script>
 <div class="service-package-bar" id="service-package-bar" hidden aria-live="polite"><div class="service-package-summary"><span class="service-package-count" id="service-package-count">0</span><span>services selected</span></div><div class="service-package-actions"><button class="service-package-clear" id="service-package-clear" type="button">Clear</button><a class="service-package-continue" id="service-package-continue" href="/book">Continue to booking</a></div></div>
-  <script src="assets/js/page-transitions.js?v=20261029" defer></script>
-  <script src="assets/js/nav.js?v=20261029-mobile-drawer-polish" defer></script>
-  <script src="js/catalogs.js?v=20261029-service-catalogs" defer></script>
+  <script src="assets/js/page-transitions.js?v=20261116-intro-failsafe-v2" defer></script>
+  <script src="assets/js/nav.js?v=20261116-intro-failsafe-v2" defer></script>
+  <script src="js/catalogs.js?v=20261116-intro-failsafe-v2" defer></script>
   <script>
     (() => {
       const word = document.querySelector(".hero-copy .circle-word");
