@@ -56,15 +56,15 @@ export default {
     const emailResults = await Promise.allSettled([
       sendEmail(env, {
         to: [env.NOTIFICATION_EMAIL],
-        subject: `New booking request ${booking.reference}`,
+        subject: `The Apex House · new booking request ${booking.reference}`,
         text: bookingEmailText(booking, "A new booking request was received."),
         html: bookingEmailHtml(booking, "A new booking request was received."),
       }),
       sendEmail(env, {
         to: [booking.email],
-        subject: `We received your booking request ${booking.reference}`,
-        text: bookingEmailText(booking, "Thank you. The Apex House has received your booking request and will review it shortly."),
-        html: bookingEmailHtml(booking, "Thank you. The Apex House has received your booking request and will review it shortly."),
+        subject: `The Apex House booking received ${booking.reference}`,
+        text: bookingEmailText(booking, `Assalamu Alaikum WaramatulLahi Wabarakatuhu, ${booking.name}. The Apex House has received your booking request and will review it shortly.`),
+        html: bookingEmailHtml(booking, `Assalamu Alaikum WaramatulLahi Wabarakatuhu, ${booking.name}. The Apex House has received your booking request and will review it shortly.`),
       }),
     ]);
     const emailStatus = emailResults.every((result) => result.status === "fulfilled") ? "sent" : "partial";
