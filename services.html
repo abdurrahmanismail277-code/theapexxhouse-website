@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>(function(){var root=document.documentElement,saved="",dark=false;try{saved=localStorage.getItem("apex-theme")||"";}catch(e){}if(saved==="light"||saved==="dark"){root.dataset.theme=saved;return;}try{dark=!!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);}catch(e){}root.dataset.theme=dark?"dark":"light";})();</script>
   <script>
     if (location.pathname.endsWith('.html')) {
       var clean = location.pathname.replace(/index\.html$/, '').replace(/\.html$/, '');
@@ -25,6 +26,33 @@
     @media(max-width:700px){.wrap{width:calc(100% - 38px)}.nav-inner{height:68px}.nav-links{gap:14px;font-size:10px}.nav-links a:nth-child(n+3){display:none}.nav-cta{min-height:38px;padding:0 12px;font-size:9px}main{padding:56px 0 76px}.page-intro{font-size:15px}.service-detail{grid-template-columns:30px minmax(0,1fr);gap:12px;padding:21px 18px}.service-detail h2{font-size:21px}.service-detail .book-link{grid-column:2;justify-self:start;margin-top:6px}.service-category{margin-top:38px}}
     @media(max-width:390px){.nav-cta{display:none}.nav-links{gap:12px}}
   </style>
+  <style>
+    html:has(body.page-services){scroll-padding-top:calc(60px + env(safe-area-inset-top,0px))}
+    body.page-services{background:#fff!important;color:#071b39}
+    body.page-services .nav{display:none!important}
+    body.page-services .services-header{position:sticky;top:0;z-index:50;padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid #ffffff22;background:#021a40;color:#fff}
+    body.page-services .services-header-inner{display:flex;width:min(calc(100% - 32px),720px);min-height:60px;align-items:center;justify-content:space-between;gap:16px;margin-inline:auto}
+    body.page-services .services-brand{display:inline-flex;min-width:0;align-items:center;gap:10px;color:#fff;font:600 15px/1.2 var(--head);letter-spacing:-.02em}
+    body.page-services .services-brand img{width:30px;height:30px;flex:none;object-fit:contain}
+    body.page-services .services-home{display:inline-flex;min-height:44px;align-items:center;padding:0 4px;color:#dce7f7;font:500 12px/1.2 var(--mono)}
+    body.page-services .services-brand:focus-visible,body.page-services .services-home:focus-visible{outline:2px solid #8db8ff;outline-offset:3px;border-radius:5px}
+    body.page-services .skip-link{position:fixed;z-index:100;top:calc(8px + env(safe-area-inset-top,0px));left:12px;padding:10px 14px;transform:translateY(-160%);border-radius:8px;background:#fff;color:#021a40;box-shadow:0 8px 26px #0003;font:600 13px var(--mono)}
+    body.page-services .skip-link:focus{transform:translateY(0)}
+    body.page-services main.wrap{width:min(calc(100% - 32px),720px);padding:28px 0 48px}
+    body.page-services .page-title{margin:8px 0;color:#021a40;font-size:clamp(34px,5vw,48px);line-height:1.08;letter-spacing:-.05em}
+    body.page-services .page-intro{max-width:650px;margin:0 0 24px;color:#63738b;font-size:16px;line-height:1.65}
+    body.page-services .service-detail{grid-template-columns:42px minmax(0,1fr) auto;gap:16px;margin-bottom:12px;padding:22px;border-radius:16px;scroll-margin-top:calc(72px + env(safe-area-inset-top,0px))}
+    body.page-services .service-detail h2{font-size:21px}
+    body.page-services .service-detail h3{margin-top:16px}
+    body.page-services .service-category{margin-top:32px}
+    body.page-services .service-category-title{margin-bottom:14px;color:#021a40;font-size:clamp(26px,4vw,34px)}
+    body.page-services .footer,body.page-services .connect-dial,body.page-services .back-to-top{display:none!important}
+    :root[data-theme="dark"] body.page-services{background:#071427!important;color:#f3f6fb}
+    :root[data-theme="dark"] body.page-services .page-title,:root[data-theme="dark"] body.page-services .service-category-title{color:#f3f6fb}
+    :root[data-theme="dark"] body.page-services .page-intro{color:#aab9ce}
+    @media(max-width:640px){body.page-services main.wrap{padding-top:20px;padding-bottom:36px}body.page-services .service-detail{grid-template-columns:28px minmax(0,1fr);gap:12px;padding:18px 16px}body.page-services .service-detail h2{font-size:19px}body.page-services .service-detail .book-link{grid-column:2;justify-self:start;margin-top:2px}body.page-services .service-category{margin-top:26px}}
+    @media(prefers-reduced-motion:reduce){body.page-services{scroll-behavior:auto}}
+  </style>
   <link rel="preload" as="style" href="assets/css/brand-motion.css?v=20261029" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" as="style" href="assets/css/brand-palette.css?v=20261029" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" as="style" href="assets/css/nav.css?v=20261029-mobile-drawer-polish" onload="this.onload=null;this.rel='stylesheet'">
@@ -35,9 +63,10 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
   <link rel="stylesheet" href="footer.css?v=20261116-grouped-services">
 </head>
-<body class="site-bg-page">
-  <header class="nav"><div class="wrap nav-inner"><a class="brand" href="/" aria-label="The Apex House home"><img src="assets/apex-house-logo.svg?v=20261029" width="300" height="90" alt="The Apex House"></a><nav class="nav-links" aria-label="Main navigation"><a href="/">Home</a><a href="/services" aria-current="page">Services</a><a href="/#work">Projects</a><a href="/about">About</a><a href="/insights">Insights</a><a href="/faq">FAQ</a><a href="/contact">Contact</a></nav><a class="nav-cta" href="/book">Book a service <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a></div></header>
-  <main class="wrap">
+<body class="site-bg-page page-services">
+  <a class="skip-link" href="#services-content">Skip to services</a>
+  <header class="services-header" role="banner"><div class="services-header-inner"><a class="services-brand" href="/" aria-label="The Apex House, home"><img src="assets/apex-house-icon.svg?v=20261029" width="32" height="32" alt=""><span>The Apex House</span></a><a class="services-home" href="/">&#8592; Home</a></div></header>
+  <main class="wrap" id="services-content" tabindex="-1">
     <span class="eyebrow">WHAT WE DO</span>
     <h1 class="page-title">Good people.<br>Great moments.</h1>
     <p class="page-intro">The Apex House is a Muslim women-centered business. All speaking, event moderation, hosting, consulting, and media services are offered exclusively for Muslim women.</p>
