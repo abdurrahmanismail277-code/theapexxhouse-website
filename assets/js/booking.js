@@ -356,7 +356,7 @@
       renderStep();
     });
     document.getElementById("booking-back").addEventListener("click", () => { currentStep = Math.max(0, currentStep - 1); renderStep(); });
-    function renderStep() {
+    function renderStep(moveFocus = true) {
       steps.forEach((step, index) => step.hidden = index !== currentStep);
       bookingForm.classList.toggle("is-reviewing", currentStep === 3);
       document.getElementById("booking-back").hidden = currentStep === 0;
@@ -368,6 +368,14 @@
         if (index === phase) label.setAttribute("aria-current", "step"); else label.removeAttribute("aria-current");
       });
       bookingForm.querySelector(".booking-progress").setAttribute("aria-label", `Step ${currentStep + 1} of 4`);
+      if (moveFocus) {
+        const heading = steps[currentStep].querySelector("h3");
+        if (heading) requestAnimationFrame(() => {
+          const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          bookingForm.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+          heading.focus({ preventScroll: true });
+        });
+      }
       if (currentStep === 3) {
         prepareRecaptcha();
         const data = new FormData(bookingForm);
@@ -862,7 +870,6 @@
       currentStep = 3;
       renderStep();
       history.replaceState({}, "", "#book");
-      document.getElementById("booking-title").focus({ preventScroll: true });
     });
     document.getElementById("payment-continue-pay").addEventListener("click", () => setPaymentStep(2));
     document.getElementById("payment-back-review").addEventListener("click", () => setPaymentStep(1));
@@ -952,7 +959,6 @@
       currentStep = 0;
       history.replaceState({}, "", "#book");
       updateOffers(); renderStep();
-      document.getElementById("booking-title").focus({ preventScroll: true });
     }
 
     const paymentRecovery = document.getElementById("booking-recovery");
@@ -984,7 +990,7 @@
     // dispatching change. Rebuild offers once that restored state is applied.
     requestAnimationFrame(() => updateOffers());
     window.addEventListener("pageshow", () => updateOffers());
-    renderStep();
+    renderStep(false);
     document.getElementById("payment-bank").textContent = "";
     document.getElementById("payment-account-name").textContent = "";
     document.getElementById("payment-account-number").textContent = "";
