@@ -195,3 +195,14 @@ body.booking-payment-open .whatsapp { visibility: hidden !important; opacity: 0 
 .international-payment-status[data-state="error"] { color: #a32929; }
 .international-payment-status[data-state="success"] { color: #17643b; }
 @media (max-width: 520px) { .international-currency-options { grid-template-columns: 1fr; gap: 9px; } .international-currency-card { min-height: 68px; } .payment-currency-toggle button { padding-inline: 7px; font-size: 12px; } }
+:root[data-theme="dark"] .payment-currency-toggle { border-color: #ffffff2a; background: #10233d; }
+:root[data-theme="dark"] .payment-currency-toggle button { color: #aab9ce; }
+:root[data-theme="dark"] .payment-currency-toggle button[aria-selected="true"] { border-color: #ffffff2a; background: #071427; color: #f3f6fb; box-shadow: 0 3px 12px #0004; }
+:root[data-theme="dark"] .international-payment-panel { border-color: #ffffff2a; background: #0b1a2e; }
+:root[data-theme="dark"] .international-payment-panel h3 { color: #f3f6fb; }
+:root[data-theme="dark"] .international-currency-options legend,:root[data-theme="dark"] .international-payment-panel .international-payment-note { color: #aab9ce; }
+:root[data-theme="dark"] .international-currency-card { border-color: #ffffff2a; background: #10233d; color: #f3f6fb; }
+:root[data-theme="dark"] .international-currency-card:has(input:checked) { border-color: #75aaff; background: #163253; box-shadow: 0 0 0 3px #75aaff1c; }
+:root[data-theme="dark"] .international-payment-status { color: #d7e2f2; }
+:root[data-theme="dark"] .international-payment-status[data-state="error"] { color: #ffb4b4; }
+:root[data-theme="dark"] .international-payment-status[data-state="success"] { color: #9fe0b6; }

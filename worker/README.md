@@ -41,4 +41,26 @@ For local requests, add local-only variables to `worker/.dev.vars` and use a tes
 
 ## Email behavior
 
-The Worker sends a new-booking notification to `NOTIFICATION_EMAIL` and a receipt-of-request message to the client's submitted email. Email delivery is attempted only after the Sheet append succeeds. Provider failures are logged in Cloudflare and reported in the response's `emailStatus`; a saved booking still returns `{ "ok": true }` so the form does not tell a client to resubmit and create duplicate rows. This Worker does not send or verify bank payments.
+The Sheet-based Worker sends a new-booking notification to `NOTIFICATION_EMAIL` and a receipt-of-request message to the client's submitted email. Email delivery is attempted only after the Sheet append succeeds. Provider failures are logged in Cloudflare and reported in the response's `emailStatus`; a saved booking still returns `{ "ok": true }` so the form does not tell a client to resubmit and create duplicate rows. This separate integration does not send or verify bank payments.
+
+## International bank-detail email secrets
+
+The booking page's international payment endpoint is served by the `apex-house-site` Worker configured in the repository-root `wrangler.toml` (`worker/src/site.js`). From the repository root, set the account details as Worker secrets on that deployment. Do not put account values in source files, `.vars` files committed to Git, or the front end.
+
+```sh
+wrangler secret put USD_BANK_NAME --config wrangler.toml
+wrangler secret put USD_ACCOUNT_NUMBER --config wrangler.toml
+wrangler secret put USD_ACCOUNT_NAME --config wrangler.toml
+wrangler secret put USD_ACH_ROUTING --config wrangler.toml
+wrangler secret put USD_WIRE_ROUTING --config wrangler.toml
+wrangler secret put USD_SWIFT --config wrangler.toml
+wrangler secret put USD_BANK_ADDRESS --config wrangler.toml
+wrangler secret put GBP_BANK_NAME --config wrangler.toml
+wrangler secret put GBP_ACCOUNT_NUMBER --config wrangler.toml
+wrangler secret put GBP_ACCOUNT_NAME --config wrangler.toml
+wrangler secret put GBP_SORT_CODE --config wrangler.toml
+wrangler secret put GBP_BANK_ADDRESS --config wrangler.toml
+wrangler secret put GBP_IBAN --config wrangler.toml
+```
+
+`USD_SWIFT`, `USD_BANK_ADDRESS`, and `GBP_IBAN` are optional; leave an optional secret unset or empty to omit that line from the email. The endpoint requires the other fields for the selected currency, sends only that currency's details, and uses the existing verified `RESEND_FROM_EMAIL` or `RESEND_FROM` sender plus `RESEND_API_KEY`.

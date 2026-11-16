@@ -442,10 +442,17 @@ async function requestInternationalPayment(request, env) {
   if (sentCurrencies.includes(currency)) return json({ ok: true, alreadySent: true }, 200, corsHeaders);
   const requestKey = `${reference}:${currency}`;
   if (internationalPaymentRequests.has(requestKey)) return json({ error: "Your request is still processing. Please wait a moment." }, 409, corsHeaders);
-  const detailKeys = currency === "USD"
-    ? ["USD_BANK_NAME", "USD_ACCOUNT_NUMBER", "USD_ACCOUNT_NAME", "USD_ROUTING_OR_SWIFT"]
-    : ["GBP_BANK_NAME", "GBP_ACCOUNT_NUMBER", "GBP_ACCOUNT_NAME", "GBP_SORT_CODE"];
-  const missing = detailKeys.filter(key => typeof env[key] !== "string" || !env[key].trim());
+  const detailFields = currency === "USD"
+    ? [
+      ["Bank name", "USD_BANK_NAME"], ["Account name", "USD_ACCOUNT_NAME"], ["Account number", "USD_ACCOUNT_NUMBER"],
+      ["ACH routing number", "USD_ACH_ROUTING"], ["Wire routing number", "USD_WIRE_ROUTING"],
+      ["SWIFT code", "USD_SWIFT", true], ["Bank address", "USD_BANK_ADDRESS", true],
+    ]
+    : [
+      ["Bank name", "GBP_BANK_NAME"], ["Account name", "GBP_ACCOUNT_NAME"], ["Account number", "GBP_ACCOUNT_NUMBER"],
+      ["Sort code", "GBP_SORT_CODE"], ["Bank address", "GBP_BANK_ADDRESS"], ["IBAN", "GBP_IBAN", true],
+    ];
+  const missing = detailFields.filter(([, key, optional]) => !optional && (typeof env[key] !== "string" || !env[key].trim())).map(([, key]) => key);
   if (!env.RESEND_API_KEY || !(env.RESEND_FROM_EMAIL || env.RESEND_FROM) || missing.length) {
     console.error("International payment email configuration is incomplete", { reference, currency, missing: [...(!env.RESEND_API_KEY ? ["RESEND_API_KEY"] : []), ...(!(env.RESEND_FROM_EMAIL || env.RESEND_FROM) ? ["RESEND_FROM_EMAIL"] : []), ...missing] });
     return json({ error: "We could not send those account details right now. Please try again shortly." }, 503, corsHeaders);
@@ -453,17 +460,17 @@ async function requestInternationalPayment(request, env) {
 
   internationalPaymentRequests.add(requestKey);
   try {
-    const details = currency === "USD"
-      ? [["Bank name", env.USD_BANK_NAME], ["Account name", env.USD_ACCOUNT_NAME], ["Account number", env.USD_ACCOUNT_NUMBER], ["Routing / SWIFT", env.USD_ROUTING_OR_SWIFT]]
-      : [["Bank name", env.GBP_BANK_NAME], ["Account name", env.GBP_ACCOUNT_NAME], ["Account number", env.GBP_ACCOUNT_NUMBER], ["Sort code", env.GBP_SORT_CODE]];
-    const safeDetails = details.map(([label, value]) => `<tr><th align="left" style="padding:8px 10px;color:#60718a;border-bottom:1px solid #e5edf7">${escapeHtml(label)}</th><td style="padding:8px 10px;color:#142d50;border-bottom:1px solid #e5edf7">${escapeHtml(value)}</td></tr>`).join("");
-    const summary = `Booking reference: ${reference}\nName: ${booking.name}\nService: ${booking.category || ""} / ${booking.service}\nPackage: ${booking.package || "Not provided"}\nEvent: ${booking.eventName || "Not provided"}\nDate: ${booking.eventDate || "Not provided"}\nPhone / WhatsApp: ${booking.whatsapp}\nCurrency: ${currency}\nBrief: ${booking.brief || "Not provided"}`;
+    const details = detailFields
+      .filter(([, key, optional]) => !optional || (typeof env[key] === "string" && env[key].trim()))
+      .map(([label, key]) => [label, env[key].trim()]);
+    const safeDetails = details.map(([label, value]) => `<li style="margin:0 0 8px"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</li>`).join("");
+    const summary = `Booking reference: ${reference}\nName: ${booking.name}\nService: ${booking.category || ""} / ${booking.service}\nMode: ${booking.mode}\nPackage: ${booking.package || "Not provided"}\nQuantity: ${booking.quantity} ${booking.unit || ""}\nEvent: ${booking.eventName || "Not provided"}\nDate: ${booking.eventDate || "Not provided"}\nCountry: ${booking.country || "Not provided"}\nPhone / WhatsApp: ${booking.whatsapp}\nCurrency: ${currency}\nBrief: ${booking.brief || "Not provided"}`;
     const detailsText = details.map(([label, value]) => `${label}: ${value}`).join("\n");
     const sender = env.RESEND_FROM_EMAIL || env.RESEND_FROM;
     const clientMessage = {
       from: sender, to: [booking.email], subject: `${currency} bank details for your Apex House booking ${reference}`,
       text: `Salaam ${booking.name},\n\nThank you for booking with The Apex House. Here is your booking summary:\n\n${summary}\n\n${currency} bank transfer details:\n${detailsText}\n\nPlease pay the exact amount confirmed for your service, then send your proof of payment on WhatsApp: https://wa.me/${OWNER_WHATSAPP}. Include your booking reference, ${reference}.\n\nThe Apex House team`,
-      html: `<div style="font-family:Arial,sans-serif;color:#142d50;max-width:600px;margin:auto;padding:24px"><div style="padding:22px;border-radius:14px 14px 0 0;background:#021a40;color:#fff"><p style="margin:0;color:#a9c9ff;font-size:12px;letter-spacing:2px">THE APEX HOUSE</p><h1 style="margin:8px 0 0;font-size:22px">${currency} bank transfer details</h1></div><div style="padding:22px;border:1px solid #e5edf7;border-top:0;border-radius:0 0 14px 14px"><p>Salaam ${escapeHtml(booking.name)},</p><p>Thank you for booking with The Apex House. Here is your booking summary:</p><p>${escapeHtml(summary).replace(/\n/g, "<br>")}</p><h2 style="font-size:17px">${currency} bank transfer details</h2><table role="presentation" style="width:100%;border-collapse:collapse">${safeDetails}</table><p>Please pay the exact amount confirmed for your service, then send your proof of payment on WhatsApp: <a href="https://wa.me/${OWNER_WHATSAPP}">+234 803 832 6349</a>. Include your booking reference, <strong>${reference}</strong>.</p><p>The Apex House team</p></div></div>`,
+      html: `<div style="font-family:Arial,sans-serif;color:#142d50;max-width:600px;margin:auto;padding:24px"><div style="padding:22px;border-radius:14px 14px 0 0;background:#021a40;color:#fff"><p style="margin:0;color:#a9c9ff;font-size:12px;letter-spacing:2px">THE APEX HOUSE</p><h1 style="margin:8px 0 0;font-size:22px">${currency} bank transfer details</h1></div><div style="padding:22px;border:1px solid #e5edf7;border-top:0;border-radius:0 0 14px 14px"><p>Salaam ${escapeHtml(booking.name)},</p><p>Thank you for booking with The Apex House. Here is your booking summary:</p><p>${escapeHtml(summary).replace(/\n/g, "<br>")}</p><h2 style="font-size:17px">${currency} bank transfer details</h2><ul style="padding-left:22px;line-height:1.6">${safeDetails}</ul><p>Please pay the exact amount confirmed for your service, then send your proof of payment on WhatsApp: <a href="https://wa.me/${OWNER_WHATSAPP}">+234 803 832 6349</a>. Include your booking reference, <strong>${reference}</strong>.</p><p>The Apex House team</p></div></div>`,
     };
     const ownerMessage = {
       from: sender, to: ["theapexxhouse2026@gmail.com"], reply_to: booking.email,
