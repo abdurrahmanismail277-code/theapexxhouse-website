@@ -3,6 +3,49 @@ import { COUNTRIES } from "./countries.js?v=20261116-international-dial-countrie
 const GLOBE_SRC = "assets/flags/globe.svg?v=20261029";
 const NIGERIA_TIME_ZONE = "Africa/Lagos";
 const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+let lockedScrollY = 0;
+let mobileScrollLocked = false;
+let viewportListenersActive = false;
+
+function updateComboboxViewport() {
+  const viewport = window.visualViewport;
+  document.documentElement.style.setProperty("--combobox-vv-height", `${viewport?.height || window.innerHeight}px`);
+  document.documentElement.style.setProperty("--combobox-vv-offset", `${viewport?.offsetTop || 0}px`);
+}
+
+function watchComboboxViewport() {
+  updateComboboxViewport();
+  if (viewportListenersActive) return;
+  viewportListenersActive = true;
+  window.visualViewport?.addEventListener("resize", updateComboboxViewport);
+  window.visualViewport?.addEventListener("scroll", updateComboboxViewport);
+  window.addEventListener("resize", updateComboboxViewport);
+}
+
+function stopWatchingComboboxViewport() {
+  if (!viewportListenersActive) return;
+  viewportListenersActive = false;
+  window.visualViewport?.removeEventListener("resize", updateComboboxViewport);
+  window.visualViewport?.removeEventListener("scroll", updateComboboxViewport);
+  window.removeEventListener("resize", updateComboboxViewport);
+}
+
+function lockComboboxScroll() {
+  if (mobileScrollLocked) return;
+  mobileScrollLocked = true;
+  lockedScrollY = window.scrollY;
+  document.documentElement.style.setProperty("--combobox-scroll-top", `${-lockedScrollY}px`);
+  watchComboboxViewport();
+}
+
+function unlockComboboxScroll() {
+  if (!mobileScrollLocked) return;
+  mobileScrollLocked = false;
+  stopWatchingComboboxViewport();
+  document.documentElement.style.removeProperty("--combobox-scroll-top");
+  document.body.classList.remove("combobox-sheet-open");
+  window.scrollTo(0, lockedScrollY);
+}
 
 function flagImage(flag) {
   const image = document.createElement("img");
@@ -32,6 +75,9 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   wrapper.append(triggerFlag);
   const panel = document.createElement("div");
   panel.className = "combobox-panel";
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-label", `Choose ${input.getAttribute("aria-label") || "an option"}`);
   panel.hidden = true;
   const backdrop = document.createElement("button");
   backdrop.type = "button"; backdrop.className = "combobox-backdrop"; backdrop.tabIndex = -1; backdrop.setAttribute("aria-label", "Close options");
@@ -47,7 +93,7 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   searchPath.setAttribute("d", "M21 21l-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"); searchPath.setAttribute("fill", "none"); searchPath.setAttribute("stroke", "currentColor"); searchPath.setAttribute("stroke-width", "1.8"); searchPath.setAttribute("stroke-linecap", "round"); searchIcon.append(searchPath);
   const search = document.createElement("input");
   search.type = "search"; search.className = "combobox-panel-search"; search.placeholder = input.placeholder || "Search";
-  search.setAttribute("aria-label", input.getAttribute("aria-label") || "Search options");
+  search.setAttribute("aria-label", `Search ${input.getAttribute("aria-label") || "options"}`);
   search.setAttribute("aria-autocomplete", "list"); search.setAttribute("aria-controls", listbox.id); search.setAttribute("role", "combobox"); search.setAttribute("aria-expanded", "true");
   search.autocomplete = "off"; searchRow.append(searchIcon, search);
   const clear = document.createElement("button");
@@ -56,12 +102,13 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   searchRow.append(clear);
   panel.append(panelTop, searchRow, listbox); wrapper.append(backdrop, panel);
   input.readOnly = true;
+  input.inputMode = "none";
   input.setAttribute("role", "button"); input.setAttribute("aria-haspopup", "listbox");
   input.setAttribute("aria-expanded", "false");
   input.setAttribute("aria-label", input.getAttribute("aria-label") || "Choose an option");
   input.placeholder ||= "Select an option";
 
-  const close = () => {
+  const close = ({ returnFocus = false } = {}) => {
     const wasOpen = input.getAttribute("aria-expanded") === "true";
     input.setAttribute("aria-expanded", "false");
     search.setAttribute("aria-expanded", "false");
@@ -69,20 +116,26 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
     search.removeAttribute("aria-activedescendant");
     panel.classList.remove("is-open");
     backdrop.classList.remove("is-open");
-    if (wasOpen) document.body.classList.remove("combobox-sheet-open");
-    window.setTimeout(() => { if (input.getAttribute("aria-expanded") !== "true") panel.hidden = true; }, 180);
+    panel.hidden = true;
+    backdrop.hidden = true;
+    search.blur();
+    if (wasOpen && mobileScrollLocked) unlockComboboxScroll();
+    else if (wasOpen) document.body.classList.remove("combobox-sheet-open");
+    if (returnFocus) input.focus({ preventScroll: true });
   };
   const open = (focusSearch = true) => {
     const fieldRect = wrapper.getBoundingClientRect();
+    const isMobileSheet = window.matchMedia("(max-width: 768px)").matches;
     panel.hidden = false;
     backdrop.hidden = false;
-    const isMobileSheet = window.matchMedia("(max-width: 768px)").matches;
     panel.classList.toggle("opens-up", !isMobileSheet && fieldRect.bottom + 326 > window.innerHeight && fieldRect.top > 326);
+    if (isMobileSheet) lockComboboxScroll();
     requestAnimationFrame(() => panel.classList.add("is-open"));
     requestAnimationFrame(() => backdrop.classList.add("is-open")); document.body.classList.add("combobox-sheet-open");
     input.setAttribute("aria-expanded", "true"); search.setAttribute("aria-expanded", "true");
     search.value = ""; render("");
-    if (focusSearch) requestAnimationFrame(() => search.focus({ preventScroll: true }));
+    const touchDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    if (focusSearch && !touchDevice) requestAnimationFrame(() => search.focus({ preventScroll: true }));
   };
   const choose = item => {
     const returnFocus = input.getAttribute("aria-expanded") === "true";
@@ -95,10 +148,9 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
     triggerFlag.onerror = () => { triggerFlag.onerror = null; triggerFlag.src = GLOBE_SRC; };
     input.dataset.selected = "true";
     input.setCustomValidity("");
-    close();
+    close({ returnFocus });
     onSelect?.(item);
     input.dispatchEvent(new Event("change", { bubbles: true }));
-    if (returnFocus) input.focus({ preventScroll: true });
   };
   const updateActive = () => {
     [...listbox.querySelectorAll('[role="option"]')].forEach((option, index) => {
@@ -116,6 +168,10 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   const render = query => {
     const needle = normalize(query);
     const filtered = items.filter(item => !needle || normalize(searchText(item)).includes(needle));
+    if (needle) {
+      const startsWithQuery = item => normalize(searchText(item)).split(/[\s()+/-]+/).some(part => part.startsWith(needle));
+      filtered.sort((left, right) => Number(startsWithQuery(right)) - Number(startsWithQuery(left)));
+    }
     matches = filtered;
     activeIndex = matches.length ? 0 : -1;
     listbox.replaceChildren();
@@ -140,18 +196,18 @@ function createCombobox({ input, listbox, items, label, searchText, value, onSel
   input.addEventListener("click", () => open(true));
   input.addEventListener("keydown", event => {
     if (["ArrowDown", "Enter", " "].includes(event.key)) { event.preventDefault(); if (input.getAttribute("aria-expanded") !== "true") open(true); else search.focus(); }
-    else if (event.key === "Escape") { event.preventDefault(); close(); }
+    else if (event.key === "Escape") { event.preventDefault(); close({ returnFocus: true }); }
   });
   search.addEventListener("input", () => render(search.value));
-  closeButton.addEventListener("click", () => { close(); input.focus({ preventScroll: true }); });
-  backdrop.addEventListener("click", () => { close(); input.focus({ preventScroll: true }); });
+  closeButton.addEventListener("click", () => close({ returnFocus: true }));
+  backdrop.addEventListener("click", () => close({ returnFocus: true }));
   search.addEventListener("keydown", event => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); if (matches.length) activeIndex = (activeIndex + (event.key === "ArrowDown" ? 1 : -1) + matches.length) % matches.length; updateActive(); }
     else if (event.key === "Enter") { event.preventDefault(); if (matches[activeIndex]) choose(matches[activeIndex]); }
     else if (event.key === "Home") { event.preventDefault(); activeIndex = 0; updateActive(); }
     else if (event.key === "End") { event.preventDefault(); activeIndex = matches.length - 1; updateActive(); }
-    else if (event.key === "Escape") { event.preventDefault(); close(); input.focus({ preventScroll: true }); }
-    else if (event.key === "Tab") close();
+    else if (event.key === "Escape") { event.preventDefault(); close({ returnFocus: true }); }
+    else if (event.key === "Tab") { event.preventDefault(); close({ returnFocus: true }); }
   });
   document.addEventListener("pointerdown", event => { if (!wrapper.contains(event.target)) close(); }, { passive: true });
   input.addEventListener("blur", () => window.setTimeout(() => { if (!wrapper.contains(document.activeElement)) close(); }, 0));

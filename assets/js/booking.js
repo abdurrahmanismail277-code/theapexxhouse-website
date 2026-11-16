@@ -1,6 +1,6 @@
 
     import { SETTINGS, SERVICES, calculatePrice, getService, readServiceIdsFromUrl } from "../../services.js?v=20261110-project-management-checkout";
-    import { initBookingInputs } from "./booking-inputs.js?v=20261116-international-payments";
+    import { initBookingInputs } from "./booking-inputs.js?v=20261116-mobile-country-sheet";
     const PAYMENT_REFERENCE_KEY = "apex-house-booking-reference";
     const PAYMENT_STEP_KEY = "apex-house-payment-step";
     const PAYMENT_REGION_KEY = "apex-house-payment-region";

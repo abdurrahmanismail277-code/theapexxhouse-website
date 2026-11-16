@@ -39,6 +39,7 @@
 .currency-rate-info a{color:#0348b4;text-decoration:underline;text-underline-offset:2px}
 .currency-estimate-field{margin:0}
 .combobox-wrap{position:relative;min-width:0}
+.combobox-wrap>input,.combobox-panel input,.combobox-panel button,.combobox-listbox [role=option]{-webkit-tap-highlight-color:transparent}
 .combobox-wrap>input{width:100%;padding-right:40px!important}
 .combobox-listbox{position:absolute;z-index:80;inset:calc(100% + 5px) 0 auto;max-height:min(300px,45vh);overflow:auto;margin:0;padding:5px;list-style:none;border:1px solid #cbd7e7;border-radius:10px;background:#fff;color:#021a40;box-shadow:0 14px 32px #021a402b;opacity:0;transform:translateY(-5px);transition:opacity .16s ease,transform .16s ease;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .combobox-listbox[hidden]{display:none}
@@ -48,6 +49,7 @@
 .combobox-listbox .combobox-empty{color:#63738b;cursor:default}
 /* Accessible, image-backed selector panels shared by country, dial, zone and currency fields. */
 .combobox-wrap>input[readonly]{cursor:pointer;background-color:#fff;padding-left:50px!important;padding-right:42px!important;text-overflow:ellipsis;white-space:nowrap}
+.combobox-wrap>input[readonly]:focus-visible{outline:3px solid #75aaff;outline-offset:2px}
 .combobox-trigger-flag{position:absolute;z-index:1;top:15px;left:14px;display:block;width:24px;height:18px;object-fit:cover;border:1px solid rgba(0,0,0,.12);border-radius:3px;pointer-events:none}.combobox-trigger-flag[hidden]{display:none}
 .combobox-wrap.is-enhanced::after{content:"";position:absolute;right:16px;top:21px;width:8px;height:8px;border-right:1.7px solid #52647c;border-bottom:1.7px solid #52647c;transform:rotate(45deg);pointer-events:none}
 .combobox-panel{position:absolute;z-index:100;inset:calc(100% + 6px) 0 auto;max-height:320px;display:flex;flex-direction:column;overflow:hidden;border:1px solid #d5dfec;border-radius:12px;background:#fff;color:#142943;box-shadow:0 16px 38px #021a4026;opacity:0;transform:translateY(-5px);transition:opacity .18s ease,transform .18s ease}
@@ -66,16 +68,17 @@
 .combobox-check{display:none;color:#0348b4;font:700 16px/1 var(--head)}.combobox-option[data-current=true] .combobox-check{display:block}.combobox-group-heading{padding:11px 16px 6px;color:#657894;font:600 11px/1.2 var(--head);letter-spacing:.06em;text-transform:uppercase}
 .combobox-option-title{min-width:0;overflow:hidden;color:#243953;font:400 14px/1.35 var(--head);text-overflow:ellipsis;white-space:nowrap}.combobox-listbox .combobox-empty{display:block;padding:20px 16px;color:#52647c;text-align:center;font:400 14px/1.5 var(--head);cursor:default}
 .combobox-panel.has-overflow::after{content:"";position:absolute;right:8px;bottom:0;left:8px;height:18px;pointer-events:none;background:linear-gradient(transparent,#fff)}
-.combobox-backdrop{display:none}
+.combobox-backdrop{display:none}.combobox-backdrop[hidden]{display:none!important}
 @media(max-width:768px){
  .combobox-wrap>input[readonly]{font-size:16px!important}
- .combobox-backdrop{position:fixed;z-index:999;inset:0;display:block;visibility:hidden;opacity:0;border:0;background:rgba(2,16,39,.48);transition:opacity .18s ease,visibility .18s ease}
+ body.combobox-sheet-open{position:fixed;top:var(--combobox-scroll-top,0px);right:0;left:0;width:100%;overflow:hidden!important}
+ body.combobox-sheet-open .back-to-top,body.combobox-sheet-open .whatsapp,body.combobox-sheet-open .connect-dial,body.combobox-sheet-open .connect-menu,body.combobox-sheet-open .accessibility{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+ .combobox-backdrop{position:fixed;z-index:999;top:var(--combobox-vv-offset,0px);right:0;left:0;height:var(--combobox-vv-height,100dvh);display:block;visibility:hidden;opacity:0;border:0;background:rgba(2,16,39,.48);transition:opacity .18s ease,visibility .18s ease}
  .combobox-backdrop.is-open{visibility:visible;opacity:1}
- .combobox-panel{position:fixed;z-index:1000;inset:auto 0 0;width:100%;max-height:min(72vh,560px);max-height:min(72dvh,560px);padding:0 16px calc(16px + env(safe-area-inset-bottom,0px));border:1px solid #d5dfec;border-bottom:0;border-radius:18px 18px 0 0;transform:translateY(16px);box-shadow:0 -16px 40px #021a4026}
- .combobox-panel.is-open{transform:translateY(0)}.combobox-panel-top{position:relative;display:flex;align-items:center;justify-content:center;min-height:36px;flex:none;background:#fff}
+ .combobox-panel{position:fixed;z-index:1000;top:var(--combobox-vv-offset,0px);right:0;left:0;bottom:auto;width:100%;height:min(560px,calc(var(--combobox-vv-height,100dvh) - 12px));max-height:calc(var(--combobox-vv-height,100dvh) - 12px);padding:0 16px max(8px,env(safe-area-inset-bottom,0px));border:1px solid #d5dfec;border-bottom:0;border-radius:18px 18px 0 0;transform:translateY(16px);box-shadow:0 -16px 40px #021a4026}
+ .combobox-panel.is-open{transform:translateY(0)}.combobox-panel-top{position:relative;display:flex;align-items:center;justify-content:center;min-height:28px;flex:none;background:#fff}
  .combobox-sheet-handle{width:38px;height:4px;border-radius:4px;background:#c8d2e0}.combobox-panel-close{position:absolute;right:0;top:2px;width:32px;height:32px;background:#f2f5f9;font-size:22px}
- .combobox-search-row{padding:8px 0;background:#fff}.combobox-listbox{max-height:calc(72vh - 110px);max-height:calc(72dvh - 110px)}.combobox-option{padding-right:8px;padding-left:8px}
- body.combobox-sheet-open{overflow:hidden}
+ .combobox-search-row{padding:6px 0;background:#fff}.combobox-panel-search{height:40px!important;min-height:40px!important}.combobox-listbox{height:auto;max-height:none;min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.combobox-option{padding-right:8px;padding-left:8px}
 }
 @media(prefers-reduced-motion:reduce){.combobox-panel,.combobox-backdrop{transition:none!important}}
 .phone-field-row{display:grid;grid-template-columns:minmax(145px,.8fr) minmax(0,1.2fr);gap:10px}
