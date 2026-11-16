@@ -7,7 +7,8 @@
       location.replace((clean || '/') + location.search + location.hash);
     }
   </script>
-  <link rel="canonical" href="https://theapexxhouse.com/insights">
+<script>(function(){var root=document.documentElement,saved="",dark=false;try{saved=localStorage.getItem("apex-theme")||"";}catch(e){}if(saved==="light"||saved==="dark"){root.dataset.theme=saved;return;}try{dark=!!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);}catch(e){}root.dataset.theme=dark?"dark":"light";})();</script>
+    <link rel="canonical" href="https://theapexxhouse.com/insights">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#021a40">
@@ -42,10 +43,12 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap"></noscript>
   <link rel="stylesheet" href="assets/css/scroll-progress.css?v=20261107-scroll-top-redesign">
   <link rel="stylesheet" href="footer.css?v=20261116-grouped-services">
+  <link rel="stylesheet" href="assets/css/standalone-section-pages.css?v=20261116">
 </head>
-<body class="site-bg-page">
+<body class="site-bg-page page-standalone">
   <span class="back-to-top-sentinel" aria-hidden="true"></span>
   <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="standalone-header" role="banner"><div class="standalone-header-inner"><a class="standalone-brand" href="/" aria-label="The Apex House, home"><img src="assets/apex-house-icon.svg?v=20261029" width="32" height="32" alt=""><span>The Apex House</span></a><a class="standalone-home" href="/">&#8592; Home</a></div></header>
   <header class="nav"><div class="wrap nav-inner">
     <a class="brand" href="/" aria-label="The Apex House home"><img src="assets/apex-house-logo.svg?v=20261029" width="300" height="90" alt="The Apex House logo"><span class="brand-fallback" hidden>The Apex House</span></a>
     <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="main-nav"><span class="menu-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>

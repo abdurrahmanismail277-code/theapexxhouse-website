@@ -1,0 +1,21 @@
+/* Focused shell for the standalone About, Insights, FAQ, and Contact pages. */
+html:has(body.page-standalone){scroll-padding-top:calc(60px + env(safe-area-inset-top,0px))}
+body.page-standalone{background:#fff!important;color:#071b39}
+body.page-standalone.site-bg-page{background:#fff!important}
+body.page-standalone.site-bg-page:before,body.page-standalone.site-bg-page:after{display:none!important}
+body.page-standalone>.nav{display:none!important}
+body.page-standalone .ah-menu-drawer,body.page-standalone .ah-menu-backdrop,body.page-standalone .theme-toggle{display:none!important}
+body.page-standalone .standalone-header{position:sticky;top:0;z-index:500;padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid #ffffff22;background:#021a40;color:#fff}
+body.page-standalone .standalone-header-inner{display:flex;width:min(calc(100% - 32px),920px);min-height:60px;align-items:center;justify-content:space-between;gap:16px;margin-inline:auto}
+body.page-standalone .standalone-brand{display:inline-flex;min-width:0;align-items:center;gap:10px;color:#fff;font:600 15px/1.2 var(--head,Inter,sans-serif);letter-spacing:-.02em}
+body.page-standalone .standalone-brand img{width:30px;height:30px;flex:none;object-fit:contain}
+body.page-standalone .standalone-home{display:inline-flex;min-height:44px;align-items:center;padding:0 4px;color:#dce7f7;font:500 12px/1.2 var(--mono,'DM Mono',monospace)}
+body.page-standalone .standalone-brand:focus-visible,body.page-standalone .standalone-home:focus-visible{outline:2px solid #8db8ff;outline-offset:3px;border-radius:5px}
+body.page-standalone .skip-link{position:fixed;z-index:600;top:calc(8px + env(safe-area-inset-top,0px));left:12px;padding:10px 14px;transform:translateY(-160%);border-radius:8px;background:#fff;color:#021a40;box-shadow:0 8px 26px #0003;font:600 13px var(--mono,'DM Mono',monospace)}
+body.page-standalone .skip-link:focus{transform:translateY(0)}
+body.page-standalone main{padding-top:28px!important;padding-bottom:48px!important;scroll-margin-top:calc(60px + env(safe-area-inset-top,0px))}
+body.page-standalone>.footer,body.page-standalone>.connect-dial,body.page-standalone>.back-to-top{display:none!important}
+:root[data-theme="dark"] body.page-standalone{background:#071427!important;color:#f3f6fb}
+:root[data-theme="dark"] body.page-standalone.site-bg-page{background:#071427!important}
+@media(max-width:640px){body.page-standalone main{padding-top:20px!important;padding-bottom:36px!important}}
+@media(prefers-reduced-motion:reduce){body.page-standalone{scroll-behavior:auto}}
