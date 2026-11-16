@@ -82,6 +82,14 @@ sectionDefinitions.forEach(definition => {
   sections.append(section);
 });
 
+// Footer links can target a service section generated above this point.
+if (window.location.hash.indexOf("#svc-full-service-") === 0) {
+  const initialServiceTarget = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+  if (initialServiceTarget && root.contains(initialServiceTarget)) {
+    initialServiceTarget.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+}
+
 // Shared footer markup is provided directly by each service page.
 
 navigation.addEventListener("click", event => {
